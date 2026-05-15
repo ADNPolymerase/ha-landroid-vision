@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Updated integration brand icon and logo assets.
+
 ## 0.2.0
 
 - Added disabled-by-default RTK address sensor using OpenStreetMap Nominatim reverse geocoding.

@@ -49,3 +49,6 @@ automations-before-*.yaml
 *.zip
 dist/
 build/
+
+# Local icon drafts
+icon_proposals/
