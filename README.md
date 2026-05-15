@@ -1,0 +1,100 @@
+# Worx Vision Cloud Plus
+
+Custom Home Assistant integration for Worx Landroid Vision / Vision Cloud / RTK mowers.
+
+This integration is built on top of the community `pyworxcloud` library and adds a cleaner Home Assistant entity layer for Vision mowers: mower controls, useful sensors, diagnostics, schedule calendar, RTK map rendering and live-ish robot position tracking.
+
+Integration prepared by **Smart Service**.
+
+## Features
+
+- Native Home Assistant `lawn_mower` entity.
+- Start, pause and dock commands.
+- Battery, status, error and connectivity sensors.
+- Useful maintenance and diagnostic sensors.
+- Schedule sensor and Home Assistant calendar entity.
+- RTK map camera rendered from the Worx private map API.
+- RTK robot position as a `device_tracker`.
+- Daily mowing progress, remaining progress and mowed area sensors when available from the API.
+- Polish and English translations.
+- Optional raw payload entities for debugging, disabled by default.
+
+## Installation With HACS
+
+1. Open HACS.
+2. Add this repository as a custom repository.
+3. Select category `Integration`.
+4. Install **Worx Vision Cloud Plus**.
+5. Restart Home Assistant.
+6. Go to `Settings > Devices & services > Add integration`.
+7. Search for `Worx Vision Cloud Plus`.
+
+## Manual Installation
+
+Copy this directory:
+
+```text
+custom_components/worx_vision_cloud
+```
+
+to your Home Assistant config directory:
+
+```text
+/config/custom_components/worx_vision_cloud
+```
+
+Then restart Home Assistant and add the integration from `Settings > Devices & services`.
+
+## Configuration
+
+Use the same e-mail and password as in the Worx Landroid app.
+
+Supported cloud selector values:
+
+- `worx`
+- `kress`
+- `landxcape`
+
+Most users should keep SSL verification enabled.
+
+## Entities
+
+The exact entity list depends on what your mower reports. Typical entities include:
+
+- `lawn_mower` mower control
+- `button` refresh
+- `calendar` mowing schedule
+- `camera` RTK map
+- `device_tracker` RTK robot position
+- `sensor` battery, status, error, RSSI, schedule, rain delay, RTK map, daily progress, remaining progress, mowed area, runtime and maintenance values
+- `binary_sensor` online, locked, charging, rain, party mode and pause mode
+
+See [docs/entities.md](docs/entities.md) for a more detailed list.
+
+## RTK Map
+
+For compatible Vision Cloud / RTK mowers the integration tries to read the private Worx map endpoint and renders a Home Assistant camera entity as SVG.
+
+The map can include:
+
+- mowing boundary
+- excluded areas
+- markers and station information when available
+- current robot position from RTK payload
+
+The map is not a video stream. It updates when Home Assistant receives new data from Worx Cloud or when the integration refreshes cached API data.
+
+## Privacy
+
+RTK maps can contain precise garden geometry and coordinates. Do not publish debug dumps, Home Assistant storage files, access tokens, serial numbers or raw API responses.
+
+Before opening an issue, remove private data from logs and screenshots. See [SECURITY.md](SECURITY.md).
+
+## Limitations
+
+The Worx / Positec cloud API is not officially public. Some endpoints used here are reverse-engineered and can change without notice. This is a best-effort custom integration, not official Worx software.
+
+## Credits
+
+- Uses [`pyworxcloud`](https://github.com/MTrab/pyworxcloud).
+- Integration prepared by **Smart Service**.

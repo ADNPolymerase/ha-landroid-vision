@@ -1,0 +1,383 @@
+"""Helper functions for Worx Vision Cloud Plus."""
+from __future__ import annotations
+
+from collections.abc import Iterable
+from datetime import date, datetime
+from enum import Enum
+import json
+from typing import Any
+
+from homeassistant.util import slugify
+
+RAW_SOURCE_ATTRS = (
+    "raw_dat",
+    "raw_cfg",
+    "module_status",
+    "module_config",
+    "battery",
+    "blades",
+    "rainsensor",
+    "status",
+    "error",
+    "orientation",
+    "zone",
+    "schedules",
+    "statistics",
+    "firmware",
+    "warranty",
+    "lawn",
+)
+
+MAX_LIST_ITEMS = 80
+MAX_STRING_STATE_LENGTH = 240
+
+SENSITIVE_RAW_PATHS = {
+    "cfg.rtk.ck",
+}
+
+NOISY_RAW_PATH_PREFIXES = (
+    "cfg.log.",
+    "cfg.dk.id.",
+    "cfg.sc.slots[",
+    "schedules.slots[",
+)
+
+NOISY_RAW_PATHS = {
+    "cfg.sc.slots.count",
+    "schedules.slots.count",
+}
+
+SCHEDULE_DAY_LABELS = {
+    "monday": "pon",
+    "tuesday": "wt",
+    "wednesday": "sr",
+    "thursday": "czw",
+    "friday": "pt",
+    "saturday": "sob",
+    "sunday": "niedz",
+}
+
+SCHEDULE_DAY_INDEX = {
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+}
+
+
+def get_dict_value(obj: Any, key: str, default: Any = None) -> Any:
+    """Read a key from dict-like or object-like values."""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def get_nested_value(obj: Any, *keys: str, default: Any = None) -> Any:
+    """Read a nested key path from dict-like or object-like values."""
+    value = obj
+    for key in keys:
+        value = get_dict_value(value, key, None)
+        if value is None:
+            return default
+    return value
+
+
+def normalize_scalar(value: Any) -> Any | None:
+    """Normalize a value so it is safe as a Home Assistant state."""
+    if value is None:
+        return None
+    if isinstance(value, bool | int | float):
+        return value
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, datetime | date):
+        return value.isoformat()
+    if isinstance(value, str):
+        if len(value) > MAX_STRING_STATE_LENGTH:
+            return value[:MAX_STRING_STATE_LENGTH]
+        return value
+    return None
+
+
+def stable_json(value: Any) -> str:
+    """Return a deterministic compact JSON string."""
+    try:
+        return json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+    except TypeError:
+        return str(value)
+
+
+def raw_path_is_sensitive(path: str) -> bool:
+    """Return true when a raw path should never be exposed as an entity."""
+    return path in SENSITIVE_RAW_PATHS
+
+
+def raw_path_enabled_default(path: str) -> bool:
+    """Return default enabled state for raw diagnostic entities."""
+    if raw_path_is_sensitive(path) or path in NOISY_RAW_PATHS:
+        return False
+    return not any(path.startswith(prefix) for prefix in NOISY_RAW_PATH_PREFIXES)
+
+
+def safe_key(path: str) -> str:
+    """Return a stable slug key for entity unique IDs."""
+    cleaned = (
+        path.replace("[", "_")
+        .replace("]", "")
+        .replace(".", "_")
+        .replace(" ", "_")
+        .replace("/", "_")
+        .replace("-", "_")
+    )
+    return slugify(cleaned)
+
+
+def iter_flatten(value: Any, prefix: str) -> Iterable[tuple[str, Any]]:
+    """Flatten nested dict/list structures into scalar leaves."""
+    if value is None:
+        return
+
+    if isinstance(value, dict):
+        for key, item in value.items():
+            key_text = str(key)
+            next_prefix = f"{prefix}.{key_text}" if prefix else key_text
+            yield from iter_flatten(item, next_prefix)
+        return
+
+    if isinstance(value, list | tuple):
+        yield f"{prefix}.count", len(value)
+        for index, item in enumerate(value[:MAX_LIST_ITEMS]):
+            yield from iter_flatten(item, f"{prefix}[{index}]")
+        return
+
+    scalar = normalize_scalar(value)
+    if scalar is not None:
+        yield prefix, scalar
+
+
+def raw_entity_values(device: Any) -> dict[str, Any]:
+    """Return all scalar raw/dynamic values for a mower."""
+    values: dict[str, Any] = {}
+
+    for attr in RAW_SOURCE_ATTRS:
+        source_value = getattr(device, attr, None)
+        if source_value is None:
+            continue
+        source_name = attr.removeprefix("raw_")
+        for path, value in iter_flatten(source_value, source_name):
+            if raw_path_is_sensitive(path):
+                continue
+            key = safe_key(path)
+            if key:
+                values[key] = value
+
+    # A few useful top-level object attributes that pyworxcloud maps from the API.
+    for attr in (
+        "online",
+        "locked",
+        "mac_address",
+        "model",
+        "name",
+        "protocol",
+        "rssi",
+        "time_zone",
+        "updated",
+        "updated_origin",
+        "uuid",
+    ):
+        if hasattr(device, attr):
+            scalar = normalize_scalar(getattr(device, attr))
+            if scalar is not None:
+                values[safe_key(attr)] = scalar
+
+    return values
+
+
+def raw_entity_path_map(device: Any) -> dict[str, str]:
+    """Return entity key -> readable raw path map."""
+    result: dict[str, str] = {}
+
+    for attr in RAW_SOURCE_ATTRS:
+        source_value = getattr(device, attr, None)
+        if source_value is None:
+            continue
+        source_name = attr.removeprefix("raw_")
+        for path, value in iter_flatten(source_value, source_name):
+            if raw_path_is_sensitive(path):
+                continue
+            key = safe_key(path)
+            if key:
+                result[key] = path
+
+    for attr in (
+        "online",
+        "locked",
+        "mac_address",
+        "model",
+        "name",
+        "protocol",
+        "rssi",
+        "time_zone",
+        "updated",
+        "updated_origin",
+        "uuid",
+    ):
+        if hasattr(device, attr):
+            key = safe_key(attr)
+            result[key] = attr
+
+    return result
+
+
+def _raw_cfg(device: Any) -> Any:
+    """Return raw cfg payload from pyworxcloud."""
+    return getattr(device, "raw_cfg", {}) or {}
+
+
+def _raw_dat(device: Any) -> Any:
+    """Return raw dat payload from pyworxcloud."""
+    return getattr(device, "raw_dat", {}) or {}
+
+
+def rtk_map_id(device: Any) -> Any:
+    """Return RTK map identifier when the mower reports one."""
+    return get_nested_value(_raw_cfg(device), "rtk", "map")
+
+
+def rtk_map_attributes(device: Any) -> dict[str, Any]:
+    """Return RTK map metadata that is available without map geometry."""
+    rtk = get_dict_value(_raw_cfg(device), "rtk", {}) or {}
+    zones = get_dict_value(rtk, "zs", []) or []
+    if not isinstance(zones, list | tuple):
+        zones = []
+
+    return {
+        "map_id": get_dict_value(rtk, "map"),
+        "status": get_dict_value(rtk, "st"),
+        "zones": [
+            {
+                "id": get_dict_value(zone, "id"),
+                "cutting": get_nested_value(zone, "cfg", "cut", default={}),
+                "schedule": get_nested_value(zone, "cfg", "sc", default={}),
+            }
+            for zone in zones
+            if isinstance(zone, dict)
+        ],
+    }
+
+
+def rtk_position(device: Any) -> tuple[float, float] | None:
+    """Return current RTK latitude/longitude position."""
+    position = get_nested_value(_raw_dat(device), "rtk", "pos", default=[])
+    if not isinstance(position, list | tuple) or len(position) < 2:
+        return None
+
+    try:
+        latitude = float(position[0])
+        longitude = float(position[1])
+    except (TypeError, ValueError):
+        return None
+
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return None
+    return latitude, longitude
+
+
+def rtk_location_attributes(device: Any) -> dict[str, Any]:
+    """Return RTK location diagnostic attributes."""
+    dat_rtk = get_nested_value(_raw_dat(device), "rtk", default={}) or {}
+    return {
+        "map_id": rtk_map_id(device),
+        "provider": get_dict_value(dat_rtk, "provider"),
+        "gps": get_dict_value(dat_rtk, "gps"),
+        "imu": get_dict_value(dat_rtk, "imu"),
+        "network": get_dict_value(dat_rtk, "network"),
+    }
+
+
+def schedule_slots(device: Any) -> list[Any]:
+    """Return normalized schedule slot objects from pyworxcloud."""
+    schedules = getattr(device, "schedules", {}) or {}
+    slots = get_dict_value(schedules, "slots", []) or []
+    if not isinstance(slots, list | tuple):
+        return []
+    return [slot for slot in slots if get_dict_value(slot, "day") is not None]
+
+
+def schedule_day_index(day: Any) -> int | None:
+    """Return Python weekday index for a pyworxcloud schedule day."""
+    if day is None:
+        return None
+    return SCHEDULE_DAY_INDEX.get(str(day).lower())
+
+
+def schedule_day_label(day: Any) -> str:
+    """Return a short human label for a schedule day."""
+    if day is None:
+        return ""
+    day_text = str(day).lower()
+    return SCHEDULE_DAY_LABELS.get(day_text, str(day))
+
+
+def schedule_slot_summary(slot: Any) -> str:
+    """Return one compact schedule slot line."""
+    day = schedule_day_label(get_dict_value(slot, "day"))
+    start = get_dict_value(slot, "start")
+    end = get_dict_value(slot, "end")
+    duration = get_dict_value(slot, "duration_extended")
+    if duration is None:
+        duration = get_dict_value(slot, "duration")
+
+    if start and end:
+        text = f"{day} {start}-{end}"
+    elif start and duration is not None:
+        text = f"{day} {start} ({duration} min)"
+    else:
+        text = day or "slot"
+
+    if get_dict_value(slot, "boundary"):
+        text = f"{text} + krawedz"
+    return text
+
+
+def schedule_summary(device: Any) -> str | None:
+    """Return a compact schedule summary for Home Assistant state."""
+    slots = schedule_slots(device)
+    if not slots:
+        return "brak aktywnych slotow"
+
+    summary = ", ".join(schedule_slot_summary(slot) for slot in slots)
+    if len(summary) <= MAX_STRING_STATE_LENGTH:
+        return summary
+    return f"{len(slots)} aktywnych slotow"
+
+
+def schedule_attributes(device: Any) -> dict[str, Any]:
+    """Return structured schedule data for cards and templates."""
+    schedules = getattr(device, "schedules", {}) or {}
+    slots = schedule_slots(device)
+    auto_schedule = get_dict_value(schedules, "auto_schedule", {}) or {}
+
+    return {
+        "active_slots": len(slots),
+        "slots": [
+            {
+                "day": get_dict_value(slot, "day"),
+                "day_label": schedule_day_label(get_dict_value(slot, "day")),
+                "start": get_dict_value(slot, "start"),
+                "end": get_dict_value(slot, "end"),
+                "duration": get_dict_value(slot, "duration"),
+                "duration_extended": get_dict_value(slot, "duration_extended"),
+                "boundary": get_dict_value(slot, "boundary"),
+                "source": get_dict_value(slot, "source"),
+            }
+            for slot in slots
+        ],
+        "auto_schedule_enabled": get_dict_value(auto_schedule, "enabled"),
+        "one_time_schedule": get_dict_value(schedules, "one_time_schedule"),
+        "party_mode_enabled": get_dict_value(schedules, "party_mode_enabled"),
+        "time_extension": get_dict_value(schedules, "time_extension"),
+    }

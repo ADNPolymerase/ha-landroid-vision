@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Home Assistant local/private files
+.storage/
+secrets.yaml
+known_devices.yaml
+home-assistant.log*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.token
+*.secret
+*.env
+
+# Local dumps and backups that may contain tokens, serials, map IDs or coordinates
+ha-dashboard*.json
+ha-services.json
+ha-worx*.json
+ha-landroid*.json
+worx-map-endpoint-probe.json
+automations-before-*.yaml
+*-backup-*.json
+*-before-*.json
+*-to-save-*.json
+
+# Release artifacts
+*.zip
+dist/
+build/

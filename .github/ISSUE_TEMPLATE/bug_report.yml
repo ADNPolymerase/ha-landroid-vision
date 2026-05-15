@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a problem with Worx Vision Cloud Plus
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste tokens, passwords, serial numbers, raw RTK map payloads or exact coordinates.
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.5.0"
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: mower_model
+    attributes:
+      label: Mower model
+      placeholder: "Worx Landroid Vision ..."
+    validations:
+      required: false
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      render: text
+    validations:
+      required: false

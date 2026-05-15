@@ -1,0 +1,145 @@
+{
+  "title": "Worx Vision Cloud Plus",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Worx Vision Cloud Plus",
+        "description": "Użyj tego samego logowania co w aplikacji Worx Landroid.",
+        "data": {
+          "email": "E-mail",
+          "password": "Hasło",
+          "cloud": "Chmura",
+          "verify_ssl": "Weryfikuj SSL",
+          "expose_raw_entities": "Wystaw wszystkie surowe pola payload jako encje"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nie udało się połączyć z Worx Cloud.",
+      "invalid_auth": "Nieprawidłowy login lub hasło.",
+      "rate_limited": "Limit zapytań Worx Cloud. Spróbuj później."
+    },
+    "abort": {
+      "already_configured": "To konto jest już skonfigurowane."
+    }
+  },
+  "entity": {
+    "lawn_mower": {
+      "mower": {
+        "name": "Kosiarka"
+      }
+    },
+    "sensor": {
+      "battery_percent": {
+        "name": "Bateria"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "error": {
+        "name": "Błąd"
+      },
+      "rssi": {
+        "name": "RSSI"
+      },
+      "zone_current": {
+        "name": "Aktualna strefa"
+      },
+      "schedule": {
+        "name": "Harmonogram"
+      },
+      "daily_progress": {
+        "name": "Dzienny postęp"
+      },
+      "remaining_progress": {
+        "name": "Pozostało do skoszenia"
+      },
+      "area_mowed_today": {
+        "name": "Skoszony obszar dzisiaj"
+      },
+      "rtk_map": {
+        "name": "Mapa RTK"
+      },
+      "rain_delay": {
+        "name": "Opóźnienie po deszczu"
+      },
+      "rain_remaining": {
+        "name": "Pozostało po deszczu"
+      },
+      "battery_voltage": {
+        "name": "Napięcie baterii"
+      },
+      "battery_temperature": {
+        "name": "Temperatura baterii"
+      },
+      "battery_cycles_total": {
+        "name": "Cykle baterii razem"
+      },
+      "blade_runtime_total": {
+        "name": "Czas pracy noży razem"
+      },
+      "blade_runtime_current": {
+        "name": "Czas pracy noży bieżący"
+      },
+      "distance_driven_total": {
+        "name": "Przejechany dystans razem"
+      },
+      "mower_runtime_total": {
+        "name": "Czas pracy kosiarki razem"
+      },
+      "pitch": {
+        "name": "Nachylenie X"
+      },
+      "roll": {
+        "name": "Nachylenie Y"
+      },
+      "yaw": {
+        "name": "Obrót Z"
+      },
+      "last_update": {
+        "name": "Ostatnia aktualizacja"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "locked": {
+        "name": "Zablokowana"
+      },
+      "battery_charging": {
+        "name": "Ładowanie baterii"
+      },
+      "rain_triggered": {
+        "name": "Czujnik deszczu aktywny"
+      },
+      "off_limits_enabled": {
+        "name": "Off Limits aktywne"
+      },
+      "acs_enabled": {
+        "name": "ACS aktywne"
+      },
+      "party_mode_enabled": {
+        "name": "Tryb party aktywny"
+      },
+      "pause_mode_enabled": {
+        "name": "Tryb pauzy aktywny"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Odśwież"
+      }
+    },
+    "camera": {
+      "rtk_map_camera": {
+        "name": "Mapa RTK"
+      }
+    },
+    "calendar": {
+      "schedule": {
+        "name": "Harmonogram koszenia"
+      }
+    }
+  }
+}

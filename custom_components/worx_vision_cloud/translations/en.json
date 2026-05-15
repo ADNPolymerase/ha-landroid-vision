@@ -1,0 +1,145 @@
+{
+  "title": "Worx Vision Cloud Plus",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Worx Vision Cloud Plus",
+        "description": "Use the same login as in the Worx Landroid app.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "cloud": "Cloud",
+          "verify_ssl": "Verify SSL",
+          "expose_raw_entities": "Expose all raw payload fields as entities"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to Worx Cloud.",
+      "invalid_auth": "Invalid login or password.",
+      "rate_limited": "Worx Cloud rate limit. Try again later."
+    },
+    "abort": {
+      "already_configured": "This account is already configured."
+    }
+  },
+  "entity": {
+    "lawn_mower": {
+      "mower": {
+        "name": "Mower"
+      }
+    },
+    "sensor": {
+      "battery_percent": {
+        "name": "Battery"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "error": {
+        "name": "Error"
+      },
+      "rssi": {
+        "name": "RSSI"
+      },
+      "zone_current": {
+        "name": "Current zone"
+      },
+      "schedule": {
+        "name": "Schedule"
+      },
+      "daily_progress": {
+        "name": "Daily progress"
+      },
+      "remaining_progress": {
+        "name": "Remaining to mow"
+      },
+      "area_mowed_today": {
+        "name": "Area mowed today"
+      },
+      "rtk_map": {
+        "name": "RTK map"
+      },
+      "rain_delay": {
+        "name": "Rain delay"
+      },
+      "rain_remaining": {
+        "name": "Rain remaining"
+      },
+      "battery_voltage": {
+        "name": "Battery voltage"
+      },
+      "battery_temperature": {
+        "name": "Battery temperature"
+      },
+      "battery_cycles_total": {
+        "name": "Battery cycles total"
+      },
+      "blade_runtime_total": {
+        "name": "Blade runtime total"
+      },
+      "blade_runtime_current": {
+        "name": "Blade runtime current"
+      },
+      "distance_driven_total": {
+        "name": "Distance driven total"
+      },
+      "mower_runtime_total": {
+        "name": "Mower runtime total"
+      },
+      "pitch": {
+        "name": "Pitch"
+      },
+      "roll": {
+        "name": "Roll"
+      },
+      "yaw": {
+        "name": "Yaw"
+      },
+      "last_update": {
+        "name": "Last update"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "locked": {
+        "name": "Locked"
+      },
+      "battery_charging": {
+        "name": "Battery charging"
+      },
+      "rain_triggered": {
+        "name": "Rain triggered"
+      },
+      "off_limits_enabled": {
+        "name": "Off limits enabled"
+      },
+      "acs_enabled": {
+        "name": "ACS enabled"
+      },
+      "party_mode_enabled": {
+        "name": "Party mode enabled"
+      },
+      "pause_mode_enabled": {
+        "name": "Pause mode enabled"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      }
+    },
+    "camera": {
+      "rtk_map_camera": {
+        "name": "RTK map"
+      }
+    },
+    "calendar": {
+      "schedule": {
+        "name": "Mowing schedule"
+      }
+    }
+  }
+}

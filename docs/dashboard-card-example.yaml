@@ -1,0 +1,6 @@
+# Example only. Replace entity IDs with entities created in your Home Assistant.
+type: picture-entity
+entity: camera.your_mower_mapa_rtk
+camera_view: auto
+show_name: true
+show_state: false
