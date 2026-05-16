@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Added Smart mowing schedule Home Assistant blueprint.
+- Added My Home Assistant import button for the blueprint.
+- Added blueprint setup documentation and optional helper package example.
+
 ## 0.3.0
 
 - Added diagnostic entities for Smart edge cutting, Save the hedgehogs and schedule edge procedure API fields.

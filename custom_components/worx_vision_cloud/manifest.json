@@ -7,15 +7,15 @@
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/SmartServicePL/Worx-Vision-Cloud-PLUS",
+  "documentation": "https://github.com/SmartServicePL/worx_vision_cloud_plus_github",
   "integration_type": "hub",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/SmartServicePL/Worx-Vision-Cloud-PLUS/issues",
+  "issue_tracker": "https://github.com/SmartServicePL/worx_vision_cloud_plus_github/issues",
   "loggers": [
     "pyworxcloud"
   ],
   "requirements": [
     "pyworxcloud==6.3.6"
   ],
-  "version": "0.3.0"
+  "version": "0.3.1"
 }
