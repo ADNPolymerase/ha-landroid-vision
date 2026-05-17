@@ -199,9 +199,6 @@
       "native_schedule": {
         "name": "Native schedule"
       },
-      "auto_schedule": {
-        "name": "Auto schedule"
-      },
       "smart_edge_cut": {
         "name": "Smart edge cutting"
       },

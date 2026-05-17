@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- Removed the `auto_schedule` switch completely.
+- Added entity-registry cleanup for the removed automatic schedule switch.
+
 ## 1.0.2
 
 - Removed the unreliable battery charging binary sensor.

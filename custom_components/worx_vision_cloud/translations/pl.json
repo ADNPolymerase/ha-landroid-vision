@@ -199,9 +199,6 @@
       "native_schedule": {
         "name": "Harmonogram kosiarki"
       },
-      "auto_schedule": {
-        "name": "Automatyczny harmonogram"
-      },
       "smart_edge_cut": {
         "name": "Inteligentne cięcie krawędziowe"
       },

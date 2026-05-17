@@ -265,25 +265,6 @@ def _native_schedule_attributes(device) -> dict[str, Any]:
     }
 
 
-def _auto_schedule_enabled(device) -> bool | None:
-    """Return whether Worx automatic schedule is enabled."""
-    schedules = getattr(device, "schedules", {}) or {}
-    auto_schedule = get_dict_value(schedules, "auto_schedule", {}) or {}
-    value = _as_bool(get_dict_value(auto_schedule, "enabled"))
-    if value is not None:
-        return value
-    return _as_bool(get_dict_value(_product_item(device), "auto_schedule"))
-
-
-def _auto_schedule_attributes(device) -> dict[str, Any]:
-    """Return automatic schedule metadata."""
-    settings = _auto_schedule_settings(device)
-    return {
-        "api_method": "pyworxcloud.toggle_auto_schedule",
-        "settings": settings,
-    }
-
-
 def _save_hedgehogs_enabled(device) -> bool | None:
     """Return the app option commonly shown as Save the hedgehogs."""
     settings = _auto_schedule_settings(device)
@@ -346,10 +327,6 @@ async def _set_native_schedule(
     coordinator, serial_number: str, enabled: bool
 ) -> None:
     await coordinator.async_toggle_schedule(serial_number, enabled)
-
-
-async def _set_auto_schedule(coordinator, serial_number: str, enabled: bool) -> None:
-    await coordinator.async_toggle_auto_schedule(serial_number, enabled)
 
 
 async def _set_schedule_border_cut(
@@ -421,16 +398,6 @@ SWITCHES: tuple[WorxSwitchDescription, ...] = (
         value_fn=_native_schedule_enabled,
         turn_fn=_set_native_schedule,
         attrs_fn=_native_schedule_attributes,
-    ),
-    WorxSwitchDescription(
-        key="auto_schedule",
-        translation_key="auto_schedule",
-        icon="mdi:calendar-sync",
-        entity_category=EntityCategory.CONFIG,
-        entity_registry_enabled_default=False,
-        value_fn=_auto_schedule_enabled,
-        turn_fn=_set_auto_schedule,
-        attrs_fn=_auto_schedule_attributes,
     ),
     WorxSwitchDescription(
         key="smart_edge_cut",

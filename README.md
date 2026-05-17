@@ -19,7 +19,7 @@ If this integration helps you, you can support Smart Service:
 - On-demand edge cutting button.
 - Native firmware `update` entity with OTA install support when Worx exposes it.
 - Rain delay, schedule time-extension, lawn area and lawn perimeter number entities.
-- Switches for firmware auto update, mower lock, native schedule and auto schedule.
+- Switches for firmware auto update, mower lock and native schedule.
 - Battery, status, error and connectivity sensors.
 - Useful maintenance, cloud/MQTT diagnostic and mowing-readiness sensors.
 - Schedule sensor and Home Assistant calendar entity.
@@ -81,7 +81,7 @@ The exact entity list depends on what your mower reports. Typical entities inclu
 - `device_tracker` RTK robot position
 - `sensor` battery, status, error, readiness, cloud connection, RSSI, schedule, rain delay, RTK map, RTK trail, daily progress, remaining progress, mowed area, runtime, efficiency and maintenance values
 - `binary_sensor` online, IoT/MQTT registration, locked, rain, party mode and pause mode
-- `switch` firmware auto update, mower lock, native schedule, auto schedule, Smart edge cutting, Save the hedgehogs and schedule edge procedure
+- `switch` firmware auto update, mower lock, native schedule, Smart edge cutting, Save the hedgehogs and schedule edge procedure
 - `number` rain delay, schedule time extension, lawn area and lawn perimeter
 - `update` firmware version, release notes and OTA install when supported
 

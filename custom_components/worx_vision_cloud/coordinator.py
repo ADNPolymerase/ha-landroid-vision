@@ -259,20 +259,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         await toggle_schedule(serial_number, enable=enabled)
         await self.async_request_device_update(serial_number)
 
-    async def async_toggle_auto_schedule(
-        self, serial_number: str, enabled: bool
-    ) -> None:
-        """Enable or disable Worx automatic scheduling."""
-        toggle_auto_schedule = getattr(self.cloud, "toggle_auto_schedule", None)
-        if toggle_auto_schedule is None:
-            raise HomeAssistantError(
-                "The installed pyworxcloud version does not support auto-schedule toggling"
-            )
-
-        await toggle_auto_schedule(serial_number, enabled)
-        self._update_cached_product_item(serial_number, auto_schedule=enabled)
-        await self.async_request_device_update(serial_number)
-
     async def async_start_firmware_upgrade(self, serial_number: str) -> None:
         """Queue the latest firmware update for a mower."""
         start_firmware_upgrade = getattr(self.cloud, "start_firmware_upgrade", None)
