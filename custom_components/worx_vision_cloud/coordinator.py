@@ -127,12 +127,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_start_edge_cut(self, serial_number: str) -> None:
         """Start an on-demand edge cutting task."""
-        edgecut = getattr(self.cloud, "edgecut", None)
-        if edgecut is not None:
-            await edgecut(serial_number)
-            await self.async_request_device_update(serial_number)
-            return
-
         mower = self.cloud.get_mower(serial_number)
         if not mower.get("online"):
             raise HomeAssistantError(
@@ -148,6 +142,8 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if command_topic is None:
             raise HomeAssistantError("Worx command topic is not available")
 
+        # pyworxcloud.edgecut() can silently no-op on Vision mowers when the
+        # derived schedule capability is missing, even though border_cut exists.
         if protocol == 0:
             await mqtt.apublish(
                 serial_number,

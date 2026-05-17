@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.4
+
+- Fixed the edge cutting button for Vision mowers whose Worx Cloud schedule payload does not expose the derived edge-cut capability.
+- The integration now sends the border-cut MQTT command directly instead of relying on `pyworxcloud.edgecut()`, which could silently do nothing.
+
 ## 1.0.3
 
 - Removed the `auto_schedule` switch completely.
