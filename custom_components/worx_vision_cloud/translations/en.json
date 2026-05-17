@@ -152,6 +152,9 @@
       },
       "reset_blade_counter": {
         "name": "Reset blade runtime"
+      },
+      "start_edge_cut": {
+        "name": "Start edge cutting"
       }
     },
     "camera": {

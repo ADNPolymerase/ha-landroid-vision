@@ -16,6 +16,7 @@ If this integration helps you, you can support Smart Service:
 
 - Native Home Assistant `lawn_mower` entity.
 - Start, pause and dock commands.
+- On-demand edge cutting button.
 - Battery, status, error and connectivity sensors.
 - Useful maintenance and diagnostic sensors.
 - Schedule sensor and Home Assistant calendar entity.
@@ -72,6 +73,7 @@ The exact entity list depends on what your mower reports. Typical entities inclu
 
 - `lawn_mower` mower control
 - `button` refresh
+- `button` start edge cutting
 - `calendar` mowing schedule
 - `camera` RTK map
 - `device_tracker` RTK robot position

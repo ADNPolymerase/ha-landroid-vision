@@ -10,6 +10,7 @@ from typing import Any
 from aiohttp import ClientError, ClientTimeout
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -114,6 +115,42 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             await self.cloud.update(serial_number, timeout=timeout)
         finally:
             await self.async_request_refresh()
+
+    async def async_start_edge_cut(self, serial_number: str) -> None:
+        """Start an on-demand edge cutting task."""
+        mower = self.cloud.get_mower(serial_number)
+        if not mower.get("online"):
+            raise HomeAssistantError(
+                "The device is currently offline, no action was sent"
+            )
+
+        mqtt = getattr(self.cloud, "mqtt", None)
+        if mqtt is None:
+            raise HomeAssistantError("Worx MQTT connection is not available")
+
+        protocol = mower.get("protocol")
+        command_topic = (mower.get("mqtt_topics") or {}).get("command_in")
+        if command_topic is None:
+            raise HomeAssistantError("Worx command topic is not available")
+
+        if protocol == 0:
+            await mqtt.apublish(
+                serial_number,
+                command_topic,
+                {"sc": {"ots": {"bc": 1, "wtm": 0}}},
+                protocol,
+            )
+        elif protocol == 1:
+            uuid = mower.get("uuid")
+            if uuid is None:
+                raise HomeAssistantError("Worx mower UUID is not available")
+            await mqtt.apublish(uuid, command_topic, {"cmd": 101}, protocol)
+        else:
+            raise HomeAssistantError(
+                "Edge cutting is not supported for this mower protocol"
+            )
+
+        await self.async_request_device_update(serial_number)
 
     async def async_set_cut_over_border(
         self, serial_number: str, enabled: bool

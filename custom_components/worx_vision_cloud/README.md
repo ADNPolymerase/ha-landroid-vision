@@ -13,6 +13,7 @@ Main features:
 - RTK robot position tracker
 - optional RTK address sensor, disabled by default
 - edge cutting and hedgehog protection switches
+- on-demand edge cutting button
 - blade runtime reset button
 - daily progress and mowed area sensors when available
 - Polish and English translations

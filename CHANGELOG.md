@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+
+- Added an on-demand edge cutting button that starts the mower in border-only cutting mode.
+
 ## 0.3.4
 
 - Added root-level `icon.png` and `logo.png` compatibility files so HACS can resolve the repository image in places that do not read `brand/icon.png`.

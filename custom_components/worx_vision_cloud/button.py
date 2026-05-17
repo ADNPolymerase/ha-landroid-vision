@@ -20,6 +20,7 @@ class WorxButtonDescription(ButtonEntityDescription):
     """Button description."""
 
     press_fn: Callable[[Any, str], Awaitable[None]]
+    available_fn: Callable[[Any], bool] | None = None
 
 
 async def _refresh(coordinator, serial_number: str) -> None:
@@ -38,6 +39,16 @@ async def _reset_blade_counter(coordinator, serial_number: str) -> None:
     await coordinator.async_request_device_update(serial_number)
 
 
+async def _start_edge_cut(coordinator, serial_number: str) -> None:
+    """Start an on-demand edge cutting task."""
+    await coordinator.async_start_edge_cut(serial_number)
+
+
+def _is_online(device) -> bool:
+    """Return true when the mower is online and can receive commands."""
+    return bool(getattr(device, "online", False))
+
+
 BUTTONS: tuple[WorxButtonDescription, ...] = (
     WorxButtonDescription(
         key="refresh",
@@ -52,6 +63,13 @@ BUTTONS: tuple[WorxButtonDescription, ...] = (
         icon="mdi:timer-refresh-outline",
         entity_category=EntityCategory.CONFIG,
         press_fn=_reset_blade_counter,
+    ),
+    WorxButtonDescription(
+        key="start_edge_cut",
+        translation_key="start_edge_cut",
+        icon="mdi:border-outside",
+        press_fn=_start_edge_cut,
+        available_fn=_is_online,
     ),
 )
 
@@ -81,6 +99,14 @@ class WorxVisionButton(WorxVisionEntity, ButtonEntity):
         """Initialize button."""
         self.entity_description = description
         super().__init__(coordinator, entry, serial_number, description.key)
+
+    @property
+    def available(self) -> bool:
+        """Return entity availability."""
+        available_fn = self.entity_description.available_fn
+        return super().available and (
+            available_fn is None or available_fn(self.device)
+        )
 
     async def async_press(self) -> None:
         """Handle press."""
