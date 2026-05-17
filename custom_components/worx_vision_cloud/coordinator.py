@@ -118,12 +118,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         except Exception as err:  # noqa: BLE001
             raise UpdateFailed(str(err)) from err
 
-    async def async_request_device_update(
-        self, serial_number: str, timeout: float | None = 12.0
-    ) -> None:
+    async def async_request_device_update(self, serial_number: str) -> None:
         """Ask one mower for a fresh MQTT state update, then refresh coordinator data."""
         try:
-            await self.cloud.update(serial_number, timeout=timeout)
+            await self.cloud.update(serial_number)
         finally:
             await self.async_request_refresh()
 

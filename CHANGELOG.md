@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+- Fixed mower command refresh for `pyworxcloud==6.3.6` by removing an unsupported `timeout` argument from device update requests.
+- Restored button and mower commands that previously failed with `WorxCloud.update() got an unexpected keyword argument 'timeout'`.
+
 ## 1.0.0
 
 - Promoted the integration to the first stable `1.0.0` release.
