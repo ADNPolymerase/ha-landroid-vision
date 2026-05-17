@@ -23,7 +23,9 @@ PLATFORMS = [
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
     Platform.SWITCH,
+    Platform.NUMBER,
     Platform.BUTTON,
+    Platform.UPDATE,
 ]
 
 ATTR_RAW_PATH = "raw_path"

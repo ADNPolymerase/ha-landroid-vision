@@ -17,14 +17,17 @@ If this integration helps you, you can support Smart Service:
 - Native Home Assistant `lawn_mower` entity.
 - Start, pause and dock commands.
 - On-demand edge cutting button.
+- Native firmware `update` entity with OTA install support when Worx exposes it.
+- Rain delay, schedule time-extension, lawn area and lawn perimeter number entities.
+- Switches for firmware auto update, mower lock, native schedule and auto schedule.
 - Battery, status, error and connectivity sensors.
-- Useful maintenance and diagnostic sensors.
+- Useful maintenance, cloud/MQTT diagnostic and mowing-readiness sensors.
 - Schedule sensor and Home Assistant calendar entity.
-- RTK map camera rendered from the Worx private map API.
+- RTK map camera rendered from the Worx private map API with a recent RTK trail overlay.
 - RTK robot position as a `device_tracker`.
 - Optional RTK address sensor using OpenStreetMap Nominatim reverse geocoding, disabled by default.
 - Switches for Smart edge cutting, Save the hedgehogs and schedule edge procedure.
-- Daily mowing progress, remaining progress and mowed area sensors when available from the API.
+- Daily mowing progress, remaining progress, mowed area, lawn area, distance and efficiency sensors when available from the API.
 - Separate smart mowing automation blueprint repository.
 - Polish and English translations.
 - Optional raw payload entities for debugging, disabled by default.
@@ -72,14 +75,15 @@ Most users should keep SSL verification enabled.
 The exact entity list depends on what your mower reports. Typical entities include:
 
 - `lawn_mower` mower control
-- `button` refresh
-- `button` start edge cutting
+- `button` refresh, reset blade runtime, reset battery cycles and start edge cutting
 - `calendar` mowing schedule
 - `camera` RTK map
 - `device_tracker` RTK robot position
-- `sensor` battery, status, error, RSSI, schedule, rain delay, RTK map, daily progress, remaining progress, mowed area, runtime and maintenance values
-- `binary_sensor` online, locked, charging, rain, party mode and pause mode
-- `switch` Smart edge cutting, Save the hedgehogs and schedule edge procedure
+- `sensor` battery, status, error, readiness, cloud connection, RSSI, schedule, rain delay, RTK map, RTK trail, daily progress, remaining progress, mowed area, runtime, efficiency and maintenance values
+- `binary_sensor` online, IoT/MQTT registration, locked, charging, rain, party mode and pause mode
+- `switch` firmware auto update, mower lock, native schedule, auto schedule, Smart edge cutting, Save the hedgehogs and schedule edge procedure
+- `number` rain delay, schedule time extension, lawn area and lawn perimeter
+- `update` firmware version, release notes and OTA install when supported
 
 See [docs/entities.md](docs/entities.md) for a more detailed list.
 
@@ -101,6 +105,7 @@ The map can include:
 - excluded areas
 - markers and station information when available
 - current robot position from RTK payload
+- recent RTK trail kept in memory by Home Assistant
 
 The map is not a video stream. It updates when Home Assistant receives new data from Worx Cloud or when the integration refreshes cached API data.
 

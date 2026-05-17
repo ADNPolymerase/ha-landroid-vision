@@ -48,6 +48,12 @@ def _product_item(device) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _firmware_info(device) -> dict[str, Any]:
+    """Return cached firmware upgrade metadata."""
+    value = getattr(device, "_worx_vision_firmware_upgrade", {}) or {}
+    return value if isinstance(value, dict) else {}
+
+
 def _rtk_map_data(device) -> dict[str, Any]:
     """Return cached RTK map payload from the private API."""
     value = getattr(device, "_worx_vision_rtk_map", {}) or {}
@@ -165,6 +171,119 @@ def _auto_schedule_settings(device) -> dict[str, Any]:
     return product_settings if isinstance(product_settings, dict) else {}
 
 
+def _firmware_auto_upgrade_enabled(device) -> bool | None:
+    """Return whether vendor firmware auto-upgrade is enabled."""
+    value = _as_bool(get_dict_value(_firmware_info(device), "auto_upgrade"))
+    if value is not None:
+        return value
+
+    firmware = getattr(device, "firmware", None)
+    if isinstance(firmware, dict):
+        value = _as_bool(firmware.get("auto_upgrade"))
+        if value is not None:
+            return value
+    value = _as_bool(getattr(firmware, "auto_upgrade", None))
+    if value is not None:
+        return value
+
+    return _as_bool(get_dict_value(_product_item(device), "firmware_auto_upgrade"))
+
+
+def _firmware_auto_upgrade_attributes(device) -> dict[str, Any]:
+    """Return firmware auto-upgrade metadata."""
+    info = _firmware_info(device)
+    product_item = _product_item(device)
+    capabilities = get_dict_value(product_item, "capabilities", []) or []
+    if not isinstance(capabilities, list | tuple):
+        capabilities = []
+
+    return {
+        "api_method": "pyworxcloud.set_firmware_auto_upgrade",
+        "ota_supported": info.get("ota_supported") or "ota_upgrade" in capabilities,
+        "current_version": info.get("current_version")
+        or get_dict_value(product_item, "firmware_version"),
+        "latest_version": info.get("latest_version"),
+        "update_available": info.get("update_available"),
+    }
+
+
+def _lock_enabled(device) -> bool | None:
+    """Return current mower lock state."""
+    value = _as_bool(getattr(device, "locked", None))
+    if value is not None:
+        return value
+    return _as_bool(get_dict_value(_product_item(device), "locked"))
+
+
+def _lock_attributes(device) -> dict[str, Any]:
+    """Return lock metadata."""
+    product_item = _product_item(device)
+    capabilities = get_dict_value(product_item, "capabilities", []) or []
+    if not isinstance(capabilities, list | tuple):
+        capabilities = []
+
+    return {
+        "api_method": "pyworxcloud.set_lock",
+        "capability_auto_lock": "auto_lock" in capabilities,
+    }
+
+
+def _native_schedule_enabled(device) -> bool | None:
+    """Return whether the mower's native schedule is enabled."""
+    schedules = getattr(device, "schedules", {}) or {}
+    value = _as_bool(get_dict_value(schedules, "active"))
+    if value is not None:
+        return value
+
+    schedule_model = get_dict_value(schedules, "schedule")
+    value = _as_bool(get_dict_value(schedule_model, "enabled"))
+    if value is not None:
+        return value
+
+    pause_mode = _as_bool(getattr(device, "pause_mode_enabled", None))
+    if pause_mode is not None:
+        return not pause_mode
+
+    return None
+
+
+def _native_schedule_attributes(device) -> dict[str, Any]:
+    """Return native schedule metadata."""
+    schedules = getattr(device, "schedules", {}) or {}
+    product_item = _product_item(device)
+    capabilities = get_dict_value(product_item, "capabilities", []) or []
+    if not isinstance(capabilities, list | tuple):
+        capabilities = []
+
+    return {
+        "api_method": "pyworxcloud.toggle_schedule",
+        "capability_schedule_disable": "schedule_disable" in capabilities,
+        "capability_unrestricted_mowing_time": "unrestricted_mowing_time"
+        in capabilities,
+        "pause_mode_enabled": getattr(device, "pause_mode_enabled", None),
+        "time_extension": get_dict_value(schedules, "time_extension"),
+    }
+
+
+def _auto_schedule_enabled(device) -> bool | None:
+    """Return whether Worx automatic schedule is enabled."""
+    schedules = getattr(device, "schedules", {}) or {}
+    auto_schedule = get_dict_value(schedules, "auto_schedule", {}) or {}
+    value = _as_bool(get_dict_value(auto_schedule, "enabled"))
+    if value is not None:
+        return value
+    return _as_bool(get_dict_value(_product_item(device), "auto_schedule"))
+
+
+def _auto_schedule_attributes(device) -> dict[str, Any]:
+    """Return automatic schedule metadata."""
+    settings = _auto_schedule_settings(device)
+    return {
+        "api_method": "pyworxcloud.toggle_auto_schedule",
+        "settings": settings,
+    }
+
+
 def _save_hedgehogs_enabled(device) -> bool | None:
     """Return the app option commonly shown as Save the hedgehogs."""
     settings = _auto_schedule_settings(device)
@@ -213,6 +332,26 @@ async def _set_save_hedgehogs(coordinator, serial_number: str, enabled: bool) ->
     await coordinator.async_request_device_update(serial_number)
 
 
+async def _set_firmware_auto_upgrade(
+    coordinator, serial_number: str, enabled: bool
+) -> None:
+    await coordinator.async_set_firmware_auto_upgrade(serial_number, enabled)
+
+
+async def _set_lock(coordinator, serial_number: str, enabled: bool) -> None:
+    await coordinator.async_set_lock(serial_number, enabled)
+
+
+async def _set_native_schedule(
+    coordinator, serial_number: str, enabled: bool
+) -> None:
+    await coordinator.async_toggle_schedule(serial_number, enabled)
+
+
+async def _set_auto_schedule(coordinator, serial_number: str, enabled: bool) -> None:
+    await coordinator.async_toggle_auto_schedule(serial_number, enabled)
+
+
 async def _set_schedule_border_cut(
     coordinator, serial_number: str, enabled: bool
 ) -> None:
@@ -253,6 +392,46 @@ async def _set_schedule_border_cut(
 
 
 SWITCHES: tuple[WorxSwitchDescription, ...] = (
+    WorxSwitchDescription(
+        key="firmware_auto_upgrade",
+        translation_key="firmware_auto_upgrade",
+        icon="mdi:update",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        value_fn=_firmware_auto_upgrade_enabled,
+        turn_fn=_set_firmware_auto_upgrade,
+        attrs_fn=_firmware_auto_upgrade_attributes,
+    ),
+    WorxSwitchDescription(
+        key="lock",
+        translation_key="lock",
+        icon="mdi:lock",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        value_fn=_lock_enabled,
+        turn_fn=_set_lock,
+        attrs_fn=_lock_attributes,
+    ),
+    WorxSwitchDescription(
+        key="native_schedule",
+        translation_key="native_schedule",
+        icon="mdi:calendar-check",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        value_fn=_native_schedule_enabled,
+        turn_fn=_set_native_schedule,
+        attrs_fn=_native_schedule_attributes,
+    ),
+    WorxSwitchDescription(
+        key="auto_schedule",
+        translation_key="auto_schedule",
+        icon="mdi:calendar-sync",
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        value_fn=_auto_schedule_enabled,
+        turn_fn=_set_auto_schedule,
+        attrs_fn=_auto_schedule_attributes,
+    ),
     WorxSwitchDescription(
         key="smart_edge_cut",
         translation_key="smart_edge_cut",

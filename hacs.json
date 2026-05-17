@@ -10,7 +10,9 @@
     "sensor",
     "binary_sensor",
     "switch",
-    "button"
+    "number",
+    "button",
+    "update"
   ],
   "iot_class": "Cloud Push"
 }

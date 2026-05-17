@@ -85,7 +85,8 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
         if map_data is not None:
             self._last_map_data = map_data
 
-        return _render_svg_map(map_data, rtk_position(self.device)).encode()
+        trail = self.coordinator.rtk_position_trail(self._serial_number)
+        return _render_svg_map(map_data, rtk_position(self.device), trail).encode()
 
 
 def _scaled_area(value: Any) -> float | None:
@@ -151,7 +152,9 @@ def _iter_contours(map_data: dict[str, Any]) -> Iterable[tuple[str, dict[str, An
 
 
 def _iter_bounds_points(
-    map_data: dict[str, Any], robot_position: tuple[float, float] | None
+    map_data: dict[str, Any],
+    robot_position: tuple[float, float] | None,
+    trail: list[tuple[float, float]] | None = None,
 ) -> list[tuple[float, float]]:
     """Return all points that should influence map bounds."""
     points: list[tuple[float, float]] = []
@@ -172,6 +175,9 @@ def _iter_bounds_points(
 
     if robot_position is not None:
         points.append(robot_position)
+
+    if trail:
+        points.extend(trail)
 
     return points
 
@@ -225,13 +231,15 @@ def _polyline(points: list[tuple[float, float]], project) -> str:
 
 
 def _render_svg_map(
-    map_data: dict[str, Any] | None, robot_position: tuple[float, float] | None
+    map_data: dict[str, Any] | None,
+    robot_position: tuple[float, float] | None,
+    trail: list[tuple[float, float]] | None = None,
 ) -> str:
     """Render map data to SVG."""
     if not isinstance(map_data, dict):
         return _placeholder_svg("Brak mapy RTK z API")
 
-    points = _iter_bounds_points(map_data, robot_position)
+    points = _iter_bounds_points(map_data, robot_position, trail)
     if not points:
         return _placeholder_svg("Mapa RTK nie zawiera punktow")
 
@@ -289,6 +297,11 @@ def _render_svg_map(
             '</g>'
         )
 
+    if trail and len(trail) > 1:
+        body.append(
+            f'<polyline class="trail" points="{_polyline(trail, project)}" />'
+        )
+
     if robot_position is not None:
         x, y = project(robot_position)
         body.append(
@@ -319,6 +332,7 @@ def _render_svg_map(
         ".hole{fill:#dde1e7;stroke:#ff604b;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}"
         ".exclusion{fill:#b56b3b;stroke:#c96d3f;stroke-width:4;opacity:.95}"
         ".guide{fill:none;stroke:#d48a3d;stroke-width:4;stroke-dasharray:8 10;opacity:.95}"
+        ".trail{fill:none;stroke:#39a0ff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;opacity:.82}"
         ".station circle{fill:#6b350e}.station path{fill:#fff}.station text{fill:#f7efe8;font-size:16px;text-anchor:middle;font-weight:800}"
         ".robot circle{fill:#f47b20;stroke:#111;stroke-width:3}.robot path{fill:#212121;stroke:#fff;stroke-width:2;stroke-linejoin:round}"
         ".title{fill:#f8faf4;font-size:28px;font-weight:900}.subtitle{fill:#bec8bc;font-size:17px;font-weight:700}"

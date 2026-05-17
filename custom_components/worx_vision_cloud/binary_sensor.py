@@ -52,6 +52,21 @@ def _product_item(device) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _as_bool(value: Any) -> bool | None:
+    """Return a bool from common API bool/int/string values."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "on", "yes"}:
+            return True
+        if lowered in {"0", "false", "off", "no"}:
+            return False
+    return None
+
+
 def _rtk_map_data(device) -> dict[str, Any]:
     """Return cached RTK map payload from the private API."""
     value = getattr(device, "_worx_vision_rtk_map", {}) or {}
@@ -202,6 +217,36 @@ BINARY_SENSORS: tuple[WorxBinarySensorDescription, ...] = (
         translation_key="online",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         value_fn=lambda d: bool(getattr(d, "online", False)),
+    ),
+    WorxBinarySensorDescription(
+        key="iot_registered",
+        translation_key="iot_registered",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _as_bool(get_dict_value(_product_item(d), "iot_registered")),
+        attrs_fn=lambda d: {
+            "mqtt_endpoint": get_dict_value(_product_item(d), "mqtt_endpoint"),
+        },
+    ),
+    WorxBinarySensorDescription(
+        key="mqtt_registered",
+        translation_key="mqtt_registered",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _as_bool(get_dict_value(_product_item(d), "mqtt_registered")),
+        attrs_fn=lambda d: {
+            "mqtt_endpoint": get_dict_value(_product_item(d), "mqtt_endpoint"),
+            "mqtt_topics": get_dict_value(_product_item(d), "mqtt_topics"),
+        },
+    ),
+    WorxBinarySensorDescription(
+        key="radio_link_pending",
+        translation_key="radio_link_pending",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _as_bool(
+            get_dict_value(_product_item(d), "pending_radio_link_validation")
+        ),
     ),
     WorxBinarySensorDescription(
         key="locked",

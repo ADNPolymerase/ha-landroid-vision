@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from datetime import UTC, datetime, timedelta
 import json
 import logging
@@ -18,6 +19,7 @@ from pyworxcloud import DeviceHandler, LandroidEvent, WorxCloud
 from pyworxcloud.utils.requests import AGET, HEADERS
 
 from .const import DOMAIN
+from .helpers import rtk_position
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,6 +32,8 @@ RTK_ADDRESS_USER_AGENT = (
     "(https://github.com/SmartServicePL/Worx-Vision-Cloud-PLUS)"
 )
 PRODUCT_ITEM_CACHE_TTL = timedelta(minutes=5)
+FIRMWARE_UPGRADE_CACHE_TTL = timedelta(minutes=30)
+RTK_TRAIL_MAX_POINTS = 300
 
 
 def _device_map(cloud: WorxCloud) -> dict[str, DeviceHandler]:
@@ -61,6 +65,12 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._rtk_map_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._rtk_address_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._product_item_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._firmware_upgrade_cache: dict[
+            str, tuple[datetime, dict[str, Any]]
+        ] = {}
+        self._rtk_position_trails: dict[
+            str, deque[tuple[datetime, float, float]]
+        ] = {}
 
     async def async_setup(self) -> None:
         """Attach pyworxcloud callbacks."""
@@ -87,6 +97,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             return
 
         async with self._event_lock:
+            self._remember_rtk_position(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
             self.async_set_updated_data(data)
@@ -118,6 +129,12 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_start_edge_cut(self, serial_number: str) -> None:
         """Start an on-demand edge cutting task."""
+        edgecut = getattr(self.cloud, "edgecut", None)
+        if edgecut is not None:
+            await edgecut(serial_number)
+            await self.async_request_device_update(serial_number)
+            return
+
         mower = self.cloud.get_mower(serial_number)
         if not mower.get("online"):
             raise HomeAssistantError(
@@ -150,6 +167,137 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 "Edge cutting is not supported for this mower protocol"
             )
 
+        await self.async_request_device_update(serial_number)
+
+    async def async_set_rain_delay(self, serial_number: str, minutes: int) -> None:
+        """Set rain delay in minutes."""
+        raindelay = getattr(self.cloud, "raindelay", None)
+        if raindelay is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support rain delay updates"
+            )
+
+        await raindelay(serial_number, str(int(minutes)))
+        self._update_cached_rain_delay(serial_number, int(minutes))
+        await self.async_request_device_update(serial_number)
+
+    async def async_set_time_extension(
+        self, serial_number: str, time_extension: int
+    ) -> None:
+        """Set schedule time extension in percent."""
+        set_time_extension = getattr(self.cloud, "set_time_extension", None)
+        if set_time_extension is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support time extension updates"
+            )
+
+        await set_time_extension(serial_number, int(time_extension))
+        await self.async_request_device_update(serial_number)
+
+    async def async_set_lawn_size(self, serial_number: str, size_m2: int) -> None:
+        """Set top-level lawn size in square meters."""
+        set_lawn_size = getattr(self.cloud, "set_lawn_size", None)
+        if set_lawn_size is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support lawn size updates"
+            )
+
+        await set_lawn_size(serial_number, int(size_m2))
+        self._update_cached_product_item(serial_number, lawn_size=int(size_m2))
+        await self.async_request_device_update(serial_number)
+
+    async def async_set_lawn_perimeter(
+        self, serial_number: str, perimeter_m: int
+    ) -> None:
+        """Set top-level lawn perimeter in meters."""
+        set_lawn_perimeter = getattr(self.cloud, "set_lawn_perimeter", None)
+        if set_lawn_perimeter is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support lawn perimeter updates"
+            )
+
+        await set_lawn_perimeter(serial_number, int(perimeter_m))
+        self._update_cached_product_item(
+            serial_number, lawn_perimeter=int(perimeter_m)
+        )
+        await self.async_request_device_update(serial_number)
+
+    async def async_set_firmware_auto_upgrade(
+        self, serial_number: str, enabled: bool
+    ) -> None:
+        """Toggle vendor firmware auto-upgrades."""
+        set_firmware_auto_upgrade = getattr(
+            self.cloud, "set_firmware_auto_upgrade", None
+        )
+        if set_firmware_auto_upgrade is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support firmware auto-upgrade"
+            )
+
+        await set_firmware_auto_upgrade(serial_number, enabled)
+        self._update_cached_product_item(serial_number, firmware_auto_upgrade=enabled)
+        await self.async_request_device_update(serial_number)
+
+    async def async_set_lock(self, serial_number: str, enabled: bool) -> None:
+        """Lock or unlock the mower."""
+        set_lock = getattr(self.cloud, "set_lock", None)
+        if set_lock is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support lock updates"
+            )
+
+        await set_lock(serial_number, state=enabled)
+        self._update_cached_product_item(serial_number, locked=enabled)
+        await self.async_request_device_update(serial_number)
+
+    async def async_toggle_schedule(self, serial_number: str, enabled: bool) -> None:
+        """Enable or disable the mower's native schedule."""
+        toggle_schedule = getattr(self.cloud, "toggle_schedule", None)
+        if toggle_schedule is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support schedule toggling"
+            )
+
+        await toggle_schedule(serial_number, enable=enabled)
+        await self.async_request_device_update(serial_number)
+
+    async def async_toggle_auto_schedule(
+        self, serial_number: str, enabled: bool
+    ) -> None:
+        """Enable or disable Worx automatic scheduling."""
+        toggle_auto_schedule = getattr(self.cloud, "toggle_auto_schedule", None)
+        if toggle_auto_schedule is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support auto-schedule toggling"
+            )
+
+        await toggle_auto_schedule(serial_number, enabled)
+        self._update_cached_product_item(serial_number, auto_schedule=enabled)
+        await self.async_request_device_update(serial_number)
+
+    async def async_start_firmware_upgrade(self, serial_number: str) -> None:
+        """Queue the latest firmware update for a mower."""
+        start_firmware_upgrade = getattr(self.cloud, "start_firmware_upgrade", None)
+        if start_firmware_upgrade is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support firmware installs"
+            )
+
+        await start_firmware_upgrade(serial_number)
+        await self.async_get_firmware_upgrade_info(serial_number, force=True)
+        await self.async_request_device_update(serial_number)
+
+    async def async_reset_charge_cycle_counter(self, serial_number: str) -> None:
+        """Reset battery charge cycle counter after battery maintenance."""
+        reset_charge_cycle_counter = getattr(
+            self.cloud, "reset_charge_cycle_counter", None
+        )
+        if reset_charge_cycle_counter is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support battery cycle reset"
+            )
+
+        await reset_charge_cycle_counter(serial_number)
         await self.async_request_device_update(serial_number)
 
     async def async_set_cut_over_border(
@@ -271,9 +419,59 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         return cached[1] if cached is not None else None
 
+    async def async_get_firmware_upgrade_info(
+        self, serial_number: str | None, *, force: bool = False
+    ) -> dict[str, Any] | None:
+        """Fetch firmware upgrade metadata from pyworxcloud/private API."""
+        if not serial_number:
+            return None
+
+        now = datetime.now(UTC)
+        cached = self._firmware_upgrade_cache.get(serial_number)
+        if (
+            cached is not None
+            and not force
+            and now - cached[0] < FIRMWARE_UPGRADE_CACHE_TTL
+        ):
+            return cached[1]
+
+        firmware_info: dict[str, Any] | None = None
+        get_firmware_upgrade_info = getattr(
+            self.cloud, "get_firmware_upgrade_info", None
+        )
+        if get_firmware_upgrade_info is not None:
+            try:
+                value = await get_firmware_upgrade_info(serial_number)
+                if isinstance(value, dict):
+                    firmware_info = value
+            except Exception:  # noqa: BLE001
+                _LOGGER.debug(
+                    "Could not fetch firmware upgrade info for %s",
+                    serial_number,
+                    exc_info=True,
+                )
+
+        if firmware_info is None:
+            product_item = await self.async_get_product_item(serial_number)
+            firmware_info = self._fallback_firmware_upgrade_info(product_item)
+
+        if firmware_info is not None:
+            self._firmware_upgrade_cache[serial_number] = (now, firmware_info)
+            device = (self.data or {}).get(serial_number)
+            if device is not None:
+                setattr(device, "_worx_vision_firmware_upgrade", firmware_info)
+            return firmware_info
+
+        return cached[1] if cached is not None else None
+
     def product_item_data(self, serial_number: str) -> dict[str, Any] | None:
         """Return cached product item details."""
         cached = self._product_item_cache.get(serial_number)
+        return None if cached is None else cached[1]
+
+    def firmware_upgrade_data(self, serial_number: str) -> dict[str, Any] | None:
+        """Return cached firmware upgrade details."""
+        cached = self._firmware_upgrade_cache.get(serial_number)
         return None if cached is None else cached[1]
 
     def rtk_map_data(self, map_id: str | None) -> dict[str, Any] | None:
@@ -282,6 +480,15 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             return None
         cached = self._rtk_map_cache.get(map_id)
         return None if cached is None else cached[1]
+
+    def rtk_position_trail(
+        self, serial_number: str, max_points: int = 120
+    ) -> list[tuple[float, float]]:
+        """Return recent RTK positions for map rendering."""
+        trail = self._rtk_position_trails.get(serial_number)
+        if trail is None:
+            return []
+        return [(lat, lon) for _, lat, lon in list(trail)[-max_points:]]
 
     async def async_reverse_geocode_rtk_position(
         self, position: tuple[float, float] | None, *, force: bool = False
@@ -404,10 +611,16 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if product_item is not None:
             setattr(device, "_worx_vision_product_item", product_item)
 
+        firmware_info = await self.async_get_firmware_upgrade_info(serial_number)
+        if firmware_info is not None:
+            setattr(device, "_worx_vision_firmware_upgrade", firmware_info)
+
         map_id = self._device_rtk_map_id(device)
         map_data = await self.async_get_rtk_map(map_id)
         if map_data is not None:
             setattr(device, "_worx_vision_rtk_map", map_data)
+
+        self._remember_rtk_position(serial_number, device)
 
     async def _api_get(self, path: str) -> Any:
         """Fetch a private Worx API path using pyworxcloud's session/token."""
@@ -445,3 +658,74 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             return None
         value = rtk.get("map")
         return None if value is None else str(value)
+
+    @staticmethod
+    def _fallback_firmware_upgrade_info(
+        product_item: dict[str, Any] | None
+    ) -> dict[str, Any] | None:
+        """Build basic firmware metadata when the OTA endpoint is unavailable."""
+        if not isinstance(product_item, dict):
+            return None
+
+        current_version = product_item.get("firmware_version")
+        capabilities = product_item.get("capabilities") or []
+        ota_supported = (
+            isinstance(capabilities, list | tuple) and "ota_upgrade" in capabilities
+        )
+        return {
+            "current_version": current_version,
+            "latest_version": current_version,
+            "update_available": False,
+            "ota_supported": ota_supported,
+            "auto_upgrade": product_item.get("firmware_auto_upgrade"),
+        }
+
+    def _remember_rtk_position(
+        self, serial_number: str, device: DeviceHandler
+    ) -> None:
+        """Keep an in-memory RTK trail for dashboards and the map camera."""
+        position = rtk_position(device)
+        if position is None:
+            return
+
+        latitude, longitude = position
+        trail = self._rtk_position_trails.setdefault(
+            serial_number, deque(maxlen=RTK_TRAIL_MAX_POINTS)
+        )
+        if trail:
+            _, previous_latitude, previous_longitude = trail[-1]
+            if (
+                round(previous_latitude, 7) == round(latitude, 7)
+                and round(previous_longitude, 7) == round(longitude, 7)
+            ):
+                return
+
+        trail.append((datetime.now(UTC), latitude, longitude))
+        setattr(device, "_worx_vision_rtk_trail", list(trail))
+
+    def _update_cached_product_item(self, serial_number: str, **fields: Any) -> None:
+        """Patch cached product item fields after a successful write."""
+        cached = self._product_item_cache.get(serial_number)
+        if cached is not None:
+            cached[1].update(fields)
+
+        device = (self.data or {}).get(serial_number)
+        if device is not None:
+            product_item = getattr(device, "_worx_vision_product_item", None)
+            if isinstance(product_item, dict):
+                product_item.update(fields)
+
+    def _update_cached_rain_delay(self, serial_number: str, minutes: int) -> None:
+        """Patch cached rain delay after a successful write."""
+        device = (self.data or {}).get(serial_number)
+        if device is None:
+            return
+
+        rainsensor = getattr(device, "rainsensor", None)
+        if isinstance(rainsensor, dict):
+            rainsensor["delay"] = minutes
+        elif rainsensor is not None and hasattr(rainsensor, "delay"):
+            try:
+                setattr(rainsensor, "delay", minutes)
+            except Exception:  # noqa: BLE001
+                _LOGGER.debug("Could not update cached rain delay", exc_info=True)

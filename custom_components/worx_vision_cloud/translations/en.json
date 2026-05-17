@@ -48,6 +48,18 @@
       "schedule": {
         "name": "Schedule"
       },
+      "mowing_readiness": {
+        "name": "Mowing readiness"
+      },
+      "cloud_connection": {
+        "name": "Cloud connection"
+      },
+      "api_capabilities": {
+        "name": "API capabilities"
+      },
+      "push_notifications": {
+        "name": "Push notifications"
+      },
       "daily_progress": {
         "name": "Daily progress"
       },
@@ -57,8 +69,23 @@
       "area_mowed_today": {
         "name": "Area mowed today"
       },
+      "lawn_area": {
+        "name": "Lawn area"
+      },
+      "lawn_perimeter": {
+        "name": "Lawn perimeter"
+      },
+      "distance_covered": {
+        "name": "Distance covered"
+      },
+      "mowing_efficiency": {
+        "name": "Mowing efficiency"
+      },
       "rtk_map": {
         "name": "RTK map"
+      },
+      "rtk_trail_points": {
+        "name": "RTK trail points"
       },
       "rtk_address": {
         "name": "RTK address"
@@ -78,14 +105,35 @@
       "battery_cycles_total": {
         "name": "Battery cycles total"
       },
+      "battery_cycles_since_reset": {
+        "name": "Battery cycles since reset"
+      },
+      "battery_cycles_reset_at": {
+        "name": "Battery cycles reset time"
+      },
       "blade_runtime_total": {
         "name": "Blade runtime total"
       },
       "blade_runtime_current": {
         "name": "Blade runtime current"
       },
+      "blade_runtime_reset_at": {
+        "name": "Blade runtime reset time"
+      },
       "mower_runtime_total": {
         "name": "Mower runtime total"
+      },
+      "mower_home_time_total": {
+        "name": "Mower home time total"
+      },
+      "mower_charging_time_total": {
+        "name": "Mower charging time total"
+      },
+      "mower_error_time_total": {
+        "name": "Mower error time total"
+      },
+      "maintenance_status": {
+        "name": "Maintenance status"
       },
       "pitch": {
         "name": "Pitch"
@@ -98,11 +146,23 @@
       },
       "last_update": {
         "name": "Last update"
+      },
+      "last_update_age": {
+        "name": "Last update age"
       }
     },
     "binary_sensor": {
       "online": {
         "name": "Online"
+      },
+      "iot_registered": {
+        "name": "IoT registered"
+      },
+      "mqtt_registered": {
+        "name": "MQTT registered"
+      },
+      "radio_link_pending": {
+        "name": "Radio link validation pending"
       },
       "locked": {
         "name": "Locked"
@@ -136,6 +196,18 @@
       }
     },
     "switch": {
+      "firmware_auto_upgrade": {
+        "name": "Firmware auto update"
+      },
+      "lock": {
+        "name": "Lock"
+      },
+      "native_schedule": {
+        "name": "Native schedule"
+      },
+      "auto_schedule": {
+        "name": "Auto schedule"
+      },
       "smart_edge_cut": {
         "name": "Smart edge cutting"
       },
@@ -153,8 +225,30 @@
       "reset_blade_counter": {
         "name": "Reset blade runtime"
       },
+      "reset_battery_cycle_counter": {
+        "name": "Reset battery cycles"
+      },
       "start_edge_cut": {
         "name": "Start edge cutting"
+      }
+    },
+    "number": {
+      "rain_delay_minutes": {
+        "name": "Rain delay"
+      },
+      "time_extension": {
+        "name": "Time extension"
+      },
+      "lawn_area": {
+        "name": "Lawn area"
+      },
+      "lawn_perimeter": {
+        "name": "Lawn perimeter"
+      }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
       }
     },
     "camera": {

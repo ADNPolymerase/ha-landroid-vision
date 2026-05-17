@@ -7,14 +7,19 @@ Install the full repository with HACS or copy `custom_components/worx_vision_clo
 Main features:
 
 - native `lawn_mower` entity
+- native firmware update entity
 - useful mower sensors and binary sensors
+- rain delay, time-extension, lawn area and lawn perimeter number entities
+- mower lock, firmware auto-update and schedule switches
 - mowing schedule calendar
 - RTK map camera
+- recent RTK trail overlay
 - RTK robot position tracker
 - optional RTK address sensor, disabled by default
 - edge cutting and hedgehog protection switches
 - on-demand edge cutting button
 - blade runtime reset button
+- battery cycle reset button
 - daily progress and mowed area sensors when available
 - Polish and English translations
 

@@ -19,6 +19,7 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfArea,
     UnitOfElectricPotential,
+    UnitOfLength,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -101,6 +102,16 @@ def _product_item(device, key, default=None):
     )
 
 
+def _product_item_dict(device) -> dict[str, Any]:
+    value = getattr(device, "_worx_vision_product_item", {}) or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _firmware_info(device) -> dict[str, Any]:
+    value = getattr(device, "_worx_vision_firmware_upgrade", {}) or {}
+    return value if isinstance(value, dict) else {}
+
+
 def _rtk_map_data(device):
     return getattr(device, "_worx_vision_rtk_map", {}) or {}
 
@@ -123,6 +134,239 @@ def _area_mowed_today(device):
         return round(float(value), 2)
     except (TypeError, ValueError):
         return None
+
+
+def _as_float(value: Any, precision: int | None = None) -> float | None:
+    """Return a float from API scalar values."""
+    if value is None:
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    if precision is not None:
+        return round(result, precision)
+    return result
+
+
+def _as_int(value: Any) -> int | None:
+    """Return an int from API scalar values."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_datetime(value: Any) -> datetime | None:
+    """Return a timezone-aware datetime from API timestamp values."""
+    if isinstance(value, datetime):
+        return value.astimezone(UTC)
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
+    except ValueError:
+        return None
+
+
+def _since_reset(device, total_key: str, reset_key: str) -> int | None:
+    """Return product item counter value since the last reset marker."""
+    total = _as_int(_product_item(device, total_key))
+    reset = _as_int(_product_item(device, reset_key))
+    if total is None:
+        return None
+    if reset is None:
+        return total
+    return max(0, total - reset)
+
+
+def _lawn_perimeter(device) -> float | None:
+    value = _product_item(device, "lawn_perimeter")
+    perimeter = _as_float(value, 2)
+    return perimeter if perimeter and perimeter > 0 else None
+
+
+def _distance_covered(device) -> float | None:
+    return _as_float(_product_item(device, "distance_covered"), 2)
+
+
+def _mowing_efficiency(device) -> float | None:
+    area = _area_mowed_today(device)
+    work_minutes = _as_float(_product_item(device, "mower_work_time"))
+    if area is None or work_minutes in (None, 0):
+        return None
+    return round(area / (work_minutes / 60), 2)
+
+
+def _last_update_age(device) -> int | None:
+    updated = _last_update(device)
+    if updated is None:
+        return None
+    return max(0, round((datetime.now(UTC) - updated).total_seconds() / 60))
+
+
+def _capability_summary(device) -> str | None:
+    capabilities = _product_item(device, "capabilities", []) or []
+    if not isinstance(capabilities, list | tuple):
+        return None
+    return f"{len(capabilities)} capabilities"
+
+
+def _capability_attributes(device) -> dict[str, Any]:
+    product_item = _product_item_dict(device)
+    return {
+        "capabilities": get_dict_value(product_item, "capabilities"),
+        "capabilities_available": get_dict_value(
+            product_item, "capabilities_available"
+        ),
+    }
+
+
+def _cloud_connection_state(device) -> str | None:
+    product_item = _product_item_dict(device)
+    if not product_item:
+        return None
+    if (
+        get_dict_value(product_item, "iot_registered") is True
+        and get_dict_value(product_item, "mqtt_registered") is True
+        and getattr(device, "online", None) is True
+    ):
+        return "ok"
+    if getattr(device, "online", None) is False:
+        return "offline"
+    return "check"
+
+
+def _cloud_connection_attributes(device) -> dict[str, Any]:
+    product_item = _product_item_dict(device)
+    return {
+        "online": getattr(device, "online", None),
+        "iot_registered": get_dict_value(product_item, "iot_registered"),
+        "mqtt_registered": get_dict_value(product_item, "mqtt_registered"),
+        "mqtt_endpoint": get_dict_value(product_item, "mqtt_endpoint"),
+        "pending_radio_link_validation": get_dict_value(
+            product_item, "pending_radio_link_validation"
+        ),
+    }
+
+
+def _push_notification_state(device) -> str | None:
+    product_item = _product_item_dict(device)
+    enabled = get_dict_value(product_item, "push_notifications")
+    level = get_dict_value(product_item, "push_notifications_level")
+    if enabled is False:
+        return "disabled"
+    if level:
+        return str(level)
+    if enabled is True:
+        return "enabled"
+    return None
+
+
+def _maintenance_state(device) -> str | None:
+    blade_minutes = _since_reset(device, "blade_work_time", "blade_work_time_reset")
+    battery_cycles = _since_reset(
+        device, "battery_charge_cycles", "battery_charge_cycles_reset"
+    )
+    if blade_minutes is None and battery_cycles is None:
+        return None
+    if blade_minutes is not None and blade_minutes >= 720:
+        return "blade_service_due"
+    if battery_cycles is not None and battery_cycles >= 500:
+        return "battery_service_due"
+    return "ok"
+
+
+def _maintenance_attributes(device) -> dict[str, Any]:
+    blade_minutes = _since_reset(device, "blade_work_time", "blade_work_time_reset")
+    battery_cycles = _since_reset(
+        device, "battery_charge_cycles", "battery_charge_cycles_reset"
+    )
+    blade_reset_at = _as_datetime(_product_item(device, "blade_work_time_reset_at"))
+    battery_reset_at = _as_datetime(
+        _product_item(device, "battery_charge_cycles_reset_at")
+    )
+    return {
+        "blade_runtime_since_reset": blade_minutes,
+        "blade_service_threshold_minutes": 720,
+        "battery_cycles_since_reset": battery_cycles,
+        "battery_service_threshold_cycles": 500,
+        "blade_runtime_reset_at": blade_reset_at.isoformat()
+        if blade_reset_at
+        else None,
+        "battery_cycles_reset_at": battery_reset_at.isoformat()
+        if battery_reset_at
+        else None,
+    }
+
+
+def _mowing_readiness_state(device) -> str | None:
+    if getattr(device, "online", None) is False:
+        return "offline"
+    if getattr(device, "locked", None) is True:
+        return "locked"
+
+    error_id = _error(device, "id")
+    if error_id not in (None, 0, -1):
+        return "error"
+
+    rain_remaining = _as_float(_rain(device, "remaining")) or 0
+    if _rain(device, "triggered") is True or rain_remaining > 0:
+        return "rain_delay"
+
+    battery_percent = _battery(device, "percent")
+    if battery_percent is not None and battery_percent < 20:
+        return "battery_low"
+
+    if _battery(device, "charging") is True:
+        return "charging"
+
+    status_id = _status(device, "id")
+    if status_id in (7, 8, 12, 32, 110, 111):
+        return "mowing"
+    return "ready"
+
+
+def _mowing_readiness_attributes(device) -> dict[str, Any]:
+    return {
+        "online": getattr(device, "online", None),
+        "locked": getattr(device, "locked", None),
+        "status_id": _status(device, "id"),
+        "status_description": _status(device, "description"),
+        "error_id": _error(device, "id"),
+        "error_description": _error(device, "description"),
+        "battery_percent": _battery(device, "percent"),
+        "rain_triggered": _rain(device, "triggered"),
+        "rain_remaining": _rain(device, "remaining"),
+    }
+
+
+def _rtk_trail(device) -> list[tuple[datetime, float, float]]:
+    value = getattr(device, "_worx_vision_rtk_trail", []) or []
+    return list(value) if isinstance(value, list | tuple) else []
+
+
+def _rtk_trail_count(device) -> int | None:
+    trail = _rtk_trail(device)
+    return len(trail) if trail else None
+
+
+def _rtk_trail_attributes(device) -> dict[str, Any]:
+    trail = _rtk_trail(device)
+    recent = trail[-50:]
+    return {
+        "points": [
+            {
+                "time": time.isoformat(),
+                "latitude": latitude,
+                "longitude": longitude,
+            }
+            for time, latitude, longitude in recent
+        ],
+        "max_cached_points": 300,
+    }
 
 
 def _lawn_area(device):
@@ -296,6 +540,42 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         attrs_fn=schedule_attributes,
     ),
     WorxSensorDescription(
+        key="mowing_readiness",
+        translation_key="mowing_readiness",
+        icon="mdi:clipboard-check-outline",
+        value_fn=_mowing_readiness_state,
+        attrs_fn=_mowing_readiness_attributes,
+    ),
+    WorxSensorDescription(
+        key="cloud_connection",
+        translation_key="cloud_connection",
+        icon="mdi:cloud-check-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_cloud_connection_state,
+        attrs_fn=_cloud_connection_attributes,
+    ),
+    WorxSensorDescription(
+        key="api_capabilities",
+        translation_key="api_capabilities",
+        icon="mdi:api",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=_capability_summary,
+        attrs_fn=_capability_attributes,
+    ),
+    WorxSensorDescription(
+        key="push_notifications",
+        translation_key="push_notifications",
+        icon="mdi:bell-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=_push_notification_state,
+        attrs_fn=lambda d: {
+            "enabled": _product_item(d, "push_notifications"),
+            "level": _product_item(d, "push_notifications_level"),
+        },
+    ),
+    WorxSensorDescription(
         key="daily_progress",
         translation_key="daily_progress",
         native_unit_of_measurement=PERCENTAGE,
@@ -330,12 +610,62 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         value_fn=_area_mowed_today,
     ),
     WorxSensorDescription(
+        key="lawn_area",
+        translation_key="lawn_area",
+        native_unit_of_measurement=UnitOfArea.SQUARE_METERS,
+        device_class=SensorDeviceClass.AREA,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:set-square",
+        value_fn=_lawn_area,
+    ),
+    WorxSensorDescription(
+        key="lawn_perimeter",
+        translation_key="lawn_perimeter",
+        native_unit_of_measurement=UnitOfLength.METERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:vector-polyline",
+        value_fn=_lawn_perimeter,
+    ),
+    WorxSensorDescription(
+        key="distance_covered",
+        translation_key="distance_covered",
+        native_unit_of_measurement=UnitOfLength.METERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:map-marker-distance",
+        value_fn=_distance_covered,
+    ),
+    WorxSensorDescription(
+        key="mowing_efficiency",
+        translation_key="mowing_efficiency",
+        native_unit_of_measurement="m2/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:speedometer",
+        value_fn=_mowing_efficiency,
+        attrs_fn=lambda d: {
+            "area_mowed": _area_mowed_today(d),
+            "mower_work_time": _product_item(d, "mower_work_time"),
+        },
+    ),
+    WorxSensorDescription(
         key="rtk_map",
         translation_key="rtk_map",
         icon="mdi:map-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=rtk_map_id,
         attrs_fn=rtk_map_attributes,
+    ),
+    WorxSensorDescription(
+        key="rtk_trail_points",
+        translation_key="rtk_trail_points",
+        icon="mdi:map-marker-path",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=_rtk_trail_count,
+        attrs_fn=_rtk_trail_attributes,
     ),
     WorxSensorDescription(
         key="rain_delay",
@@ -380,7 +710,25 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         translation_key="battery_cycles_total",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:battery-sync",
-        value_fn=lambda d: get_dict_value(_battery(d, "cycles", {}), "total"),
+        value_fn=lambda d: get_dict_value(_battery(d, "cycles", {}), "total")
+        or _product_item(d, "battery_charge_cycles"),
+    ),
+    WorxSensorDescription(
+        key="battery_cycles_since_reset",
+        translation_key="battery_cycles_since_reset",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery-heart",
+        value_fn=lambda d: _since_reset(
+            d, "battery_charge_cycles", "battery_charge_cycles_reset"
+        ),
+    ),
+    WorxSensorDescription(
+        key="battery_cycles_reset_at",
+        translation_key="battery_cycles_reset_at",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery-clock",
+        value_fn=lambda d: _as_datetime(_product_item(d, "battery_charge_cycles_reset_at")),
     ),
     WorxSensorDescription(
         key="blade_runtime_total",
@@ -397,7 +745,16 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         native_unit_of_measurement=UnitOfTime.MINUTES,
         device_class=SensorDeviceClass.DURATION,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: _blades(d, "current_on"),
+        value_fn=lambda d: _blades(d, "current_on")
+        or _since_reset(d, "blade_work_time", "blade_work_time_reset"),
+    ),
+    WorxSensorDescription(
+        key="blade_runtime_reset_at",
+        translation_key="blade_runtime_reset_at",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:timer-check-outline",
+        value_fn=lambda d: _as_datetime(_product_item(d, "blade_work_time_reset_at")),
     ),
     WorxSensorDescription(
         key="mower_runtime_total",
@@ -406,7 +763,46 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL_INCREASING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: _statistics(d, "worktime_total"),
+        value_fn=lambda d: _statistics(d, "worktime_total")
+        or _product_item(d, "mower_work_time"),
+    ),
+    WorxSensorDescription(
+        key="mower_home_time_total",
+        translation_key="mower_home_time_total",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:home-clock",
+        value_fn=lambda d: _product_item(d, "mower_home_time"),
+    ),
+    WorxSensorDescription(
+        key="mower_charging_time_total",
+        translation_key="mower_charging_time_total",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery-clock-outline",
+        value_fn=lambda d: _product_item(d, "mower_charging_time"),
+    ),
+    WorxSensorDescription(
+        key="mower_error_time_total",
+        translation_key="mower_error_time_total",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:alert-clock-outline",
+        value_fn=lambda d: _product_item(d, "mower_error_time"),
+    ),
+    WorxSensorDescription(
+        key="maintenance_status",
+        translation_key="maintenance_status",
+        icon="mdi:wrench-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_maintenance_state,
+        attrs_fn=_maintenance_attributes,
     ),
     WorxSensorDescription(
         key="pitch",
@@ -442,6 +838,16 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         icon="mdi:clock-check",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_last_update,
+    ),
+    WorxSensorDescription(
+        key="last_update_age",
+        translation_key="last_update_age",
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:timer-sand",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_last_update_age,
     ),
 )
 

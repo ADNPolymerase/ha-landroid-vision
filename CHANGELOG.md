@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0
+
+- Promoted the integration to the first stable `1.0.0` release.
+- Added a native Home Assistant firmware update entity with release notes and OTA install support when exposed by Worx Cloud.
+- Added configurable rain delay, schedule time-extension, lawn area and lawn perimeter number entities.
+- Added switches for firmware auto update, mower lock, native schedule and Worx auto schedule.
+- Added cloud/MQTT diagnostics, mowing-readiness status, API capabilities and push notification state sensors.
+- Added extended mowing statistics: lawn area/perimeter, distance covered, efficiency and mower time at home, charging and in error.
+- Added maintenance tracking for blade runtime and battery cycles, including reset timestamps and a battery cycle reset button.
+- Added recent RTK trail storage, a diagnostic trail sensor and a trail overlay on the RTK map camera.
+
 ## 0.3.5
 
 - Added an on-demand edge cutting button that starts the mower in border-only cutting mode.

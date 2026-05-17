@@ -39,6 +39,11 @@ async def _reset_blade_counter(coordinator, serial_number: str) -> None:
     await coordinator.async_request_device_update(serial_number)
 
 
+async def _reset_battery_cycle_counter(coordinator, serial_number: str) -> None:
+    """Reset the mower battery charge cycle counter after battery maintenance."""
+    await coordinator.async_reset_charge_cycle_counter(serial_number)
+
+
 async def _start_edge_cut(coordinator, serial_number: str) -> None:
     """Start an on-demand edge cutting task."""
     await coordinator.async_start_edge_cut(serial_number)
@@ -63,6 +68,13 @@ BUTTONS: tuple[WorxButtonDescription, ...] = (
         icon="mdi:timer-refresh-outline",
         entity_category=EntityCategory.CONFIG,
         press_fn=_reset_blade_counter,
+    ),
+    WorxButtonDescription(
+        key="reset_battery_cycle_counter",
+        translation_key="reset_battery_cycle_counter",
+        icon="mdi:battery-sync",
+        entity_category=EntityCategory.CONFIG,
+        press_fn=_reset_battery_cycle_counter,
     ),
     WorxButtonDescription(
         key="start_edge_cut",

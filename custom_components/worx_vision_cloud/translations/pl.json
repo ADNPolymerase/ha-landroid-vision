@@ -48,6 +48,18 @@
       "schedule": {
         "name": "Harmonogram"
       },
+      "mowing_readiness": {
+        "name": "Gotowość do koszenia"
+      },
+      "cloud_connection": {
+        "name": "Połączenie z chmurą"
+      },
+      "api_capabilities": {
+        "name": "Możliwości API"
+      },
+      "push_notifications": {
+        "name": "Powiadomienia push"
+      },
       "daily_progress": {
         "name": "Dzienny postęp"
       },
@@ -57,8 +69,23 @@
       "area_mowed_today": {
         "name": "Skoszony obszar dzisiaj"
       },
+      "lawn_area": {
+        "name": "Powierzchnia trawnika"
+      },
+      "lawn_perimeter": {
+        "name": "Obwód trawnika"
+      },
+      "distance_covered": {
+        "name": "Przejechany dystans"
+      },
+      "mowing_efficiency": {
+        "name": "Wydajność koszenia"
+      },
       "rtk_map": {
         "name": "Mapa RTK"
+      },
+      "rtk_trail_points": {
+        "name": "Punkty śladu RTK"
       },
       "rtk_address": {
         "name": "Adres RTK"
@@ -78,14 +105,35 @@
       "battery_cycles_total": {
         "name": "Cykle baterii razem"
       },
+      "battery_cycles_since_reset": {
+        "name": "Cykle baterii od resetu"
+      },
+      "battery_cycles_reset_at": {
+        "name": "Czas resetu cykli baterii"
+      },
       "blade_runtime_total": {
         "name": "Czas pracy noży razem"
       },
       "blade_runtime_current": {
         "name": "Czas pracy noży bieżący"
       },
+      "blade_runtime_reset_at": {
+        "name": "Czas resetu pracy noży"
+      },
       "mower_runtime_total": {
         "name": "Czas pracy kosiarki razem"
+      },
+      "mower_home_time_total": {
+        "name": "Czas w bazie razem"
+      },
+      "mower_charging_time_total": {
+        "name": "Czas ładowania razem"
+      },
+      "mower_error_time_total": {
+        "name": "Czas błędów razem"
+      },
+      "maintenance_status": {
+        "name": "Status serwisowy"
       },
       "pitch": {
         "name": "Nachylenie X"
@@ -98,11 +146,23 @@
       },
       "last_update": {
         "name": "Ostatnia aktualizacja"
+      },
+      "last_update_age": {
+        "name": "Wiek ostatniej aktualizacji"
       }
     },
     "binary_sensor": {
       "online": {
         "name": "Online"
+      },
+      "iot_registered": {
+        "name": "IoT zarejestrowane"
+      },
+      "mqtt_registered": {
+        "name": "MQTT zarejestrowane"
+      },
+      "radio_link_pending": {
+        "name": "Oczekuje walidacji łącza radiowego"
       },
       "locked": {
         "name": "Zablokowana"
@@ -136,6 +196,18 @@
       }
     },
     "switch": {
+      "firmware_auto_upgrade": {
+        "name": "Automatyczna aktualizacja firmware"
+      },
+      "lock": {
+        "name": "Blokada"
+      },
+      "native_schedule": {
+        "name": "Harmonogram kosiarki"
+      },
+      "auto_schedule": {
+        "name": "Automatyczny harmonogram"
+      },
       "smart_edge_cut": {
         "name": "Inteligentne cięcie krawędziowe"
       },
@@ -153,8 +225,30 @@
       "reset_blade_counter": {
         "name": "Reset czasu pracy noży"
       },
+      "reset_battery_cycle_counter": {
+        "name": "Reset cykli baterii"
+      },
       "start_edge_cut": {
         "name": "Uruchom przycinanie krawędzi"
+      }
+    },
+    "number": {
+      "rain_delay_minutes": {
+        "name": "Opóźnienie po deszczu"
+      },
+      "time_extension": {
+        "name": "Wydłużenie czasu"
+      },
+      "lawn_area": {
+        "name": "Powierzchnia trawnika"
+      },
+      "lawn_perimeter": {
+        "name": "Obwód trawnika"
+      }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
       }
     },
     "camera": {
