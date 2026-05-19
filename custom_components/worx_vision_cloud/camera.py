@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import UTC, datetime, timedelta
 from html import escape
-from math import cos, radians
+from math import cos, hypot, radians
 from typing import Any
 
 from homeassistant.components.camera import Camera
@@ -18,6 +19,14 @@ from .helpers import get_dict_value, get_nested_value, rtk_map_id, rtk_position
 SVG_WIDTH = 900
 SVG_HEIGHT = 620
 SVG_PADDING = 48
+TRAIL_MAX_AGE = timedelta(hours=6)
+TRAIL_MAX_GAP = timedelta(minutes=5)
+TRAIL_MAX_SEGMENT_DISTANCE_M = 35.0
+TRAIL_MIN_POINT_DISTANCE_M = 0.25
+TRAIL_MAP_MARGIN_M = 12.0
+MOWED_SWATH_WIDTH = 6
+MOWED_MAX_OPACITY = 0.58
+MOWED_MIN_OPACITY = 0.12
 
 
 async def async_setup_entry(
@@ -85,7 +94,7 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
         if map_data is not None:
             self._last_map_data = map_data
 
-        trail = self.coordinator.rtk_position_trail(self._serial_number)
+        trail = self.coordinator.rtk_position_timed_trail(self._serial_number)
         return _render_svg_map(map_data, rtk_position(self.device), trail).encode()
 
 
@@ -225,21 +234,154 @@ def _path(points: list[tuple[float, float]], project) -> str:
     return " ".join(parts)
 
 
+def _open_path(points: list[tuple[float, float]], project) -> str:
+    """Return SVG path data for an open line."""
+    if not points:
+        return ""
+    projected = [project(point) for point in points]
+    first_x, first_y = projected[0]
+    parts = [f"M {first_x:.2f} {first_y:.2f}"]
+    parts.extend(f"L {x:.2f} {y:.2f}" for x, y in projected[1:])
+    return " ".join(parts)
+
+
 def _polyline(points: list[tuple[float, float]], project) -> str:
     """Return SVG polyline points."""
     return " ".join(f"{x:.2f},{y:.2f}" for x, y in (project(point) for point in points))
 
 
+def _distance_m(
+    first: tuple[float, float],
+    second: tuple[float, float],
+) -> float:
+    """Return approximate distance between two latitude/longitude points."""
+    mean_lat = (first[0] + second[0]) / 2
+    lon_scale = max(cos(radians(mean_lat)), 0.1)
+    x_m = (second[1] - first[1]) * 111_320 * lon_scale
+    y_m = (second[0] - first[0]) * 110_540
+    return hypot(x_m, y_m)
+
+
+def _coordinate_bounds(
+    points: list[tuple[float, float]],
+) -> tuple[float, float, float, float] | None:
+    """Return min/max latitude and longitude for map geometry."""
+    if not points:
+        return None
+    lats = [point[0] for point in points]
+    lons = [point[1] for point in points]
+    return min(lats), max(lats), min(lons), max(lons)
+
+
+def _point_in_bounds(
+    point: tuple[float, float],
+    bounds: tuple[float, float, float, float],
+    margin_m: float,
+) -> bool:
+    """Return whether a point is near the mapped garden geometry."""
+    min_lat, max_lat, min_lon, max_lon = bounds
+    mean_lat = (min_lat + max_lat) / 2
+    lon_scale = max(cos(radians(mean_lat)), 0.1)
+    lat_margin = margin_m / 110_540
+    lon_margin = margin_m / (111_320 * lon_scale)
+    lat, lon = point
+    return (
+        min_lat - lat_margin <= lat <= max_lat + lat_margin
+        and min_lon - lon_margin <= lon <= max_lon + lon_margin
+    )
+
+
+def _trail_segments(
+    map_data: dict[str, Any],
+    trail: list[tuple[datetime, float, float]] | None,
+) -> list[list[tuple[datetime, float, float]]]:
+    """Return drawable RTK trail segments without long gaps or position jumps."""
+    if not trail:
+        return []
+
+    now = datetime.now(UTC)
+    bounds = _coordinate_bounds(_iter_bounds_points(map_data, None))
+    segments: list[list[tuple[datetime, float, float]]] = []
+    current: list[tuple[datetime, float, float]] = []
+    previous_time: datetime | None = None
+    previous_point: tuple[float, float] | None = None
+
+    def flush() -> None:
+        if len(current) > 1:
+            segments.append(list(current))
+        current.clear()
+
+    for timestamp, latitude, longitude in trail:
+        point = (latitude, longitude)
+
+        if now - timestamp > TRAIL_MAX_AGE:
+            continue
+
+        if bounds is not None and not _point_in_bounds(point, bounds, TRAIL_MAP_MARGIN_M):
+            flush()
+            previous_time = None
+            previous_point = None
+            continue
+
+        if previous_point is not None:
+            distance = _distance_m(previous_point, point)
+            if distance < TRAIL_MIN_POINT_DISTANCE_M:
+                continue
+            if (
+                previous_time is not None
+                and timestamp - previous_time > TRAIL_MAX_GAP
+            ) or distance > TRAIL_MAX_SEGMENT_DISTANCE_M:
+                flush()
+
+        current.append((timestamp, latitude, longitude))
+        previous_time = timestamp
+        previous_point = point
+
+    flush()
+    return segments
+
+
+def _mowed_opacity(timestamp: datetime, now: datetime) -> float:
+    """Return fading opacity for a recently mowed RTK segment."""
+    age = max(now - timestamp, timedelta())
+    fade = min(age / TRAIL_MAX_AGE, 1)
+    return MOWED_MAX_OPACITY - (MOWED_MAX_OPACITY - MOWED_MIN_OPACITY) * fade
+
+
+def _mowed_segments_svg(
+    segments: list[list[tuple[datetime, float, float]]],
+    project,
+) -> list[str]:
+    """Return SVG paths for mowed swaths that fade with age."""
+    now = datetime.now(UTC)
+    paths: list[str] = []
+    for segment in segments:
+        for start, end in zip(segment, segment[1:]):
+            points = [(start[1], start[2]), (end[1], end[2])]
+            path = _open_path(points, project)
+            opacity = _mowed_opacity(end[0], now)
+            paths.append(
+                f'<path class="mowed" d="{path}" opacity="{opacity:.2f}" />'
+            )
+    return paths
+
+
 def _render_svg_map(
     map_data: dict[str, Any] | None,
     robot_position: tuple[float, float] | None,
-    trail: list[tuple[float, float]] | None = None,
+    trail: list[tuple[datetime, float, float]] | None = None,
 ) -> str:
     """Render map data to SVG."""
     if not isinstance(map_data, dict):
         return _placeholder_svg("Brak mapy RTK z API")
 
-    points = _iter_bounds_points(map_data, robot_position, trail)
+    trail_segments = _trail_segments(map_data, trail)
+    trail_points = [
+        (latitude, longitude)
+        for segment in trail_segments
+        for _, latitude, longitude in segment
+    ]
+    points = _iter_bounds_points(map_data, robot_position, trail_points)
     if not points:
         return _placeholder_svg("Mapa RTK nie zawiera punktow")
 
@@ -252,34 +394,33 @@ def _render_svg_map(
             continue
 
         if layer == "zone":
+            zone_path = _path(outer, project)
             body.append(
-                f'<path class="zone" d="{_path(outer, project)}" />'
+                f'<path class="zone-shadow" d="{zone_path}" />'
+                f'<path class="zone" d="{zone_path}" />'
+                f'<path class="zone-edge" d="{_open_path(outer, project)}" />'
             )
             for child in get_dict_value(contour, "children", []) or []:
                 if not isinstance(child, dict):
                     continue
                 child_points = _contour_points(child)
                 if child_points:
+                    child_path = _path(child_points, project)
                     body.append(
-                        f'<path class="hole" d="{_path(child_points, project)}" />'
+                        f'<path class="hole-shadow" d="{child_path}" />'
+                        f'<path class="hole" d="{child_path}" />'
+                        f'<path class="hole-edge" d="{_open_path(child_points, project)}" />'
                     )
         else:
+            exclusion_path = _path(outer, project)
             body.append(
-                f'<path class="exclusion" d="{_path(outer, project)}" />'
+                f'<path class="exclusion-shadow" d="{exclusion_path}" />'
+                f'<path class="exclusion" d="{exclusion_path}" />'
             )
+
+    body.extend(_mowed_segments_svg(trail_segments, project))
 
     markers = get_nested_value(map_data, "layers", "markers", default=[]) or []
-    for marker in markers:
-        guide_points = [
-            pair
-            for pair in (_point_pair(point) for point in get_dict_value(marker, "guide", []) or [])
-            if pair is not None
-        ]
-        if len(guide_points) > 1:
-            body.append(
-                f'<polyline class="guide" points="{_polyline(guide_points, project)}" />'
-            )
-
     for marker in markers:
         pair = _point_pair([
             get_nested_value(marker, "record", "latitude"),
@@ -288,60 +429,54 @@ def _render_svg_map(
         if pair is None:
             continue
         x, y = project(pair)
-        label = escape(str(get_dict_value(marker, "name", "Stacja")))
         body.append(
             f'<g class="station" transform="translate({x:.2f} {y:.2f})">'
-            '<circle r="17" />'
-            '<path d="M 3 -13 L -8 2 H 0 L -4 14 L 10 -4 H 2 Z" />'
-            f'<text x="0" y="32">{label}</text>'
+            '<circle class="station-shadow" r="24" cx="3" cy="5" />'
+            '<circle r="22" />'
+            '<path d="M 4 -16 L -9 3 H 0 L -5 17 L 12 -5 H 3 Z" />'
             '</g>'
-        )
-
-    if trail and len(trail) > 1:
-        body.append(
-            f'<polyline class="trail" points="{_polyline(trail, project)}" />'
         )
 
     if robot_position is not None:
         x, y = project(robot_position)
         body.append(
-            f'<g class="robot" transform="translate({x:.2f} {y:.2f})">'
-            '<circle r="13" />'
-            '<path d="M -8 5 H 8 V -5 H -8 Z M -5 -5 L -2 -11 H 2 L 5 -5" />'
+            f'<g class="robot" transform="translate({x:.2f} {y:.2f}) scale(0.68)">'
+            '<ellipse class="robot-shadow" cx="2" cy="21" rx="27" ry="10" />'
+            '<path class="track" d="M -27 -11 L -18 -18 L -16 20 L -25 17 Z" />'
+            '<path class="track" d="M 27 -11 L 18 -18 L 16 20 L 25 17 Z" />'
+            '<path class="body" d="M -20 -18 L -8 -24 H 12 L 22 -15 L 20 16 L 10 25 H -13 L -22 15 Z" />'
+            '<path class="wing left" d="M -20 -17 L -7 -23 H -2 L -8 -4 H -18 Z" />'
+            '<path class="wing right" d="M 10 -23 L 22 -14 L 17 0 L 7 -5 Z" />'
+            '<circle class="rtk" cx="-6" cy="7" r="8" />'
+            '<rect class="panel" x="3" y="2" width="13" height="10" rx="3" />'
+            '<rect class="stop" x="9" y="7" width="9" height="13" rx="4" />'
+            '<circle class="knob" cx="10" cy="-7" r="5" />'
+            '<rect class="camera" x="-16" y="8" width="6" height="7" rx="2" />'
+            '<path class="groove" d="M -14 -7 H -6 M 1 -11 H 10 M -2 18 H 6" />'
             '</g>'
         )
-
-    zone = _first_zone(map_data)
-    area = _scaled_area(get_dict_value(zone, "area"))
-    perimeter = _scaled_length(get_dict_value(zone, "perimeter"))
-    title = escape(str(get_dict_value(zone, "name", "") or "Trawnik"))
-    subtitle_parts = []
-    if area is not None:
-        subtitle_parts.append(f"{area:g} m2")
-    if perimeter is not None:
-        subtitle_parts.append(f"{perimeter:g} m")
-    subtitle = escape(" | ".join(subtitle_parts))
 
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_WIDTH}" '
         f'height="{SVG_HEIGHT}" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" role="img">'
         "<style>"
-        "svg{background:#101412;font-family:Inter,Segoe UI,Arial,sans-serif}"
-        ".grid{stroke:#253027;stroke-width:1;opacity:.45}"
-        ".zone{fill:#078a39;stroke:#ff604b;stroke-width:8;stroke-linejoin:round;stroke-linecap:round}"
-        ".hole{fill:#dde1e7;stroke:#ff604b;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}"
-        ".exclusion{fill:#b56b3b;stroke:#c96d3f;stroke-width:4;opacity:.95}"
-        ".guide{fill:none;stroke:#d48a3d;stroke-width:4;stroke-dasharray:8 10;opacity:.95}"
-        ".trail{fill:none;stroke:#39a0ff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;opacity:.82}"
-        ".station circle{fill:#6b350e}.station path{fill:#fff}.station text{fill:#f7efe8;font-size:16px;text-anchor:middle;font-weight:800}"
-        ".robot circle{fill:#f47b20;stroke:#111;stroke-width:3}.robot path{fill:#212121;stroke:#fff;stroke-width:2;stroke-linejoin:round}"
-        ".title{fill:#f8faf4;font-size:28px;font-weight:900}.subtitle{fill:#bec8bc;font-size:17px;font-weight:700}"
+        "svg{background:#050607;font-family:Inter,Segoe UI,Arial,sans-serif}"
+        ".grid{stroke:#202624;stroke-width:1;opacity:.45}"
+        ".zone-shadow{fill:#000;opacity:.08;transform:translate(3px,5px)}"
+        ".zone{fill:#008b3a;stroke:#ff6045;stroke-width:8;stroke-linejoin:round;stroke-linecap:round}"
+        ".zone-edge{fill:none;stroke:#1fb95b;stroke-width:3;stroke-linejoin:round;stroke-linecap:round;opacity:.9}"
+        ".hole-shadow{fill:#000;opacity:.06;transform:translate(3px,5px)}"
+        ".hole{fill:#e4e7ed;stroke:#ff6045;stroke-width:6;stroke-linejoin:round;stroke-linecap:round}"
+        ".hole-edge{fill:none;stroke:#cfd4dc;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}"
+        ".exclusion-shadow{fill:#000;opacity:.1;transform:translate(2px,4px)}"
+        ".exclusion{fill:#b66b36;stroke:#b66b36;stroke-width:4;opacity:.96}"
+        f".mowed{{fill:none;stroke:#005f2b;stroke-width:{MOWED_SWATH_WIDTH};stroke-linecap:round;stroke-linejoin:round}}"
+        ".station-shadow{fill:#000;opacity:.14}.station circle{fill:#70380f}.station path{fill:#fff}"
+        ".robot-shadow{fill:#000;opacity:.35}.robot .track{fill:#161b1f;stroke:#4b5563;stroke-width:2;stroke-linejoin:round}.robot .body{fill:#33383d;stroke:#111820;stroke-width:3;stroke-linejoin:round}.robot .wing{fill:#f47b20;stroke:#ffae55;stroke-width:1.5;stroke-linejoin:round}.robot .rtk{fill:#f8fafc;stroke:#e5e7eb;stroke-width:2}.robot .panel{fill:#22272e;stroke:#111820;stroke-width:1.5}.robot .stop{fill:#f43f4f;stroke:#991b1b;stroke-width:1.5}.robot .knob{fill:#f47b20;stroke:#fff7ed;stroke-width:1.5}.robot .camera{fill:#1f2429;stroke:#89929d;stroke-width:1}.robot .groove{fill:none;stroke:#171b20;stroke-width:2;stroke-linecap:round;opacity:.7}"
         "</style>"
         '<defs><pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">'
         '<path class="grid" d="M 48 0 L 0 0 0 48" /></pattern></defs>'
         f'<rect width="{SVG_WIDTH}" height="{SVG_HEIGHT}" fill="url(#grid)" />'
-        f'<text class="title" x="34" y="44">{title}</text>'
-        f'<text class="subtitle" x="34" y="72">{subtitle}</text>'
         f'{"".join(body)}'
         "</svg>"
     )

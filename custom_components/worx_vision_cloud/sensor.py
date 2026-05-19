@@ -19,7 +19,6 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfArea,
     UnitOfElectricPotential,
-    UnitOfLength,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -57,6 +56,45 @@ class WorxSensorDescription(SensorEntityDescription):
     attrs_fn: Callable[[Any], dict[str, Any] | None] | None = None
 
 
+STATUS_LABELS_PL = {
+    "home": "w bazie",
+    "leaving home": "wyjazd z bazy",
+    "going home": "powrót do bazy",
+    "mowing": "koszenie",
+    "cutting edge": "przycinanie krawędzi",
+    "edge cutting": "przycinanie krawędzi",
+    "border cut": "przycinanie krawędzi",
+    "charging": "ładowanie",
+    "paused": "pauza",
+    "pause": "pauza",
+    "idle": "bezczynna",
+    "manual stop": "zatrzymana ręcznie",
+    "rain delay": "opóźnienie po deszczu",
+    "locked": "zablokowana",
+    "error": "błąd",
+    "offline": "offline",
+}
+
+READINESS_LABELS_PL = {
+    "ready": "gotowa",
+    "mowing": "koszenie",
+    "charging": "ładowanie",
+    "battery_low": "niski poziom baterii",
+    "rain_delay": "opóźnienie po deszczu",
+    "error": "błąd",
+    "locked": "zablokowana",
+    "offline": "offline",
+}
+
+
+def _label_pl(value: Any, labels: dict[str, str]) -> str | None:
+    """Return a Polish label for a known Worx state."""
+    if value is None:
+        return None
+    text = str(value)
+    return labels.get(text.strip().lower(), text)
+
+
 def _battery(device, key, default=None):
     return get_dict_value(getattr(device, "battery", {}), key, default)
 
@@ -75,6 +113,10 @@ def _orientation(device, key, default=None):
 
 def _status(device, key, default=None):
     return get_dict_value(getattr(device, "status", {}), key, default)
+
+
+def _status_state(device) -> str | None:
+    return _label_pl(_status(device, "description"), STATUS_LABELS_PL)
 
 
 def _error(device, key, default=None):
@@ -182,12 +224,6 @@ def _since_reset(device, total_key: str, reset_key: str) -> int | None:
     return max(0, total - reset)
 
 
-def _lawn_perimeter(device) -> float | None:
-    value = _product_item(device, "lawn_perimeter")
-    perimeter = _as_float(value, 2)
-    return perimeter if perimeter and perimeter > 0 else None
-
-
 def _mowing_efficiency(device) -> float | None:
     area = _area_mowed_today(device)
     work_minutes = _as_float(_product_item(device, "mower_work_time"))
@@ -242,9 +278,6 @@ def _cloud_connection_attributes(device) -> dict[str, Any]:
         "iot_registered": get_dict_value(product_item, "iot_registered"),
         "mqtt_registered": get_dict_value(product_item, "mqtt_registered"),
         "mqtt_endpoint": get_dict_value(product_item, "mqtt_endpoint"),
-        "pending_radio_link_validation": get_dict_value(
-            product_item, "pending_radio_link_validation"
-        ),
     }
 
 
@@ -298,7 +331,7 @@ def _maintenance_attributes(device) -> dict[str, Any]:
     }
 
 
-def _mowing_readiness_state(device) -> str | None:
+def _mowing_readiness_code(device) -> str | None:
     if getattr(device, "online", None) is False:
         return "offline"
     if getattr(device, "locked", None) is True:
@@ -325,12 +358,18 @@ def _mowing_readiness_state(device) -> str | None:
     return "ready"
 
 
+def _mowing_readiness_state(device) -> str | None:
+    return _label_pl(_mowing_readiness_code(device), READINESS_LABELS_PL)
+
+
 def _mowing_readiness_attributes(device) -> dict[str, Any]:
     return {
         "online": getattr(device, "online", None),
         "locked": getattr(device, "locked", None),
+        "readiness_code": _mowing_readiness_code(device),
         "status_id": _status(device, "id"),
-        "status_description": _status(device, "description"),
+        "status_description": _status_state(device),
+        "raw_status_description": _status(device, "description"),
         "error_id": _error(device, "id"),
         "error_description": _error(device, "description"),
         "battery_percent": _battery(device, "percent"),
@@ -497,8 +536,11 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         key="status",
         translation_key="status",
         icon="mdi:robot-mower",
-        value_fn=lambda d: _status(d, "description"),
-        attrs_fn=lambda d: {"id": _status(d, "id")},
+        value_fn=_status_state,
+        attrs_fn=lambda d: {
+            "id": _status(d, "id"),
+            "raw_description": _status(d, "description"),
+        },
     ),
     WorxSensorDescription(
         key="error",
@@ -613,15 +655,6 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:set-square",
         value_fn=_lawn_area,
-    ),
-    WorxSensorDescription(
-        key="lawn_perimeter",
-        translation_key="lawn_perimeter",
-        native_unit_of_measurement=UnitOfLength.METERS,
-        device_class=SensorDeviceClass.DISTANCE,
-        state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:vector-polyline",
-        value_fn=_lawn_perimeter,
     ),
     WorxSensorDescription(
         key="mowing_efficiency",

@@ -72,9 +72,6 @@
       "lawn_area": {
         "name": "Powierzchnia trawnika"
       },
-      "lawn_perimeter": {
-        "name": "Obwód trawnika"
-      },
       "mowing_efficiency": {
         "name": "Wydajność koszenia"
       },
@@ -158,9 +155,6 @@
       "mqtt_registered": {
         "name": "MQTT zarejestrowane"
       },
-      "radio_link_pending": {
-        "name": "Oczekuje walidacji łącza radiowego"
-      },
       "locked": {
         "name": "Zablokowana"
       },
@@ -184,9 +178,6 @@
       },
       "save_hedgehogs": {
         "name": "Ochrona jeży"
-      },
-      "schedule_border_cut": {
-        "name": "Procedura krawędzi"
       }
     },
     "switch": {
@@ -204,9 +195,6 @@
       },
       "save_hedgehogs": {
         "name": "Ochrona jeży"
-      },
-      "schedule_border_cut": {
-        "name": "Procedura krawędzi"
       }
     },
     "button": {

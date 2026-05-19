@@ -133,8 +133,12 @@ def _async_migrate_entity_registry(hass: HomeAssistant, devices: dict) -> None:
         for domain, unique_id in (
             ("sensor", f"{serial_number}_distance_driven_total"),
             ("sensor", f"{serial_number}_distance_covered"),
+            ("sensor", f"{serial_number}_lawn_perimeter"),
             ("binary_sensor", f"{serial_number}_battery_charging"),
+            ("binary_sensor", f"{serial_number}_radio_link_pending"),
+            ("binary_sensor", f"{serial_number}_schedule_border_cut"),
             ("switch", f"{serial_number}_auto_schedule"),
+            ("switch", f"{serial_number}_schedule_border_cut"),
         ):
             entity_id = registry.async_get_entity_id(domain, DOMAIN, unique_id)
             if entity_id is not None:

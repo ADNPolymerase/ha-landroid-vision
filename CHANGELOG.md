@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Removed the unavailable schedule edge procedure entities.
+- Removed the radio link validation pending binary sensor.
+- Removed the duplicate read-only lawn perimeter sensor.
+- Added Polish state labels for the status and mowing-readiness sensors.
+
 ## 1.0.4
 
 - Fixed the edge cutting button for Vision mowers whose Worx Cloud schedule payload does not expose the derived edge-cut capability.

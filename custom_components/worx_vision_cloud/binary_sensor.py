@@ -110,61 +110,6 @@ def _smart_edge_cut_attributes(device) -> dict[str, Any]:
     }
 
 
-def _schedule_entries(device) -> list[Any]:
-    """Return schedule entries from map API or normalized pyworxcloud slots."""
-    map_schedule = get_dict_value(_rtk_map_data(device), "schedule", []) or []
-    if isinstance(map_schedule, list | tuple) and map_schedule:
-        return list(map_schedule)
-
-    schedules = getattr(device, "schedules", {}) or {}
-    slots = get_dict_value(schedules, "slots", []) or []
-    return list(slots) if isinstance(slots, list | tuple) else []
-
-
-def _schedule_border_cut_enabled(device) -> bool | None:
-    """Return true when at least one schedule entry has border cut enabled."""
-    entries = _schedule_entries(device)
-    if not entries:
-        return None
-    for entry in entries:
-        value = get_dict_value(entry, "border_cut")
-        if value is None:
-            value = get_dict_value(entry, "boundary")
-        if value is True:
-            return True
-    return False
-
-
-def _schedule_border_cut_attributes(device) -> dict[str, Any]:
-    """Return per-slot edge procedure details."""
-    entries = _schedule_entries(device)
-    border_entries: list[dict[str, Any]] = []
-    for entry in entries:
-        border_cut = get_dict_value(entry, "border_cut")
-        if border_cut is None:
-            border_cut = get_dict_value(entry, "boundary")
-        if border_cut is not True:
-            continue
-        border_entries.append(
-            {
-                "day_of_week": get_dict_value(entry, "day_of_week"),
-                "day": get_dict_value(entry, "day"),
-                "starts_at": get_dict_value(entry, "starts_at")
-                or get_dict_value(entry, "start"),
-                "duration": get_dict_value(entry, "duration"),
-                "zones": get_dict_value(entry, "zones"),
-                "source": get_dict_value(entry, "source"),
-            }
-        )
-
-    return {
-        "api_field": "schedule[].border_cut / schedules.slots[].boundary",
-        "border_cut_slots": border_entries,
-        "border_cut_slot_count": len(border_entries),
-        "schedule_entry_count": len(entries),
-    }
-
-
 def _auto_schedule_settings(device) -> dict[str, Any]:
     """Return automatic schedule settings from pyworxcloud or product item data."""
     schedules = getattr(device, "schedules", {}) or {}
@@ -240,15 +185,6 @@ BINARY_SENSORS: tuple[WorxBinarySensorDescription, ...] = (
         },
     ),
     WorxBinarySensorDescription(
-        key="radio_link_pending",
-        translation_key="radio_link_pending",
-        device_class=BinarySensorDeviceClass.PROBLEM,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: _as_bool(
-            get_dict_value(_product_item(d), "pending_radio_link_validation")
-        ),
-    ),
-    WorxBinarySensorDescription(
         key="locked",
         translation_key="locked",
         device_class=BinarySensorDeviceClass.LOCK,
@@ -288,14 +224,6 @@ BINARY_SENSORS: tuple[WorxBinarySensorDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_save_hedgehogs_enabled,
         attrs_fn=_save_hedgehogs_attributes,
-    ),
-    WorxBinarySensorDescription(
-        key="schedule_border_cut",
-        translation_key="schedule_border_cut",
-        icon="mdi:border-outside",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=_schedule_border_cut_enabled,
-        attrs_fn=_schedule_border_cut_attributes,
     ),
 )
 

@@ -72,9 +72,6 @@
       "lawn_area": {
         "name": "Lawn area"
       },
-      "lawn_perimeter": {
-        "name": "Lawn perimeter"
-      },
       "mowing_efficiency": {
         "name": "Mowing efficiency"
       },
@@ -158,9 +155,6 @@
       "mqtt_registered": {
         "name": "MQTT registered"
       },
-      "radio_link_pending": {
-        "name": "Radio link validation pending"
-      },
       "locked": {
         "name": "Locked"
       },
@@ -184,9 +178,6 @@
       },
       "save_hedgehogs": {
         "name": "Save the hedgehogs"
-      },
-      "schedule_border_cut": {
-        "name": "Schedule edge procedure"
       }
     },
     "switch": {
@@ -204,9 +195,6 @@
       },
       "save_hedgehogs": {
         "name": "Save the hedgehogs"
-      },
-      "schedule_border_cut": {
-        "name": "Schedule edge procedure"
       }
     },
     "button": {

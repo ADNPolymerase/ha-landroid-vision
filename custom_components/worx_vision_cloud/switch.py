@@ -11,8 +11,6 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from pyworxcloud.utils import ScheduleEntry, ScheduleModel
-
 from .const import DOMAIN
 from .entity import WorxVisionEntity
 from .helpers import get_dict_value, get_nested_value
@@ -107,55 +105,6 @@ def _smart_edge_cut_attributes(device) -> dict[str, Any]:
         "cut_type": get_dict_value(metadata, "cut_type"),
         "cut_direction": get_dict_value(metadata, "cut_direction"),
         "pattern_width": get_dict_value(metadata, "pattern_width"),
-    }
-
-
-def _schedule_entries(device) -> list[Any]:
-    """Return normalized pyworxcloud schedule entries."""
-    schedules = getattr(device, "schedules", {}) or {}
-    slots = get_dict_value(schedules, "slots", []) or []
-    return list(slots) if isinstance(slots, list | tuple) else []
-
-
-def _schedule_border_cut_enabled(device) -> bool | None:
-    """Return true when at least one schedule entry has border cut enabled."""
-    entries = _schedule_entries(device)
-    if not entries:
-        return None
-    for entry in entries:
-        value = get_dict_value(entry, "boundary")
-        if value is None:
-            value = get_dict_value(entry, "border_cut")
-        if _as_bool(value) is True:
-            return True
-    return False
-
-
-def _schedule_border_cut_attributes(device) -> dict[str, Any]:
-    """Return per-slot edge procedure details."""
-    entries = _schedule_entries(device)
-    border_entries: list[dict[str, Any]] = []
-    for entry in entries:
-        value = get_dict_value(entry, "boundary")
-        if value is None:
-            value = get_dict_value(entry, "border_cut")
-        if _as_bool(value) is not True:
-            continue
-        border_entries.append(
-            {
-                "day": get_dict_value(entry, "day"),
-                "starts_at": get_dict_value(entry, "start")
-                or get_dict_value(entry, "starts_at"),
-                "duration": get_dict_value(entry, "duration"),
-                "source": get_dict_value(entry, "source"),
-            }
-        )
-
-    return {
-        "api_field": "schedules.slots[].boundary / cfg.sc.slots[].cfg.cut.b",
-        "border_cut_slots": border_entries,
-        "border_cut_slot_count": len(border_entries),
-        "schedule_entry_count": len(entries),
     }
 
 
@@ -329,45 +278,6 @@ async def _set_native_schedule(
     await coordinator.async_toggle_schedule(serial_number, enabled)
 
 
-async def _set_schedule_border_cut(
-    coordinator, serial_number: str, enabled: bool
-) -> None:
-    get_schedule = getattr(coordinator.cloud, "get_schedule", None)
-    set_schedule = getattr(coordinator.cloud, "set_schedule", None)
-    if get_schedule is None or set_schedule is None:
-        raise HomeAssistantError(
-            "The installed pyworxcloud version does not support schedule editing"
-        )
-
-    schedule = get_schedule(serial_number)
-    entries = [
-        ScheduleEntry(
-            entry_id=entry.entry_id,
-            day=entry.day,
-            start=entry.start,
-            duration=entry.duration,
-            boundary=enabled,
-            source=entry.source,
-            secondary=entry.secondary,
-            metadata=dict(entry.metadata or {}),
-        )
-        for entry in schedule.entries
-    ]
-    if not entries:
-        raise HomeAssistantError("The mower schedule has no entries to update")
-
-    await set_schedule(
-        serial_number,
-        ScheduleModel(
-            enabled=schedule.enabled,
-            time_extension=schedule.time_extension,
-            entries=entries,
-            protocol=schedule.protocol,
-        ),
-    )
-    await coordinator.async_request_device_update(serial_number)
-
-
 SWITCHES: tuple[WorxSwitchDescription, ...] = (
     WorxSwitchDescription(
         key="firmware_auto_upgrade",
@@ -416,15 +326,6 @@ SWITCHES: tuple[WorxSwitchDescription, ...] = (
         value_fn=_save_hedgehogs_enabled,
         turn_fn=_set_save_hedgehogs,
         attrs_fn=_save_hedgehogs_attributes,
-    ),
-    WorxSwitchDescription(
-        key="schedule_border_cut",
-        translation_key="schedule_border_cut",
-        icon="mdi:border-outside",
-        entity_category=EntityCategory.CONFIG,
-        value_fn=_schedule_border_cut_enabled,
-        turn_fn=_set_schedule_border_cut,
-        attrs_fn=_schedule_border_cut_attributes,
     ),
 )
 

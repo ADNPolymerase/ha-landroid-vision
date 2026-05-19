@@ -470,6 +470,15 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             return []
         return [(lat, lon) for _, lat, lon in list(trail)[-max_points:]]
 
+    def rtk_position_timed_trail(
+        self, serial_number: str, max_points: int = 120
+    ) -> list[tuple[datetime, float, float]]:
+        """Return recent RTK positions with timestamps for map rendering."""
+        trail = self._rtk_position_trails.get(serial_number)
+        if trail is None:
+            return []
+        return list(trail)[-max_points:]
+
     async def async_reverse_geocode_rtk_position(
         self, position: tuple[float, float] | None, *, force: bool = False
     ) -> dict[str, Any] | None:
