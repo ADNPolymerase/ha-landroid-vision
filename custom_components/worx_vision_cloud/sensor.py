@@ -40,6 +40,8 @@ from .helpers import (
     raw_entity_path_map,
     raw_entity_values,
     raw_path_enabled_default,
+    rtk_at_station,
+    rtk_distance_to_station_m,
     rtk_map_attributes,
     rtk_map_id,
     rtk_position,
@@ -75,6 +77,24 @@ STATUS_LABELS_PL = {
     "error": "błąd",
     "no error": "brak błędu",
     "offline": "offline",
+}
+
+RTK_STATION_HOME_STATUS_IDS = {
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    12,
+    30,
+    32,
+    33,
+    103,
+    104,
+    110,
+    111,
 }
 
 READINESS_LABELS_PL = {
@@ -122,6 +142,8 @@ def _status(device, key, default=None):
 def _status_state(device) -> str | None:
     if _is_rain_delay(device):
         return _label_pl("rain_delay", READINESS_LABELS_PL)
+    if _status_corrected_to_home_by_rtk(device):
+        return _label_pl("home", STATUS_LABELS_PL)
     return _label_pl(_status(device, "description"), STATUS_LABELS_PL)
 
 
@@ -144,6 +166,33 @@ def _is_rain_delay(device) -> bool:
 
     rain_remaining = _as_float(_rain(device, "remaining")) or 0
     return _rain(device, "triggered") is True or rain_remaining > 0
+
+
+def _has_real_error(device) -> bool:
+    """Return true when the mower reports a real error state."""
+    error_id = _error(device, "id", 0)
+    return error_id not in (None, 0, -1) and not _is_rain_delay(device)
+
+
+def _status_corrected_to_home_by_rtk(device) -> bool:
+    """Return true when RTK station position proves the mower is home."""
+    return (
+        _status(device, "id") in RTK_STATION_HOME_STATUS_IDS
+        and not _has_real_error(device)
+        and rtk_at_station(device)
+    )
+
+
+def _rtk_station_status_attrs(device) -> dict[str, Any]:
+    """Return diagnostic attributes for RTK-based status correction."""
+    station_distance = rtk_distance_to_station_m(device)
+    if station_distance is None:
+        return {}
+    return {
+        "rtk_station_distance_m": round(station_distance, 2),
+        "rtk_at_station": rtk_at_station(device),
+        "status_corrected_by_rtk": _status_corrected_to_home_by_rtk(device),
+    }
 
 
 def _zone(device, key, default=None):
@@ -375,7 +424,9 @@ def _mowing_readiness_code(device) -> str | None:
         return "charging"
 
     status_id = _status(device, "id")
-    if status_id in (7, 8, 12, 32, 110, 111):
+    if status_id in (7, 8, 12, 32, 110, 111) and not _status_corrected_to_home_by_rtk(
+        device
+    ):
         return "mowing"
     return "ready"
 
@@ -385,7 +436,7 @@ def _mowing_readiness_state(device) -> str | None:
 
 
 def _mowing_readiness_attributes(device) -> dict[str, Any]:
-    return {
+    attrs = {
         "online": getattr(device, "online", None),
         "locked": getattr(device, "locked", None),
         "readiness_code": _mowing_readiness_code(device),
@@ -399,6 +450,21 @@ def _mowing_readiness_attributes(device) -> dict[str, Any]:
         "rain_triggered": _rain(device, "triggered"),
         "rain_remaining": _rain(device, "remaining"),
     }
+    attrs.update(_rtk_station_status_attrs(device))
+    return attrs
+
+
+def _status_attributes(device) -> dict[str, Any]:
+    """Return status sensor attributes."""
+    attrs = {
+        "id": _status(device, "id"),
+        "raw_description": _status(device, "description"),
+        "error_id": _error(device, "id"),
+        "error_description": _error(device, "description"),
+        "rain_delay": _is_rain_delay(device),
+    }
+    attrs.update(_rtk_station_status_attrs(device))
+    return attrs
 
 
 def _rtk_trail(device) -> list[tuple[datetime, float, float]]:
@@ -560,13 +626,7 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         translation_key="status",
         icon="mdi:robot-mower",
         value_fn=_status_state,
-        attrs_fn=lambda d: {
-            "id": _status(d, "id"),
-            "raw_description": _status(d, "description"),
-            "error_id": _error(d, "id"),
-            "error_description": _error(d, "description"),
-            "rain_delay": _is_rain_delay(d),
-        },
+        attrs_fn=_status_attributes,
     ),
     WorxSensorDescription(
         key="error",

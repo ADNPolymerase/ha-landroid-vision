@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from datetime import date, datetime
 from enum import Enum
 import json
+from math import cos, hypot, radians
 from typing import Any
 
 from homeassistant.util import slugify
@@ -284,6 +285,59 @@ def rtk_position(device: Any) -> tuple[float, float] | None:
     if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
         return None
     return latitude, longitude
+
+
+def rtk_station_position(device: Any) -> tuple[float, float] | None:
+    """Return the RTK station marker position from cached map geometry."""
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    if not isinstance(map_data, dict):
+        return None
+
+    markers = get_nested_value(map_data, "layers", "markers", default=[]) or []
+    if not isinstance(markers, list | tuple):
+        return None
+
+    for marker in markers:
+        if not isinstance(marker, dict):
+            continue
+        pair = (
+            get_nested_value(marker, "record", "latitude"),
+            get_nested_value(marker, "record", "longitude"),
+        )
+        try:
+            latitude = float(pair[0])
+            longitude = float(pair[1])
+        except (TypeError, ValueError):
+            continue
+        if -90 <= latitude <= 90 and -180 <= longitude <= 180:
+            return latitude, longitude
+
+    return None
+
+
+def distance_meters(
+    first: tuple[float, float], second: tuple[float, float]
+) -> float:
+    """Return an approximate distance between two latitude/longitude pairs."""
+    mean_latitude = radians((first[0] + second[0]) / 2)
+    latitude_m = (first[0] - second[0]) * 110_540
+    longitude_m = (first[1] - second[1]) * 111_320 * cos(mean_latitude)
+    return hypot(latitude_m, longitude_m)
+
+
+def rtk_distance_to_station_m(device: Any) -> float | None:
+    """Return distance from current RTK position to the station marker."""
+    position = rtk_position(device)
+    station = rtk_station_position(device)
+    if position is None or station is None:
+        return None
+    return distance_meters(position, station)
+
+
+def rtk_at_station(device: Any, threshold_m: float = 2.5) -> bool:
+    """Return true when RTK position is close enough to the station marker."""
+    distance = rtk_distance_to_station_m(device)
+    return distance is not None and distance <= threshold_m
 
 
 def rtk_location_attributes(device: Any) -> dict[str, Any]:

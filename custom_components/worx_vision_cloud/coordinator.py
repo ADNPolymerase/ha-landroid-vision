@@ -110,6 +110,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             return
 
         async with self._event_lock:
+            self._preserve_enriched_attributes(str(serial), device)
             self._remember_rtk_position(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
@@ -840,6 +841,23 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         trail.append((datetime.now(UTC), latitude, longitude))
         setattr(device, "_worx_vision_rtk_trail", list(trail))
+
+    def _preserve_enriched_attributes(
+        self, serial_number: str, device: DeviceHandler
+    ) -> None:
+        """Keep cached API enrichment on MQTT-only push updates."""
+        previous = (self.data or {}).get(serial_number)
+        if previous is None:
+            return
+
+        for attr in (
+            "_worx_vision_product_item",
+            "_worx_vision_firmware_upgrade",
+            "_worx_vision_rtk_map",
+        ):
+            if hasattr(device, attr) or not hasattr(previous, attr):
+                continue
+            setattr(device, attr, getattr(previous, attr))
 
     def _update_cached_product_item(self, serial_number: str, **fields: Any) -> None:
         """Patch cached product item fields after a successful write."""

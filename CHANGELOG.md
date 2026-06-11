@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.5 - 2026-06-11
+
+- Added RTK station-based status correction so Home Assistant can show the mower as docked when Worx Cloud is stuck on stale mowing/returning/searching-home states.
+- Preserved cached RTK map and product details across MQTT-only push updates so status correction keeps access to the base station marker.
 - Changed the Vision edge-cut button to send a zero-minute one-time schedule with edge cutting enabled instead of `cmd:101`, because firmware 3.46.x can continue into full mowing after `cmd:101`.
 - Added one-time mowing controls and service with runtime, edge-cut and optional RTK zone selection.
 - Added a robot-lifted binary sensor based on Worx Cloud `lifted` and `upside down` error states.
