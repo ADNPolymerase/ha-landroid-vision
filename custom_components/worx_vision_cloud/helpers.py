@@ -49,13 +49,13 @@ NOISY_RAW_PATHS = {
 }
 
 SCHEDULE_DAY_LABELS = {
-    "monday": "pon",
-    "tuesday": "wt",
-    "wednesday": "sr",
-    "thursday": "czw",
-    "friday": "pt",
-    "saturday": "sob",
-    "sunday": "niedz",
+    "monday": "Mon",
+    "tuesday": "Tue",
+    "wednesday": "Wed",
+    "thursday": "Thu",
+    "friday": "Fri",
+    "saturday": "Sat",
+    "sunday": "Sun",
 }
 
 SCHEDULE_DAY_INDEX = {
@@ -393,7 +393,7 @@ def schedule_slot_summary(slot: Any) -> str:
         text = day or "slot"
 
     if get_dict_value(slot, "boundary"):
-        text = f"{text} + krawedz"
+        text = f"{text} + edge"
     return text
 
 
@@ -401,12 +401,12 @@ def schedule_summary(device: Any) -> str | None:
     """Return a compact schedule summary for Home Assistant state."""
     slots = schedule_slots(device)
     if not slots:
-        return "brak aktywnych slotow"
+        return "no active slots"
 
     summary = ", ".join(schedule_slot_summary(slot) for slot in slots)
     if len(summary) <= MAX_STRING_STATE_LENGTH:
         return summary
-    return f"{len(slots)} aktywnych slotow"
+    return f"{len(slots)} active slots"
 
 
 def schedule_attributes(device: Any) -> dict[str, Any]:

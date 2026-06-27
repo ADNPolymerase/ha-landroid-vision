@@ -75,7 +75,7 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
     """RTK map rendered from Worx map geometry."""
 
     _attr_icon = "mdi:map"
-    _attr_name = "Mapa RTK"
+    _attr_translation_key = "rtk_map_camera"
 
     def __init__(self, coordinator, entry, serial_number: str) -> None:
         """Initialize RTK map camera."""

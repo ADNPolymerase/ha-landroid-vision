@@ -33,7 +33,7 @@ class WorxVisionLocationTracker(WorxVisionEntity, TrackerEntity):
     """GPS/RTK location tracker for one mower."""
 
     _attr_icon = "mdi:map-marker-radius-outline"
-    _attr_name = "Pozycja RTK"
+    _attr_translation_key = "rtk_position"
     _attr_source_type = SourceType.GPS
 
     def __init__(self, coordinator, entry, serial_number: str) -> None:

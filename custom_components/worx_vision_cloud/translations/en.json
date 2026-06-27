@@ -34,10 +34,42 @@
         "name": "Battery"
       },
       "status": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "home": "Docked",
+          "leaving_home": "Leaving base",
+          "going_home": "Returning to base",
+          "mowing": "Mowing",
+          "edge_cutting": "Edge cutting",
+          "charging": "Charging",
+          "paused": "Paused",
+          "idle": "Idle",
+          "manual_stop": "Manual stop",
+          "rain_delay": "Rain delay",
+          "locked": "Locked",
+          "error": "Error",
+          "no_error": "No error",
+          "offline": "Offline"
+        }
       },
       "error": {
-        "name": "Error"
+        "name": "Error",
+        "state": {
+          "home": "Docked",
+          "leaving_home": "Leaving base",
+          "going_home": "Returning to base",
+          "mowing": "Mowing",
+          "edge_cutting": "Edge cutting",
+          "charging": "Charging",
+          "paused": "Paused",
+          "idle": "Idle",
+          "manual_stop": "Manual stop",
+          "rain_delay": "Rain delay",
+          "locked": "Locked",
+          "error": "Error",
+          "no_error": "No error",
+          "offline": "Offline"
+        }
       },
       "rssi": {
         "name": "RSSI"
@@ -49,10 +81,25 @@
         "name": "Schedule"
       },
       "mowing_readiness": {
-        "name": "Mowing readiness"
+        "name": "Mowing readiness",
+        "state": {
+          "ready": "Ready",
+          "mowing": "Mowing",
+          "charging": "Charging",
+          "battery_low": "Battery low",
+          "rain_delay": "Rain delay",
+          "error": "Error",
+          "locked": "Locked",
+          "offline": "Offline"
+        }
       },
       "cloud_connection": {
-        "name": "Cloud connection"
+        "name": "Cloud connection",
+        "state": {
+          "ok": "Connected",
+          "check": "Checking",
+          "offline": "Offline"
+        }
       },
       "api_capabilities": {
         "name": "API capabilities"
@@ -127,7 +174,12 @@
         "name": "Mower error time total"
       },
       "maintenance_status": {
-        "name": "Maintenance status"
+        "name": "Maintenance status",
+        "state": {
+          "ok": "OK",
+          "blade_service_due": "Blade service due",
+          "battery_service_due": "Battery service due"
+        }
       },
       "pitch": {
         "name": "Pitch"
@@ -255,6 +307,11 @@
     "calendar": {
       "schedule": {
         "name": "Mowing schedule"
+      }
+    },
+    "device_tracker": {
+      "rtk_position": {
+        "name": "RTK position"
       }
     }
   }

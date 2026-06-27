@@ -34,10 +34,42 @@
         "name": "Batterie"
       },
       "status": {
-        "name": "État"
+        "name": "État",
+        "state": {
+          "home": "En station",
+          "leaving_home": "Sortie de la base",
+          "going_home": "Retour à la base",
+          "mowing": "En train de tondre",
+          "edge_cutting": "Coupe de bordure",
+          "charging": "En charge",
+          "paused": "En pause",
+          "idle": "Inactive",
+          "manual_stop": "Arrêt manuel",
+          "rain_delay": "Délai pluie",
+          "locked": "Verrouillée",
+          "error": "Erreur",
+          "no_error": "Aucune erreur",
+          "offline": "Hors ligne"
+        }
       },
       "error": {
-        "name": "Erreur"
+        "name": "Erreur",
+        "state": {
+          "home": "En station",
+          "leaving_home": "Sortie de la base",
+          "going_home": "Retour à la base",
+          "mowing": "En train de tondre",
+          "edge_cutting": "Coupe de bordure",
+          "charging": "En charge",
+          "paused": "En pause",
+          "idle": "Inactive",
+          "manual_stop": "Arrêt manuel",
+          "rain_delay": "Délai pluie",
+          "locked": "Verrouillée",
+          "error": "Erreur",
+          "no_error": "Aucune erreur",
+          "offline": "Hors ligne"
+        }
       },
       "rssi": {
         "name": "RSSI"
@@ -49,10 +81,25 @@
         "name": "Programme"
       },
       "mowing_readiness": {
-        "name": "Aptitude à la tonte"
+        "name": "Aptitude à la tonte",
+        "state": {
+          "ready": "Prête",
+          "mowing": "En train de tondre",
+          "charging": "En charge",
+          "battery_low": "Batterie faible",
+          "rain_delay": "Délai pluie",
+          "error": "Erreur",
+          "locked": "Verrouillée",
+          "offline": "Hors ligne"
+        }
       },
       "cloud_connection": {
-        "name": "Connexion au cloud"
+        "name": "Connexion au cloud",
+        "state": {
+          "ok": "Connecté",
+          "check": "Vérification",
+          "offline": "Hors ligne"
+        }
       },
       "api_capabilities": {
         "name": "Capacités de l'API"
@@ -127,7 +174,12 @@
         "name": "Temps total en erreur"
       },
       "maintenance_status": {
-        "name": "État de maintenance"
+        "name": "État de maintenance",
+        "state": {
+          "ok": "OK",
+          "blade_service_due": "Entretien des lames requis",
+          "battery_service_due": "Entretien de la batterie requis"
+        }
       },
       "pitch": {
         "name": "Tangage"
@@ -255,6 +307,11 @@
     "calendar": {
       "schedule": {
         "name": "Programme de tonte"
+      }
+    },
+    "device_tracker": {
+      "rtk_position": {
+        "name": "Position RTK"
       }
     }
   }

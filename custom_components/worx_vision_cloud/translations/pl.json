@@ -34,10 +34,42 @@
         "name": "Bateria"
       },
       "status": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "home": "w bazie",
+          "leaving_home": "wyjazd z bazy",
+          "going_home": "powrót do bazy",
+          "mowing": "koszenie",
+          "edge_cutting": "przycinanie krawędzi",
+          "charging": "ładowanie",
+          "paused": "pauza",
+          "idle": "bezczynna",
+          "manual_stop": "zatrzymana ręcznie",
+          "rain_delay": "opóźnienie po deszczu",
+          "locked": "zablokowana",
+          "error": "błąd",
+          "no_error": "brak błędu",
+          "offline": "offline"
+        }
       },
       "error": {
-        "name": "Błąd"
+        "name": "Błąd",
+        "state": {
+          "home": "w bazie",
+          "leaving_home": "wyjazd z bazy",
+          "going_home": "powrót do bazy",
+          "mowing": "koszenie",
+          "edge_cutting": "przycinanie krawędzi",
+          "charging": "ładowanie",
+          "paused": "pauza",
+          "idle": "bezczynna",
+          "manual_stop": "zatrzymana ręcznie",
+          "rain_delay": "opóźnienie po deszczu",
+          "locked": "zablokowana",
+          "error": "błąd",
+          "no_error": "brak błędu",
+          "offline": "offline"
+        }
       },
       "rssi": {
         "name": "RSSI"
@@ -49,10 +81,25 @@
         "name": "Harmonogram"
       },
       "mowing_readiness": {
-        "name": "Gotowość do koszenia"
+        "name": "Gotowość do koszenia",
+        "state": {
+          "ready": "gotowa",
+          "mowing": "koszenie",
+          "charging": "ładowanie",
+          "battery_low": "niski poziom baterii",
+          "rain_delay": "opóźnienie po deszczu",
+          "error": "błąd",
+          "locked": "zablokowana",
+          "offline": "offline"
+        }
       },
       "cloud_connection": {
-        "name": "Połączenie z chmurą"
+        "name": "Połączenie z chmurą",
+        "state": {
+          "ok": "Połączono",
+          "check": "Sprawdzanie",
+          "offline": "Offline"
+        }
       },
       "api_capabilities": {
         "name": "Możliwości API"
@@ -127,7 +174,12 @@
         "name": "Czas błędów razem"
       },
       "maintenance_status": {
-        "name": "Status serwisowy"
+        "name": "Status serwisowy",
+        "state": {
+          "ok": "OK",
+          "blade_service_due": "Wymiana ostrzy wymagana",
+          "battery_service_due": "Serwis baterii wymagany"
+        }
       },
       "pitch": {
         "name": "Nachylenie X"
@@ -255,6 +307,11 @@
     "calendar": {
       "schedule": {
         "name": "Harmonogram koszenia"
+      }
+    },
+    "device_tracker": {
+      "rtk_position": {
+        "name": "Pozycja RTK"
       }
     }
   }

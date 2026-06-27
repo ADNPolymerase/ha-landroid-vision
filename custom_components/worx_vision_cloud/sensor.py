@@ -58,47 +58,71 @@ class WorxSensorDescription(SensorEntityDescription):
     attrs_fn: Callable[[Any], dict[str, Any] | None] | None = None
 
 
-STATUS_LABELS_PL = {
-    "home": "w bazie",
-    "leaving home": "wyjazd z bazy",
-    "going home": "powrót do bazy",
-    "mowing": "koszenie",
-    "cutting edge": "przycinanie krawędzi",
-    "edge cutting": "przycinanie krawędzi",
-    "border cut": "przycinanie krawędzi",
-    "charging": "ładowanie",
-    "paused": "pauza",
-    "pause": "pauza",
-    "idle": "bezczynna",
-    "manual stop": "zatrzymana ręcznie",
-    "rain delay": "opóźnienie po deszczu",
-    "rain_delay": "opóźnienie po deszczu",
-    "locked": "zablokowana",
-    "error": "błąd",
-    "no error": "brak błędu",
+# Map the raw descriptions reported by Worx to canonical, language-neutral state
+# keys. The human-readable labels live in translations/*.json so Home Assistant can
+# localize them per user (en/pl/fr/...), instead of being hard-coded here.
+STATUS_STATE_KEYS = {
+    "home": "home",
+    "leaving home": "leaving_home",
+    "going home": "going_home",
+    "mowing": "mowing",
+    "cutting edge": "edge_cutting",
+    "edge cutting": "edge_cutting",
+    "border cut": "edge_cutting",
+    "charging": "charging",
+    "paused": "paused",
+    "pause": "paused",
+    "idle": "idle",
+    "manual stop": "manual_stop",
+    "rain delay": "rain_delay",
+    "rain_delay": "rain_delay",
+    "locked": "locked",
+    "error": "error",
+    "no error": "no_error",
     "offline": "offline",
 }
 
-READINESS_LABELS_PL = {
-    "ready": "gotowa",
-    "mowing": "koszenie",
-    "charging": "ładowanie",
-    "battery_low": "niski poziom baterii",
-    "rain_delay": "opóźnienie po deszczu",
-    "error": "błąd",
-    "locked": "zablokowana",
-    "offline": "offline",
-}
+# Canonical option lists exposed as enum sensor states.
+STATUS_STATE_OPTIONS = [
+    "home",
+    "leaving_home",
+    "going_home",
+    "mowing",
+    "edge_cutting",
+    "charging",
+    "paused",
+    "idle",
+    "manual_stop",
+    "rain_delay",
+    "locked",
+    "error",
+    "no_error",
+    "offline",
+]
+
+READINESS_STATE_OPTIONS = [
+    "ready",
+    "mowing",
+    "charging",
+    "battery_low",
+    "rain_delay",
+    "error",
+    "locked",
+    "offline",
+]
+
+CLOUD_CONNECTION_OPTIONS = ["ok", "check", "offline"]
+
+MAINTENANCE_STATE_OPTIONS = ["ok", "blade_service_due", "battery_service_due"]
 
 RAIN_DELAY_ERROR_DESCRIPTIONS = {"rain delay", "rain_delay"}
 
 
-def _label_pl(value: Any, labels: dict[str, str]) -> str | None:
-    """Return a Polish label for a known Worx state."""
+def _state_key(value: Any, mapping: dict[str, str]) -> str | None:
+    """Map a raw Worx description to a canonical, translatable state key."""
     if value is None:
         return None
-    text = str(value)
-    return labels.get(text.strip().lower(), text)
+    return mapping.get(str(value).strip().lower())
 
 
 def _battery(device, key, default=None):
@@ -123,8 +147,8 @@ def _status(device, key, default=None):
 
 def _status_state(device) -> str | None:
     if _is_rain_delay(device):
-        return _label_pl("rain_delay", READINESS_LABELS_PL)
-    return _label_pl(_status(device, "description"), STATUS_LABELS_PL)
+        return "rain_delay"
+    return _state_key(_status(device, "description"), STATUS_STATE_KEYS)
 
 
 def _error(device, key, default=None):
@@ -132,7 +156,9 @@ def _error(device, key, default=None):
 
 
 def _error_state(device) -> str | None:
-    return _label_pl(_error(device, "description"), STATUS_LABELS_PL)
+    # Unmapped/rare device error descriptions surface via the raw_description
+    # attribute; the enum state stays None to avoid noisy non-option warnings.
+    return _state_key(_error(device, "description"), STATUS_STATE_KEYS)
 
 
 def _is_rain_delay(device) -> bool:
@@ -394,7 +420,7 @@ def _mowing_readiness_code(device) -> str | None:
 
 
 def _mowing_readiness_state(device) -> str | None:
-    return _label_pl(_mowing_readiness_code(device), READINESS_LABELS_PL)
+    return _mowing_readiness_code(device)
 
 
 def _mowing_readiness_attributes(device) -> dict[str, Any]:
@@ -587,6 +613,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         key="status",
         translation_key="status",
         icon="mdi:robot-mower",
+        device_class=SensorDeviceClass.ENUM,
+        options=STATUS_STATE_OPTIONS,
         value_fn=_status_state,
         attrs_fn=_status_attributes,
     ),
@@ -595,6 +623,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         translation_key="error",
         icon="mdi:alert-circle-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.ENUM,
+        options=STATUS_STATE_OPTIONS,
         value_fn=_error_state,
         attrs_fn=lambda d: {
             "id": _error(d, "id"),
@@ -633,6 +663,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         key="mowing_readiness",
         translation_key="mowing_readiness",
         icon="mdi:clipboard-check-outline",
+        device_class=SensorDeviceClass.ENUM,
+        options=READINESS_STATE_OPTIONS,
         value_fn=_mowing_readiness_state,
         attrs_fn=_mowing_readiness_attributes,
     ),
@@ -641,6 +673,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         translation_key="cloud_connection",
         icon="mdi:cloud-check-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.ENUM,
+        options=CLOUD_CONNECTION_OPTIONS,
         value_fn=_cloud_connection_state,
         attrs_fn=_cloud_connection_attributes,
     ),
@@ -872,6 +906,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         translation_key="maintenance_status",
         icon="mdi:wrench-clock",
         entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.ENUM,
+        options=MAINTENANCE_STATE_OPTIONS,
         value_fn=_maintenance_state,
         attrs_fn=_maintenance_attributes,
     ),

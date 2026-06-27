@@ -39,7 +39,7 @@ class WorxVisionScheduleCalendar(WorxVisionEntity, CalendarEntity):
     """Read-only mowing schedule calendar."""
 
     _attr_icon = "mdi:calendar-clock"
-    _attr_name = "Harmonogram koszenia"
+    _attr_translation_key = "schedule"
 
     def __init__(self, coordinator, entry, serial_number: str) -> None:
         """Initialize schedule calendar."""
