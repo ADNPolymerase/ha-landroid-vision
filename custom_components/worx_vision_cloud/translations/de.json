@@ -1,0 +1,318 @@
+{
+  "title": "Worx Vision Cloud PLUS",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Worx Vision Cloud PLUS",
+        "description": "Verwenden Sie dieselben Anmeldedaten wie in der Worx-Landroid-App.",
+        "data": {
+          "email": "E-Mail-Adresse",
+          "password": "Passwort",
+          "cloud": "Cloud",
+          "verify_ssl": "SSL-Zertifikat überprüfen",
+          "expose_raw_entities": "Alle Roh-Payload-Felder als Entitäten bereitstellen"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zur Worx Cloud fehlgeschlagen.",
+      "invalid_auth": "Ungültiger Benutzername oder ungültiges Passwort.",
+      "rate_limited": "Anfragelimit der Worx Cloud erreicht. Bitte später erneut versuchen."
+    },
+    "abort": {
+      "already_configured": "Dieses Konto ist bereits konfiguriert."
+    }
+  },
+  "entity": {
+    "lawn_mower": {
+      "mower": {
+        "name": "Mähroboter"
+      }
+    },
+    "sensor": {
+      "battery_percent": {
+        "name": "Akku"
+      },
+      "status": {
+        "name": "Status",
+        "state": {
+          "home": "In der Station",
+          "leaving_home": "Verlässt die Station",
+          "going_home": "Rückkehr zur Station",
+          "mowing": "Mäht",
+          "edge_cutting": "Kantenschnitt",
+          "charging": "Lädt",
+          "paused": "Pausiert",
+          "idle": "Inaktiv",
+          "manual_stop": "Manuell gestoppt",
+          "rain_delay": "Regenverzögerung",
+          "locked": "Gesperrt",
+          "error": "Fehler",
+          "no_error": "Kein Fehler",
+          "offline": "Offline"
+        }
+      },
+      "error": {
+        "name": "Fehler",
+        "state": {
+          "home": "In der Station",
+          "leaving_home": "Verlässt die Station",
+          "going_home": "Rückkehr zur Station",
+          "mowing": "Mäht",
+          "edge_cutting": "Kantenschnitt",
+          "charging": "Lädt",
+          "paused": "Pausiert",
+          "idle": "Inaktiv",
+          "manual_stop": "Manuell gestoppt",
+          "rain_delay": "Regenverzögerung",
+          "locked": "Gesperrt",
+          "error": "Fehler",
+          "no_error": "Kein Fehler",
+          "offline": "Offline"
+        }
+      },
+      "rssi": {
+        "name": "RSSI"
+      },
+      "zone_current": {
+        "name": "Aktuelle Zone"
+      },
+      "schedule": {
+        "name": "Zeitplan"
+      },
+      "mowing_readiness": {
+        "name": "Mähbereitschaft",
+        "state": {
+          "ready": "Bereit",
+          "mowing": "Mäht",
+          "charging": "Lädt",
+          "battery_low": "Akku niedrig",
+          "rain_delay": "Regenverzögerung",
+          "error": "Fehler",
+          "locked": "Gesperrt",
+          "offline": "Offline"
+        }
+      },
+      "cloud_connection": {
+        "name": "Cloud-Verbindung",
+        "state": {
+          "ok": "Verbunden",
+          "check": "Wird geprüft",
+          "offline": "Offline"
+        }
+      },
+      "api_capabilities": {
+        "name": "API-Funktionen"
+      },
+      "push_notifications": {
+        "name": "Push-Benachrichtigungen"
+      },
+      "daily_progress": {
+        "name": "Tagesfortschritt"
+      },
+      "remaining_progress": {
+        "name": "Verbleibend zu mähen"
+      },
+      "area_mowed_today": {
+        "name": "Heute gemähte Fläche"
+      },
+      "lawn_area": {
+        "name": "Rasenfläche"
+      },
+      "mowing_efficiency": {
+        "name": "Mäheffizienz"
+      },
+      "rtk_map": {
+        "name": "RTK-Karte"
+      },
+      "rtk_trail_points": {
+        "name": "RTK-Spurpunkte"
+      },
+      "rtk_address": {
+        "name": "RTK-Adresse"
+      },
+      "rain_delay": {
+        "name": "Regenverzögerung"
+      },
+      "rain_remaining": {
+        "name": "Verbleibende Regenverzögerung"
+      },
+      "battery_voltage": {
+        "name": "Akkuspannung"
+      },
+      "battery_temperature": {
+        "name": "Akkutemperatur"
+      },
+      "battery_cycles_total": {
+        "name": "Akkuzyklen (gesamt)"
+      },
+      "battery_cycles_since_reset": {
+        "name": "Akkuzyklen seit Zurücksetzen"
+      },
+      "battery_cycles_reset_at": {
+        "name": "Letztes Zurücksetzen der Akkuzyklen"
+      },
+      "blade_runtime_total": {
+        "name": "Messer-Laufzeit (gesamt)"
+      },
+      "blade_runtime_current": {
+        "name": "Messer-Laufzeit (aktuell)"
+      },
+      "blade_runtime_reset_at": {
+        "name": "Letztes Zurücksetzen der Messer-Laufzeit"
+      },
+      "mower_runtime_total": {
+        "name": "Gesamtlaufzeit"
+      },
+      "mower_home_time_total": {
+        "name": "Gesamtzeit in der Station"
+      },
+      "mower_charging_time_total": {
+        "name": "Gesamtladezeit"
+      },
+      "mower_error_time_total": {
+        "name": "Gesamtzeit im Fehlerzustand"
+      },
+      "maintenance_status": {
+        "name": "Wartungsstatus",
+        "state": {
+          "ok": "OK",
+          "blade_service_due": "Messerwartung fällig",
+          "battery_service_due": "Akkuwartung fällig"
+        }
+      },
+      "pitch": {
+        "name": "Nicken"
+      },
+      "roll": {
+        "name": "Rollen"
+      },
+      "yaw": {
+        "name": "Gieren"
+      },
+      "last_update": {
+        "name": "Letzte Aktualisierung"
+      },
+      "last_update_age": {
+        "name": "Alter der letzten Aktualisierung"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "iot_registered": {
+        "name": "IoT registriert"
+      },
+      "mqtt_registered": {
+        "name": "MQTT registriert"
+      },
+      "locked": {
+        "name": "Gesperrt"
+      },
+      "rain_triggered": {
+        "name": "Regen erkannt"
+      },
+      "robot_lifted": {
+        "name": "Roboter angehoben"
+      },
+      "off_limits_enabled": {
+        "name": "Sperrzonen aktiviert"
+      },
+      "acs_enabled": {
+        "name": "ACS aktiviert"
+      },
+      "party_mode_enabled": {
+        "name": "Partymodus aktiviert"
+      },
+      "pause_mode_enabled": {
+        "name": "Pausenmodus aktiviert"
+      },
+      "smart_edge_cut": {
+        "name": "Intelligenter Kantenschnitt"
+      },
+      "save_hedgehogs": {
+        "name": "Igel retten"
+      }
+    },
+    "switch": {
+      "firmware_auto_upgrade": {
+        "name": "Firmware automatisch aktualisieren"
+      },
+      "lock": {
+        "name": "Sperren"
+      },
+      "native_schedule": {
+        "name": "Nativer Zeitplan"
+      },
+      "smart_edge_cut": {
+        "name": "Intelligenter Kantenschnitt"
+      },
+      "save_hedgehogs": {
+        "name": "Igel retten"
+      },
+      "one_time_mowing_edge_cut": {
+        "name": "Kantenschnitt"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Aktualisieren"
+      },
+      "reset_blade_counter": {
+        "name": "Messer-Laufzeit zurücksetzen"
+      },
+      "reset_battery_cycle_counter": {
+        "name": "Akkuzyklen zurücksetzen"
+      },
+      "start_edge_cut": {
+        "name": "Kantenschnitt starten"
+      },
+      "start_one_time_mowing": {
+        "name": "Einmaliges Mähen starten"
+      }
+    },
+    "number": {
+      "rain_delay_minutes": {
+        "name": "Regenverzögerung"
+      },
+      "time_extension": {
+        "name": "Zeitverlängerung"
+      },
+      "lawn_area": {
+        "name": "Rasenfläche"
+      },
+      "lawn_perimeter": {
+        "name": "Rasenumfang"
+      },
+      "one_time_mowing_runtime": {
+        "name": "Laufzeit für einmaliges Mähen"
+      }
+    },
+    "select": {
+      "one_time_mowing_zones": {
+        "name": "Zonen für einmaliges Mähen"
+      }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
+      }
+    },
+    "camera": {
+      "rtk_map_camera": {
+        "name": "RTK-Karte"
+      }
+    },
+    "calendar": {
+      "schedule": {
+        "name": "Mähplan"
+      }
+    },
+    "device_tracker": {
+      "rtk_position": {
+        "name": "RTK-Position"
+      }
+    }
+  }
+}
