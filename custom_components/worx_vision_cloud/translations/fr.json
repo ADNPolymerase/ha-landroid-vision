@@ -1,0 +1,261 @@
+{
+  "title": "Worx Vision Cloud PLUS",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Worx Vision Cloud PLUS",
+        "description": "Utilisez les mêmes identifiants que dans l'application Worx Landroid.",
+        "data": {
+          "email": "Adresse e-mail",
+          "password": "Mot de passe",
+          "cloud": "Cloud",
+          "verify_ssl": "Vérifier le certificat SSL",
+          "expose_raw_entities": "Exposer tous les champs bruts du payload en tant qu'entités"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter au Cloud Worx.",
+      "invalid_auth": "Identifiant ou mot de passe incorrect.",
+      "rate_limited": "Limite de requêtes du Cloud Worx atteinte. Réessayez plus tard."
+    },
+    "abort": {
+      "already_configured": "Ce compte est déjà configuré."
+    }
+  },
+  "entity": {
+    "lawn_mower": {
+      "mower": {
+        "name": "Tondeuse"
+      }
+    },
+    "sensor": {
+      "battery_percent": {
+        "name": "Batterie"
+      },
+      "status": {
+        "name": "État"
+      },
+      "error": {
+        "name": "Erreur"
+      },
+      "rssi": {
+        "name": "RSSI"
+      },
+      "zone_current": {
+        "name": "Zone actuelle"
+      },
+      "schedule": {
+        "name": "Programme"
+      },
+      "mowing_readiness": {
+        "name": "Aptitude à la tonte"
+      },
+      "cloud_connection": {
+        "name": "Connexion au cloud"
+      },
+      "api_capabilities": {
+        "name": "Capacités de l'API"
+      },
+      "push_notifications": {
+        "name": "Notifications push"
+      },
+      "daily_progress": {
+        "name": "Progression quotidienne"
+      },
+      "remaining_progress": {
+        "name": "Reste à tondre"
+      },
+      "area_mowed_today": {
+        "name": "Surface tondue aujourd'hui"
+      },
+      "lawn_area": {
+        "name": "Surface de la pelouse"
+      },
+      "mowing_efficiency": {
+        "name": "Efficacité de tonte"
+      },
+      "rtk_map": {
+        "name": "Carte RTK"
+      },
+      "rtk_trail_points": {
+        "name": "Points de trace RTK"
+      },
+      "rtk_address": {
+        "name": "Adresse RTK"
+      },
+      "rain_delay": {
+        "name": "Délai pluie"
+      },
+      "rain_remaining": {
+        "name": "Délai pluie restant"
+      },
+      "battery_voltage": {
+        "name": "Tension de la batterie"
+      },
+      "battery_temperature": {
+        "name": "Température de la batterie"
+      },
+      "battery_cycles_total": {
+        "name": "Cycles de batterie (total)"
+      },
+      "battery_cycles_since_reset": {
+        "name": "Cycles de batterie depuis réinitialisation"
+      },
+      "battery_cycles_reset_at": {
+        "name": "Dernière réinitialisation des cycles de batterie"
+      },
+      "blade_runtime_total": {
+        "name": "Temps de fonctionnement des lames (total)"
+      },
+      "blade_runtime_current": {
+        "name": "Temps de fonctionnement des lames (actuel)"
+      },
+      "blade_runtime_reset_at": {
+        "name": "Dernière réinitialisation du temps des lames"
+      },
+      "mower_runtime_total": {
+        "name": "Temps de fonctionnement total"
+      },
+      "mower_home_time_total": {
+        "name": "Temps total en station"
+      },
+      "mower_charging_time_total": {
+        "name": "Temps de charge total"
+      },
+      "mower_error_time_total": {
+        "name": "Temps total en erreur"
+      },
+      "maintenance_status": {
+        "name": "État de maintenance"
+      },
+      "pitch": {
+        "name": "Tangage"
+      },
+      "roll": {
+        "name": "Roulis"
+      },
+      "yaw": {
+        "name": "Lacet"
+      },
+      "last_update": {
+        "name": "Dernière mise à jour"
+      },
+      "last_update_age": {
+        "name": "Ancienneté de la dernière mise à jour"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "En ligne"
+      },
+      "iot_registered": {
+        "name": "IoT enregistré"
+      },
+      "mqtt_registered": {
+        "name": "MQTT enregistré"
+      },
+      "locked": {
+        "name": "Verrouillé"
+      },
+      "rain_triggered": {
+        "name": "Pluie détectée"
+      },
+      "robot_lifted": {
+        "name": "Robot soulevé"
+      },
+      "off_limits_enabled": {
+        "name": "Zones interdites activées"
+      },
+      "acs_enabled": {
+        "name": "ACS activé"
+      },
+      "party_mode_enabled": {
+        "name": "Mode festif activé"
+      },
+      "pause_mode_enabled": {
+        "name": "Mode pause activé"
+      },
+      "smart_edge_cut": {
+        "name": "Coupe de bordure intelligente"
+      },
+      "save_hedgehogs": {
+        "name": "Mode hérissons"
+      }
+    },
+    "switch": {
+      "firmware_auto_upgrade": {
+        "name": "Mise à jour automatique du firmware"
+      },
+      "lock": {
+        "name": "Verrouillage"
+      },
+      "native_schedule": {
+        "name": "Programme natif"
+      },
+      "smart_edge_cut": {
+        "name": "Coupe de bordure intelligente"
+      },
+      "save_hedgehogs": {
+        "name": "Mode hérissons"
+      },
+      "one_time_mowing_edge_cut": {
+        "name": "Coupe de bordure (tonte unique)"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Actualiser"
+      },
+      "reset_blade_counter": {
+        "name": "Réinitialiser le temps des lames"
+      },
+      "reset_battery_cycle_counter": {
+        "name": "Réinitialiser les cycles de batterie"
+      },
+      "start_edge_cut": {
+        "name": "Démarrer la coupe de bordure"
+      },
+      "start_one_time_mowing": {
+        "name": "Démarrer la tonte unique"
+      }
+    },
+    "number": {
+      "rain_delay_minutes": {
+        "name": "Délai pluie"
+      },
+      "time_extension": {
+        "name": "Prolongation de durée"
+      },
+      "lawn_area": {
+        "name": "Surface de la pelouse"
+      },
+      "lawn_perimeter": {
+        "name": "Périmètre de la pelouse"
+      },
+      "one_time_mowing_runtime": {
+        "name": "Durée de la tonte unique"
+      }
+    },
+    "select": {
+      "one_time_mowing_zones": {
+        "name": "Zones de la tonte unique"
+      }
+    },
+    "update": {
+      "firmware": {
+        "name": "Firmware"
+      }
+    },
+    "camera": {
+      "rtk_map_camera": {
+        "name": "Carte RTK"
+      }
+    },
+    "calendar": {
+      "schedule": {
+        "name": "Programme de tonte"
+      }
+    }
+  }
+}
