@@ -116,6 +116,12 @@
       "area_mowed_today": {
         "name": "Skoszony obszar dzisiaj"
       },
+      "next_schedule": {
+        "name": "Następny harmonogram"
+      },
+      "area_mowed_total": {
+        "name": "Łącznie skoszona powierzchnia"
+      },
       "lawn_area": {
         "name": "Powierzchnia trawnika"
       },

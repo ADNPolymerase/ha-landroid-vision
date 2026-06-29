@@ -116,6 +116,12 @@
       "area_mowed_today": {
         "name": "Area mowed today"
       },
+      "next_schedule": {
+        "name": "Next schedule"
+      },
+      "area_mowed_total": {
+        "name": "Total area mowed"
+      },
       "lawn_area": {
         "name": "Lawn area"
       },

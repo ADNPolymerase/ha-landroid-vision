@@ -116,6 +116,12 @@
       "area_mowed_today": {
         "name": "Surface tondue aujourd'hui"
       },
+      "next_schedule": {
+        "name": "Prochaine tonte"
+      },
+      "area_mowed_total": {
+        "name": "Surface totale tondue"
+      },
       "lawn_area": {
         "name": "Surface de la pelouse"
       },

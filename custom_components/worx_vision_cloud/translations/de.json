@@ -116,6 +116,12 @@
       "area_mowed_today": {
         "name": "Heute gemähte Fläche"
       },
+      "next_schedule": {
+        "name": "Nächster Zeitplan"
+      },
+      "area_mowed_total": {
+        "name": "Insgesamt gemähte Fläche"
+      },
       "lawn_area": {
         "name": "Rasenfläche"
       },

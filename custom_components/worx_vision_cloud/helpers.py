@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from enum import Enum
 import json
 from math import cos, hypot, radians
@@ -366,6 +366,44 @@ def schedule_day_index(day: Any) -> int | None:
     if day is None:
         return None
     return SCHEDULE_DAY_INDEX.get(str(day).lower())
+
+
+def parse_schedule_time(value: Any) -> time | None:
+    """Parse an HH:MM schedule time from pyworxcloud data."""
+    if not isinstance(value, str) or ":" not in value:
+        return None
+    hour, minute, *_ = value.split(":")
+    try:
+        return time(hour=int(hour), minute=int(minute))
+    except ValueError:
+        return None
+
+
+def next_schedule_start(device: Any, now: datetime) -> datetime | None:
+    """Return the next scheduled mowing start at or after ``now``.
+
+    Looks ahead up to seven days across the weekly schedule slots. Returns a
+    timezone-aware datetime (matching ``now``'s tzinfo) or None when no schedule
+    is configured.
+    """
+    slots = schedule_slots(device)
+    if not slots:
+        return None
+
+    candidates: list[datetime] = []
+    for offset in range(0, 8):
+        day = (now + timedelta(days=offset)).date()
+        for slot in slots:
+            if schedule_day_index(get_dict_value(slot, "day")) != day.weekday():
+                continue
+            start_time = parse_schedule_time(get_dict_value(slot, "start"))
+            if start_time is None:
+                continue
+            start = datetime.combine(day, start_time, tzinfo=now.tzinfo)
+            if start >= now:
+                candidates.append(start)
+
+    return min(candidates) if candidates else None
 
 
 def schedule_day_label(day: Any) -> str:
