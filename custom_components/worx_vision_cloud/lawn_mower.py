@@ -70,6 +70,12 @@ async def async_setup_entry(
 class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
     """Worx Landroid mower entity."""
 
+    # This is the device's primary/main entity, so it has no name of its own
+    # (HA convention): with has_entity_name=True its friendly_name becomes
+    # exactly the device name, which is what lets companion cards like
+    # landroid-card correctly strip the device name from other entities.
+    _attr_name = None
+
     _attr_supported_features = (
         LawnMowerEntityFeature.START_MOWING
         | LawnMowerEntityFeature.PAUSE
@@ -79,7 +85,6 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
     def __init__(self, coordinator, entry, serial_number: str) -> None:
         """Initialize mower."""
         super().__init__(coordinator, entry, serial_number, "mower")
-        self._attr_translation_key = "mower"
 
     @property
     def available(self) -> bool:

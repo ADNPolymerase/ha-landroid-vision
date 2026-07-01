@@ -24,11 +24,6 @@
     }
   },
   "entity": {
-    "lawn_mower": {
-      "mower": {
-        "name": "Mähroboter"
-      }
-    },
     "sensor": {
       "battery_percent": {
         "name": "Akku"

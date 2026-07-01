@@ -24,11 +24,6 @@
     }
   },
   "entity": {
-    "lawn_mower": {
-      "mower": {
-        "name": "Kosiarka"
-      }
-    },
     "sensor": {
       "battery_percent": {
         "name": "Bateria"
