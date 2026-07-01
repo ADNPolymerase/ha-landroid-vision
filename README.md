@@ -130,6 +130,10 @@ Before opening an issue, remove private data from logs and screenshots. See [SEC
 
 The mower reports its mowing figures as **covered area** (the surface the blades pass over), not unique lawn area. Because a robot mows with overlapping passes, the **Today mowed area** and **Total area mowed** sensors can legitimately exceed your lawn size, and **Daily progress** reaches 100% once the covered area matches the lawn size. **Today mowed area** is derived from a local-midnight baseline and is rebuilt after a restart or a counter reset.
 
+## Entity naming
+
+The `lawn_mower` entity is the device's primary entity and has no name of its own: its displayed name is exactly the device name (e.g. just "Vision Cloud" instead of "Vision Cloud Mower"). This is both for readability and for compatibility with third-party cards such as [landroid-card](https://github.com/Barma-lej/landroid-card), which strip the device name from every other entity's label using the primary entity's name as the prefix; a redundant word there (like "Mower") previously prevented the prefix from matching.
+
 ## Limitations
 
 The Worx / Positec cloud API is not officially public. Some endpoints used here are reverse-engineered and can change without notice. This is a best-effort custom integration, not official Worx software.
