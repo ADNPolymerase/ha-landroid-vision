@@ -125,10 +125,18 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
     async def _refresh_from_cloud_cache(self) -> dict[str, DeviceHandler]:
         """Return current cloud cache."""
         devices = _device_map(self.cloud)
-        await asyncio.gather(
+        results = await asyncio.gather(
             *(self._enrich_device(serial, device) for serial, device in devices.items()),
             return_exceptions=True,
         )
+        for serial, result in zip(devices, results):
+            if isinstance(result, Exception):
+                _LOGGER.warning(
+                    "Failed to enrich device %s with REST API data (area mowed, "
+                    "firmware, RTK map may be stale): %s",
+                    serial,
+                    result,
+                )
         return devices
 
     async def _async_update_data(self) -> dict[str, DeviceHandler]:
@@ -757,6 +765,15 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         product_item = await self.async_get_product_item(serial_number)
         if product_item is not None:
             setattr(device, "_worx_vision_product_item", product_item)
+            _LOGGER.debug(
+                "Enriched device %s: area_mowed=%s",
+                serial_number,
+                product_item.get("area_mowed"),
+            )
+        else:
+            _LOGGER.debug(
+                "No product item data returned for device %s", serial_number
+            )
 
         firmware_info = await self.async_get_firmware_upgrade_info(serial_number)
         if firmware_info is not None:
