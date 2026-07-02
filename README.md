@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="Worx Vision Cloud PLUS" width="360">
+  <img src="https://raw.githubusercontent.com/ADNPolymerase/worx_vision_cloud_plus_github/main/logo.png" alt="Worx Vision Cloud PLUS" width="360">
 </p>
 
 # Worx Vision Cloud PLUS
