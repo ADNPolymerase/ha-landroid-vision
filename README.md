@@ -33,6 +33,10 @@ Integration originally prepared by Smart Service.
 - Primary mower entity follows the Home Assistant naming convention (no redundant name), improving compatibility with third-party cards such as landroid-card
 - Non-deprecated device_tracker imports
 - 8 additional languages: French, German, Dutch, Spanish, Italian, Swedish, Norwegian and Danish, on top of the original English and Polish
+- Party mode switch (previously only exposed as a read-only sensor)
+- ACS, off limits, cutting height and torque controls, gated on pyworxcloud's live per-device capability detection rather than a manual model list, so they only show up when your mower actually reports the matching hardware module
+- Removed duplicate entities that exposed the same value twice as both a switch and a read-only sensor (lock, smart edge cutting, save the hedgehogs, party mode) and a duplicate rain delay sensor next to the existing rain delay number
+- Mower home time and charging time sensors are now disabled by default: for many accounts the Worx API reports them as a permanent 0 (unlike mower work time, which does update), so they're kept as opt-in diagnostics rather than shown by default
 
 ## Features
 
@@ -101,10 +105,10 @@ The exact entity list depends on what your mower reports. Typical entities inclu
 - `calendar` mowing schedule
 - `camera` RTK map
 - `device_tracker` RTK robot position
-- `sensor` battery, status, error, readiness, cloud connection, RSSI, schedule, next schedule, rain delay, RTK map, RTK trail, daily progress, remaining progress, today and total mowed area, lawn area, runtime, efficiency and maintenance values
-- `binary_sensor` online, IoT/MQTT registration, locked, rain, party mode and pause mode
-- `switch` firmware auto update, mower lock, native schedule, Smart edge cutting, Save the hedgehogs and schedule edge procedure
-- `number` rain delay, schedule time extension, lawn area and lawn perimeter
+- `sensor` battery, status, error, readiness, cloud connection, RSSI, schedule, next schedule, RTK map, RTK trail, daily progress, remaining progress, today and total mowed area, lawn area, runtime, efficiency and maintenance values (home time and charging time are included but disabled by default, see below)
+- `binary_sensor` online, IoT/MQTT registration, rain, robot lifted and pause mode
+- `switch` firmware auto update, mower lock, native schedule, smart edge cutting, save the hedgehogs, party mode, off limits and ACS (the last two only when your mower reports the matching module)
+- `number` rain delay, schedule time extension, lawn area, lawn perimeter, cutting height and torque (the last two only when your mower reports the matching module; torque is disabled by default)
 - `update` firmware version, release notes and OTA install when supported
 
 See [docs/entities.md](docs/entities.md) for a more detailed list.
@@ -146,6 +150,9 @@ The `lawn_mower` entity is the device's primary entity and has no name of its ow
 ## Limitations
 
 The Worx / Positec cloud API is not officially public. Some endpoints used here are reverse-engineered and can change without notice. This is a best-effort custom integration, not official Worx software.
+
+- Off limits and ACS entities can show up as `unavailable` even on a mower model that supports the feature. Availability is based on pyworxcloud detecting the matching module (`DF` for off limits, `US` for ACS) in the mower's live data, and for off limits specifically that module only appears once at least one off-limit zone has been configured in the Worx app at least once. This is a limitation of the underlying API data (the same behavior exists in the community `landroid_cloud` integration), not a bug in this integration.
+- Mower home time and charging time can permanently read `0` for some accounts even though mower work time updates normally, because the Worx API itself doesn't populate those two fields for every model. That's why both sensors are disabled by default; enable them if your account happens to report real values.
 
 ## Credits
 

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.5.0 - 2026-07-06
+
+- Added a party mode switch (previously only a read-only sensor).
+- Added ACS, off limits, cutting height and torque controls, gated on pyworxcloud's live per-device capability detection instead of a manual model list, so they only appear when your mower reports the matching hardware module.
+- Removed entities that duplicated the same value as both a switch and a read-only binary sensor: lock, smart edge cutting, save the hedgehogs and party mode. Also removed a duplicate rain delay sensor that repeated the existing rain delay number.
+- Fixed rain delay, cutting height and torque numbers showing a spurious decimal (e.g. `180.0` instead of `180`).
+- Disabled the torque number and the mower home time / charging time sensors by default: torque is an advanced setting most users won't touch, and home/charging time can permanently read `0` on accounts where the Worx API doesn't populate those two fields (mower work time is unaffected and still updates normally).
+- Off limits and ACS entities can legitimately show as `unavailable` on a supported mower until the corresponding module shows up in the mower's live data; for off limits this can require configuring at least one off-limit zone once in the Worx app. This is a data limitation of the underlying API, not a bug (the community `landroid_cloud` integration has the same behavior).
+
 ## 1.0.11 - 2026-06-18
 
 - Allowed the one-time mowing service to accept `runtime: 0`, so automations can explicitly start an edge-only pass after normal mowing.
