@@ -14,15 +14,11 @@
 <a href="https://buymeacoffee.com/adnpolymerase" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60"></a>
 <a href="https://adnpolymerase.github.io/HA/" target="_blank"><img src="https://raw.githubusercontent.com/ADNPolymerase/HA/main/assets/site-button.svg" alt="Link to my github.io for my other projects" height="60"></a>
 
-> Enhanced fork of [SmartServicePL/worx_vision_cloud_plus_github](https://github.com/SmartServicePL/worx_vision_cloud_plus_github). Improvements flow in both directions: fixes from this fork have landed upstream and upstream fixes are synced back here, on top of features this fork adds on its own.
-
 Custom Home Assistant integration for Worx Landroid Vision / Vision Cloud / RTK mowers.
 
 This integration is built on top of the community `pyworxcloud` library and adds a cleaner Home Assistant entity layer for Vision mowers: mower controls, useful sensors, diagnostics, schedule calendar, RTK map rendering and live-ish robot position tracking.
 
-Integration originally prepared by Smart Service.
-
-## What's new in this fork
+## Highlights
 
 - Estimated area mowed today sensor, computed locally to work around REST API staleness
 - Estimated daily mowing progress sensor
@@ -40,6 +36,9 @@ Integration originally prepared by Smart Service.
 - Daily area/progress and mowing-time tracking persisted in Home Assistant storage at the coordinator level: one shared baseline per mower that survives restarts and entity renames, with proper handling of cloud counter resets, multi-day gaps and mowing across midnight
 - Mowing time today sensor (locally observed, independent of Worx's sporadic work-time statistics) and a Cloud statistics updated diagnostic timestamp
 - Download diagnostics support with automatic redaction of coordinates, addresses and account/device identifiers, so issue reports are safe to attach
+- Home Assistant Repairs integration: actionable alerts in Settings > Repairs when blade cutting time or battery charge cycles exceed the maintenance thresholds, cleared automatically after the matching reset button is pressed
+- Border distance select (50/100/150/200 mm) for Vision mowers; the Worx API is write-only here, so the entity remembers the last value set through Home Assistant
+- Restart mower button (reboots the mower baseboard remotely when it is stuck) and a live MQTT connected diagnostic sensor
 
 ## Features
 

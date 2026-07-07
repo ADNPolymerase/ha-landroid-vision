@@ -3,7 +3,7 @@
   "name": "Worx Landroid Vision PLUS",
   "after_dependencies": [],
   "codeowners": [
-    "@SmartServicePL"
+    "@ADNPolymerase"
   ],
   "config_flow": true,
   "dependencies": [],

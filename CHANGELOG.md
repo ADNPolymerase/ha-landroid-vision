@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.6.0 - 2026-07-07
+
+- Renamed the repository to `ADNPolymerase/ha-landroid-vision` and the
+  integration display name to Worx Landroid Vision PLUS. GitHub redirects
+  the old repository name and HACS tracks installations by repository ID,
+  so existing installs are unaffected; the `worx_vision_cloud` domain and
+  all entity IDs are unchanged.
 - Added Home Assistant Repairs integration: when the blade cutting time or
   battery charge cycles exceed the maintenance thresholds (12 h / 500
   cycles, the same ones the maintenance sensor uses), an actionable issue
