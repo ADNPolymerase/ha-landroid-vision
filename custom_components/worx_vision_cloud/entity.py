@@ -10,6 +10,7 @@ from pyworxcloud import DeviceHandler
 
 from .const import DOMAIN
 from .coordinator import WorxVisionCoordinator
+from .helpers import device_display_name
 
 
 def _firmware_version(device: DeviceHandler) -> str | None:
@@ -20,15 +21,6 @@ def _firmware_version(device: DeviceHandler) -> str | None:
         return None if value is None else str(value)
     value = getattr(firmware, "version", None)
     return None if value is None else str(value)
-
-
-def _device_name(device: DeviceHandler) -> str:
-    """Return a mower name without an account e-mail prefix."""
-    value = str(getattr(device, "name", "") or "").strip()
-    first_part, separator, mower_name = value.partition(" ")
-    if separator and "@" in first_part and mower_name.strip():
-        return mower_name.strip()
-    return value or "Worx Landroid Vision"
 
 
 class WorxVisionEntity(CoordinatorEntity[WorxVisionCoordinator]):
@@ -67,7 +59,7 @@ class WorxVisionEntity(CoordinatorEntity[WorxVisionCoordinator]):
         manufacturer = "Worx"
         model = str(getattr(device, "model", "Landroid Vision Cloud"))
         serial_number = str(getattr(device, "serial_number", self._serial_number))
-        name = _device_name(device)
+        name = device_display_name(device)
 
         info = {
             "identifiers": {(DOMAIN, serial_number)},

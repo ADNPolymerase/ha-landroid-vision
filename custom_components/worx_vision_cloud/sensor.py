@@ -31,6 +31,8 @@ from homeassistant.util import dt as dt_util
 from .const import (
     ATTR_RAW_PATH,
     ATTR_RAW_SOURCE,
+    BATTERY_SERVICE_THRESHOLD_CYCLES,
+    BLADE_SERVICE_THRESHOLD_MINUTES,
     CONF_EXPOSE_RAW,
     DEFAULT_EXPOSE_RAW,
     DOMAIN,
@@ -398,9 +400,12 @@ def _maintenance_state(device) -> str | None:
     )
     if blade_minutes is None and battery_cycles is None:
         return None
-    if blade_minutes is not None and blade_minutes >= 720:
+    if blade_minutes is not None and blade_minutes >= BLADE_SERVICE_THRESHOLD_MINUTES:
         return "blade_service_due"
-    if battery_cycles is not None and battery_cycles >= 500:
+    if (
+        battery_cycles is not None
+        and battery_cycles >= BATTERY_SERVICE_THRESHOLD_CYCLES
+    ):
         return "battery_service_due"
     return "ok"
 
@@ -416,9 +421,9 @@ def _maintenance_attributes(device) -> dict[str, Any]:
     )
     return {
         "blade_runtime_since_reset": blade_minutes,
-        "blade_service_threshold_minutes": 720,
+        "blade_service_threshold_minutes": BLADE_SERVICE_THRESHOLD_MINUTES,
         "battery_cycles_since_reset": battery_cycles,
-        "battery_service_threshold_cycles": 500,
+        "battery_service_threshold_cycles": BATTERY_SERVICE_THRESHOLD_CYCLES,
         "blade_runtime_reset_at": blade_reset_at.isoformat()
         if blade_reset_at
         else None,

@@ -311,6 +311,15 @@
     "select": {
       "one_time_mowing_zones": {
         "name": "Strefy koszenia jednorazowego"
+      },
+      "border_distance": {
+        "name": "Odległość od krawędzi",
+        "state": {
+          "50": "50 mm",
+          "100": "100 mm",
+          "150": "150 mm",
+          "200": "200 mm"
+        }
       }
     },
     "update": {
@@ -332,6 +341,16 @@
       "rtk_position": {
         "name": "Pozycja RTK"
       }
+    }
+  },
+  "issues": {
+    "blade_service_due": {
+      "title": "Wymagany serwis noży ({mower_name})",
+      "description": "Noże kosiarki {mower_name} przepracowały {hours} h od ostatniego resetu (próg: {threshold_hours} h). Wymień lub obróć noże, a następnie naciśnij przycisk resetu licznika noży na stronie urządzenia."
+    },
+    "battery_service_due": {
+      "title": "Zalecany serwis akumulatora ({mower_name})",
+      "description": "Kosiarka {mower_name} wykonała {cycles} cykli ładowania od ostatniego resetu (próg: {threshold_cycles}). Sprawdź stan akumulatora, a następnie naciśnij przycisk resetu licznika cykli na stronie urządzenia."
     }
   }
 }

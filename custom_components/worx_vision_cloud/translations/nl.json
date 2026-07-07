@@ -311,6 +311,15 @@
     "select": {
       "one_time_mowing_zones": {
         "name": "Maaizone"
+      },
+      "border_distance": {
+        "name": "Randafstand",
+        "state": {
+          "50": "50 mm",
+          "100": "100 mm",
+          "150": "150 mm",
+          "200": "200 mm"
+        }
       }
     },
     "update": {
@@ -332,6 +341,16 @@
       "rtk_position": {
         "name": "RTK-positie"
       }
+    }
+  },
+  "issues": {
+    "blade_service_due": {
+      "title": "Mesonderhoud nodig ({mower_name})",
+      "description": "De messen van {mower_name} hebben {hours} u maaitijd sinds de laatste reset (drempel: {threshold_hours} u). Vervang of draai de messen en druk daarna op de resetknop voor de messenteller op de apparaatpagina."
+    },
+    "battery_service_due": {
+      "title": "Accuonderhoud aanbevolen ({mower_name})",
+      "description": "{mower_name} heeft {cycles} laadcycli sinds de laatste reset (drempel: {threshold_cycles}). Controleer de accu en druk daarna op de resetknop voor de cyclusteller op de apparaatpagina."
     }
   }
 }

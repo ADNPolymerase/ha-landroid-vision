@@ -311,6 +311,15 @@
     "select": {
       "one_time_mowing_zones": {
         "name": "Klippezone"
+      },
+      "border_distance": {
+        "name": "Kantafstand",
+        "state": {
+          "50": "50 mm",
+          "100": "100 mm",
+          "150": "150 mm",
+          "200": "200 mm"
+        }
       }
     },
     "update": {
@@ -332,6 +341,16 @@
       "rtk_position": {
         "name": "RTK-position"
       }
+    }
+  },
+  "issues": {
+    "blade_service_due": {
+      "title": "Knivservice påkrævet ({mower_name})",
+      "description": "Knivene på {mower_name} har samlet {hours} t klippetid siden sidste nulstilling (grænse: {threshold_hours} t). Udskift eller vend knivene, og tryk derefter på knappen til nulstilling af knivtælleren på enhedssiden."
+    },
+    "battery_service_due": {
+      "title": "Batteriservice anbefales ({mower_name})",
+      "description": "{mower_name} har gennemført {cycles} opladningscyklusser siden sidste nulstilling (grænse: {threshold_cycles}). Tjek batteriet, og tryk derefter på knappen til nulstilling af cyklustælleren på enhedssiden."
     }
   }
 }

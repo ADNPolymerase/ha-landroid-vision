@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Added Home Assistant Repairs integration: when the blade cutting time or
+  battery charge cycles exceed the maintenance thresholds (12 h / 500
+  cycles, the same ones the maintenance sensor uses), an actionable issue
+  appears in Settings > Repairs and clears automatically after the matching
+  reset button is pressed. Mowers disabled in the device registry never
+  raise repairs.
+- Added a Border distance select (50/100/150/200 mm) for Vision mowers.
+  The Worx API accepts writing this setting but never reports it back, so
+  the entity is optimistic: it shows the last value set through Home
+  Assistant (persisted across restarts) and stays unknown until used once.
 - Fixed the Next schedule sensor going unknown on Vision protocol 1 mowers:
   pyworxcloud reports `schedules["active"]` as False on these models even
   while the weekly schedule genuinely runs, so the inactive flag now only

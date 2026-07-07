@@ -311,6 +311,15 @@
     "select": {
       "one_time_mowing_zones": {
         "name": "Mowing zone"
+      },
+      "border_distance": {
+        "name": "Border distance",
+        "state": {
+          "50": "50 mm",
+          "100": "100 mm",
+          "150": "150 mm",
+          "200": "200 mm"
+        }
       }
     },
     "update": {
@@ -332,6 +341,16 @@
       "rtk_position": {
         "name": "RTK position"
       }
+    }
+  },
+  "issues": {
+    "blade_service_due": {
+      "title": "Blade service due ({mower_name})",
+      "description": "The blades on {mower_name} have accumulated {hours} h of cutting time since the last reset (threshold: {threshold_hours} h). Replace or rotate the blades, then press the Reset blade counter button on the mower's device page."
+    },
+    "battery_service_due": {
+      "title": "Battery service recommended ({mower_name})",
+      "description": "{mower_name} has completed {cycles} charge cycles since the last reset (threshold: {threshold_cycles}). Check the battery condition, then press the Reset battery cycle counter button on the mower's device page."
     }
   }
 }

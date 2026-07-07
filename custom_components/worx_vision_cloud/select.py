@@ -8,9 +8,10 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
+from .const import BORDER_DISTANCE_OPTIONS_MM, DOMAIN
 from .entity import WorxVisionEntity
 from .helpers import get_dict_value, rtk_map_attributes
 
@@ -52,12 +53,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up select entities."""
     runtime = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [
-            OneTimeMowingZonesSelect(runtime.coordinator, entry, serial_number)
-            for serial_number in runtime.coordinator.data
-        ]
+    entities: list[SelectEntity] = [
+        OneTimeMowingZonesSelect(runtime.coordinator, entry, serial_number)
+        for serial_number in runtime.coordinator.data
+    ]
+    entities.extend(
+        WorxBorderDistanceSelect(runtime.coordinator, entry, serial_number)
+        for serial_number in runtime.coordinator.data
     )
+    async_add_entities(entities)
 
 
 def _zone_ids(device: Any) -> list[int]:
@@ -160,4 +164,53 @@ class OneTimeMowingZonesSelect(WorxVisionEntity, SelectEntity):
             raise HomeAssistantError(f"Unknown one-time mowing zone option: {option}")
         await self.coordinator.async_set_one_time_mowing_zones(
             self._serial_number, options[option]
+        )
+
+
+class WorxBorderDistanceSelect(WorxVisionEntity, SelectEntity):
+    """Vision border cutting distance.
+
+    The Worx API accepts writing this setting but never reports the current
+    value back, so the entity is optimistic: it shows the last value set
+    through Home Assistant (persisted across restarts) and stays unknown
+    until set here once.
+    """
+
+    _attr_translation_key = "border_distance"
+    _attr_icon = "mdi:ruler"
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_assumed_state = True
+    _attr_options = [str(value) for value in BORDER_DISTANCE_OPTIONS_MM]
+
+    def __init__(self, coordinator, entry, serial_number: str) -> None:
+        """Initialize border distance select."""
+        super().__init__(coordinator, entry, serial_number, "border_distance")
+
+    @property
+    def available(self) -> bool:
+        """Only Vision protocol 1 mowers accept this setting."""
+        return (
+            super().available
+            and getattr(self.device, "protocol", 0) == 1
+            and bool(getattr(self.device, "online", False))
+        )
+
+    @property
+    def current_option(self) -> str | None:
+        """Return the last border distance sent through Home Assistant."""
+        value = self.coordinator.border_distance(self._serial_number)
+        return None if value is None else str(value)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Explain the optimistic behavior."""
+        return {
+            "api_method": "pyworxcloud.set_border_distance",
+            "note": "write-only setting; shows the last value set from Home Assistant",
+        }
+
+    async def async_select_option(self, option: str) -> None:
+        """Send a new border distance to the mower."""
+        await self.coordinator.async_set_border_distance(
+            self._serial_number, int(option)
         )

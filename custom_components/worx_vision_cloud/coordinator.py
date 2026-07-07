@@ -13,6 +13,7 @@ from aiohttp import ClientError, ClientTimeout
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
@@ -28,8 +29,19 @@ from pyworxcloud.exceptions import (
 )
 from pyworxcloud.utils.requests import AGET, HEADERS
 
-from .const import DOMAIN
-from .helpers import MOWING_STATUS_IDS, STARTING_STATUS_IDS, get_dict_value, rtk_position
+from .const import (
+    BATTERY_SERVICE_THRESHOLD_CYCLES,
+    BLADE_SERVICE_THRESHOLD_MINUTES,
+    BORDER_DISTANCE_OPTIONS_MM,
+    DOMAIN,
+)
+from .helpers import (
+    MOWING_STATUS_IDS,
+    STARTING_STATUS_IDS,
+    device_display_name,
+    get_dict_value,
+    rtk_position,
+)
 from .statistics import DailyStatisticsTracker
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,6 +59,7 @@ LIVE_REFRESH_INTERVAL = timedelta(minutes=5)
 FIRMWARE_UPGRADE_CACHE_TTL = timedelta(minutes=30)
 STATISTICS_STORAGE_VERSION = 1
 STATISTICS_SAVE_DELAY = 60
+LOCAL_OPTIONS_STORAGE_VERSION = 1
 RTK_TRAIL_MAX_POINTS = 300
 DEFAULT_ONE_TIME_MOWING_RUNTIME = 60
 DEFAULT_ONE_TIME_MOWING_EDGE_CUT = False
@@ -102,6 +115,12 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._statistics = DailyStatisticsTracker()
         self._statistics_save_pending = False
         self._shutdown_complete = False
+        self._local_options_store = Store[dict[str, Any]](
+            hass,
+            LOCAL_OPTIONS_STORAGE_VERSION,
+            f"{DOMAIN}.{config_entry.entry_id}.local_options",
+        )
+        self._local_options: dict[str, dict[str, Any]] = {}
         self._event_lock = asyncio.Lock()
         self._rtk_address_lock = asyncio.Lock()
         self._last_rtk_address_lookup: datetime | None = None
@@ -122,6 +141,13 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._statistics = DailyStatisticsTracker(
             await self._statistics_store.async_load()
         )
+        stored_options = await self._local_options_store.async_load()
+        if isinstance(stored_options, dict):
+            self._local_options = {
+                str(serial): dict(options)
+                for serial, options in stored_options.items()
+                if isinstance(options, dict)
+            }
 
         def _on_data_received(name: str, device: DeviceHandler) -> None:
             del name
@@ -184,6 +210,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self._preserve_enriched_attributes(str(serial), device)
             self._remember_rtk_position(str(serial), device)
             self._update_daily_statistics(str(serial), device)
+            self._sync_repair_issues(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
             self.async_set_updated_data(data)
@@ -554,6 +581,42 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         await set_torque(serial_number, int(torque))
         await self.async_request_device_update(serial_number)
+
+    def border_distance(self, serial_number: str) -> int | None:
+        """Return the last border distance sent to the mower, if any.
+
+        The Worx API accepts writing this setting but never reports it back,
+        so the value is remembered locally (persisted across restarts) and
+        unknown until set once through Home Assistant.
+        """
+        value = self._local_options.get(serial_number, {}).get("border_distance")
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    async def async_set_border_distance(
+        self, serial_number: str, distance_mm: int
+    ) -> None:
+        """Set the Vision border cutting distance in millimeters."""
+        set_border_distance = getattr(self.cloud, "set_border_distance", None)
+        if set_border_distance is None:
+            raise HomeAssistantError(
+                "The installed pyworxcloud version does not support border distance"
+            )
+        distance = int(distance_mm)
+        if distance not in BORDER_DISTANCE_OPTIONS_MM:
+            raise HomeAssistantError(
+                "Border distance must be one of "
+                + ", ".join(f"{value} mm" for value in BORDER_DISTANCE_OPTIONS_MM)
+            )
+
+        await set_border_distance(serial_number, distance)
+        self._local_options.setdefault(serial_number, {})[
+            "border_distance"
+        ] = distance
+        await self._local_options_store.async_save(self._local_options)
+        self.async_set_updated_data(self.data or {})
 
     async def async_restart_mower(self, serial_number: str) -> None:
         """Reboot the mower baseboard."""
@@ -949,6 +1012,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         self._remember_rtk_position(serial_number, device)
         self._update_daily_statistics(serial_number, device)
+        self._sync_repair_issues(serial_number, device)
 
     async def _api_get(self, path: str) -> Any:
         """Fetch a private Worx API path using pyworxcloud's session/token."""
@@ -1091,6 +1155,97 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         """Return current statistics and allow scheduling the next save."""
         self._statistics_save_pending = False
         return self._statistics.as_dict()
+
+    def _counter_since_reset(
+        self, product_item: dict[str, Any], total_key: str, reset_key: str
+    ) -> int | None:
+        """Return a cumulative counter minus its optional reset marker."""
+        try:
+            total = int(float(product_item.get(total_key)))
+        except (TypeError, ValueError):
+            return None
+        try:
+            reset = int(float(product_item.get(reset_key)))
+        except (TypeError, ValueError):
+            return total
+        return max(0, total - reset)
+
+    def _sync_repair_issues(
+        self, serial_number: str, device: DeviceHandler
+    ) -> None:
+        """Raise or clear HA repair issues from maintenance counters.
+
+        Mirrors the maintenance sensor's thresholds, so the sensor and the
+        Repairs panel always agree on what needs attention.
+        """
+        product_item = getattr(device, "_worx_vision_product_item", {}) or {}
+        if not product_item:
+            return
+
+        blade_issue_id = f"blade_service_due_{serial_number}"
+        battery_issue_id = f"battery_service_due_{serial_number}"
+
+        # No repairs for mowers the user disabled in the device registry
+        # (e.g. an old mower still registered on the Worx account).
+        device_entry = dr.async_get(self.hass).async_get_device(
+            identifiers={(DOMAIN, serial_number)}
+        )
+        if device_entry is not None and device_entry.disabled:
+            ir.async_delete_issue(self.hass, DOMAIN, blade_issue_id)
+            ir.async_delete_issue(self.hass, DOMAIN, battery_issue_id)
+            return
+
+        mower_name = device_display_name(device)
+
+        blade_minutes = self._counter_since_reset(
+            product_item, "blade_work_time", "blade_work_time_reset"
+        )
+        blade_due = (
+            blade_minutes is not None
+            and blade_minutes >= BLADE_SERVICE_THRESHOLD_MINUTES
+        )
+        if blade_due:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                blade_issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="blade_service_due",
+                translation_placeholders={
+                    "mower_name": mower_name,
+                    "hours": str(round(blade_minutes / 60, 1)),
+                    "threshold_hours": str(
+                        round(BLADE_SERVICE_THRESHOLD_MINUTES / 60)
+                    ),
+                },
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, blade_issue_id)
+
+        battery_cycles = self._counter_since_reset(
+            product_item, "battery_charge_cycles", "battery_charge_cycles_reset"
+        )
+        battery_due = (
+            battery_cycles is not None
+            and battery_cycles >= BATTERY_SERVICE_THRESHOLD_CYCLES
+        )
+        if battery_due:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                battery_issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="battery_service_due",
+                translation_placeholders={
+                    "mower_name": mower_name,
+                    "cycles": str(battery_cycles),
+                    "threshold_cycles": str(BATTERY_SERVICE_THRESHOLD_CYCLES),
+                },
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, battery_issue_id)
 
     def area_mowed_today(self, serial_number: str) -> float | None:
         """Return the cloud counter increase since local midnight."""

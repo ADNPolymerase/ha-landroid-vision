@@ -112,6 +112,15 @@ def get_dict_value(obj: Any, key: str, default: Any = None) -> Any:
     return getattr(obj, key, default)
 
 
+def device_display_name(device: Any) -> str:
+    """Return a mower name without an account e-mail prefix."""
+    value = str(getattr(device, "name", "") or "").strip()
+    first_part, separator, mower_name = value.partition(" ")
+    if separator and "@" in first_part and mower_name.strip():
+        return mower_name.strip()
+    return value or "Worx Landroid Vision"
+
+
 def get_nested_value(obj: Any, *keys: str, default: Any = None) -> Any:
     """Read a nested key path from dict-like or object-like values."""
     value = obj

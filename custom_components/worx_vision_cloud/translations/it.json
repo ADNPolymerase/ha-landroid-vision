@@ -311,6 +311,15 @@
     "select": {
       "one_time_mowing_zones": {
         "name": "Zona di taglio"
+      },
+      "border_distance": {
+        "name": "Distanza dal bordo",
+        "state": {
+          "50": "50 mm",
+          "100": "100 mm",
+          "150": "150 mm",
+          "200": "200 mm"
+        }
       }
     },
     "update": {
@@ -332,6 +341,16 @@
       "rtk_position": {
         "name": "Posizione RTK"
       }
+    }
+  },
+  "issues": {
+    "blade_service_due": {
+      "title": "Manutenzione lame necessaria ({mower_name})",
+      "description": "Le lame di {mower_name} hanno accumulato {hours} h di taglio dall'ultimo azzeramento (soglia: {threshold_hours} h). Sostituisci o ruota le lame, poi premi il pulsante di azzeramento del contatore lame nella pagina del dispositivo."
+    },
+    "battery_service_due": {
+      "title": "Manutenzione batteria consigliata ({mower_name})",
+      "description": "{mower_name} ha completato {cycles} cicli di ricarica dall'ultimo azzeramento (soglia: {threshold_cycles}). Controlla la batteria, poi premi il pulsante di azzeramento del contatore cicli nella pagina del dispositivo."
     }
   }
 }
