@@ -51,8 +51,8 @@ RTK_ADDRESS_CACHE_TTL = timedelta(hours=24)
 RTK_ADDRESS_COORD_PRECISION = 7
 RTK_ADDRESS_ENDPOINT = "https://nominatim.openstreetmap.org/reverse"
 RTK_ADDRESS_USER_AGENT = (
-    "Worx Vision Cloud PLUS Home Assistant custom integration "
-    "(https://github.com/SmartServicePL/Worx-Vision-Cloud-PLUS)"
+    "Worx Landroid Vision PLUS Home Assistant custom integration "
+    "(https://github.com/ADNPolymerase/ha-landroid-vision)"
 )
 PRODUCT_ITEM_CACHE_TTL = timedelta(minutes=5)
 LIVE_REFRESH_INTERVAL = timedelta(minutes=5)

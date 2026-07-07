@@ -1,14 +1,14 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ADNPolymerase/worx_vision_cloud_plus_github/main/logo.png" alt="Worx Vision Cloud PLUS" width="360">
+  <img src="https://raw.githubusercontent.com/ADNPolymerase/ha-landroid-vision/main/logo.png" alt="Worx Landroid Vision PLUS" width="360">
 </p>
 
-# Worx Vision Cloud PLUS
+# Worx Landroid Vision PLUS
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/ADNPolymerase/worx_vision_cloud_plus_github)
-[![GitHub Release](https://badgen.net/github/release/ADNPolymerase/worx_vision_cloud_plus_github)](https://github.com/ADNPolymerase/worx_vision_cloud_plus_github/releases)
-[![Validate](https://github.com/ADNPolymerase/worx_vision_cloud_plus_github/actions/workflows/validate.yml/badge.svg)](https://github.com/ADNPolymerase/worx_vision_cloud_plus_github/actions/workflows/validate.yml)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/ADNPolymerase/ha-landroid-vision)
+[![GitHub Release](https://badgen.net/github/release/ADNPolymerase/ha-landroid-vision)](https://github.com/ADNPolymerase/ha-landroid-vision/releases)
+[![Validate](https://github.com/ADNPolymerase/ha-landroid-vision/actions/workflows/validate.yml/badge.svg)](https://github.com/ADNPolymerase/ha-landroid-vision/actions/workflows/validate.yml)
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg)](https://www.home-assistant.io/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ADNPolymerase/worx_vision_cloud_plus_github/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ADNPolymerase/ha-landroid-vision/blob/main/LICENSE)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?logo=buy-me-a-coffee)](https://buymeacoffee.com/adnpolymerase)
 
 <a href="https://buymeacoffee.com/adnpolymerase" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60"></a>
@@ -66,10 +66,10 @@ Integration originally prepared by Smart Service.
 1. Open HACS.
 2. Add this repository as a custom repository.
 3. Select category `Integration`.
-4. Install Worx Vision Cloud PLUS.
+4. Install Worx Landroid Vision PLUS.
 5. Restart Home Assistant.
 6. Go to `Settings > Devices & services > Add integration`.
-7. Search for `Worx Vision Cloud PLUS`.
+7. Search for `Worx Landroid Vision PLUS`.
 
 ## Manual Installation
 

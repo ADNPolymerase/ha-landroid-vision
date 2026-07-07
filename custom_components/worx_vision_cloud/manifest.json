@@ -1,16 +1,16 @@
 {
   "domain": "worx_vision_cloud",
-  "name": "Worx Vision Cloud PLUS",
+  "name": "Worx Landroid Vision PLUS",
   "after_dependencies": [],
   "codeowners": [
     "@SmartServicePL"
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/SmartServicePL/worx_vision_cloud_plus_github",
+  "documentation": "https://github.com/ADNPolymerase/ha-landroid-vision",
   "integration_type": "hub",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/SmartServicePL/worx_vision_cloud_plus_github/issues",
+  "issue_tracker": "https://github.com/ADNPolymerase/ha-landroid-vision/issues",
   "loggers": [
     "pyworxcloud"
   ],
