@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Persisted the RTK map id cache to Home Assistant storage, so the map camera and RTK map sensor no longer need to wait for the mower to send a fresh cfg payload with the rtk block after a restart (observed: docked/idle mowers can go a while without one, only sending it again once mowing resumes). The stored value is a single short string per mower and only gets written when it actually changes, so this stays tiny over time rather than accumulating.
 - Added Russian translation.
 - Fixed the RTK map camera and sensor going unavailable/unknown again after
   several hours, even without any restart. The 1.6.2 fix compared the

@@ -67,6 +67,7 @@ RTK_TRAIL_SAVE_DELAY = 60
 # local midnight (see _remember_rtk_position), so this only guards against
 # unbounded growth if positions ever streamed in absurdly often.
 RTK_TRAIL_MAX_POINTS_PER_DAY = 4000
+RTK_MAP_ID_STORAGE_VERSION = 1
 DEFAULT_ONE_TIME_MOWING_RUNTIME = 60
 DEFAULT_ONE_TIME_MOWING_EDGE_CUT = False
 
@@ -149,8 +150,16 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         # Independent last-known-good cache, decoupled from pyworxcloud's
         # DeviceHandler (which it mutates in place, so it never holds a
         # true "previous" snapshot to preserve from - see
-        # _remember_rtk_map_id).
+        # _remember_rtk_map_id). Persisted: a mower's map id is stable for
+        # long stretches (it only changes if the boundary gets remapped in
+        # the Worx app), so this is one short string per mower, not
+        # something that grows over time.
         self._rtk_map_ids: dict[str, str] = {}
+        self._rtk_map_id_store = Store[dict[str, str]](
+            hass,
+            RTK_MAP_ID_STORAGE_VERSION,
+            f"{DOMAIN}.{config_entry.entry_id}.rtk_map_id",
+        )
         self._one_time_mowing_options: dict[str, dict[str, Any]] = {}
         self._unsub_periodic_refresh: Callable[[], None] | None = None
 
@@ -168,6 +177,14 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             }
 
         await self._load_rtk_trail()
+
+        stored_map_ids = await self._rtk_map_id_store.async_load()
+        if isinstance(stored_map_ids, dict):
+            self._rtk_map_ids = {
+                str(serial): str(value)
+                for serial, value in stored_map_ids.items()
+                if value
+            }
 
         def _on_data_received(name: str, device: DeviceHandler) -> None:
             del name
@@ -199,6 +216,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         try:
             await self._statistics_store.async_save(self._statistics.as_dict())
             await self._rtk_trail_store.async_save(self._rtk_trail_store_data())
+            await self._rtk_map_id_store.async_save(dict(self._rtk_map_ids))
         finally:
             await super().async_shutdown()
 
@@ -1074,10 +1092,22 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         omits the rtk block. The only reliable fix is a cache that lives
         outside that object entirely, updated whenever a real value is seen
         and used as a fallback whenever it briefly isn't.
+
+        Also persisted to storage (only when it actually changes, so this
+        stays a fire-and-forget write, not something callers need to await)
+        since a mower can sit docked for a while after a restart without
+        Worx ever sending a payload containing the rtk block again, which
+        would otherwise leave the camera without a map id to work with
+        until the next mow.
         """
         live_value = rtk_map_id(device)
-        if live_value is not None:
+        if live_value is not None and self._rtk_map_ids.get(serial_number) != str(
+            live_value
+        ):
             self._rtk_map_ids[serial_number] = str(live_value)
+            self.hass.async_create_task(
+                self._rtk_map_id_store.async_save(dict(self._rtk_map_ids))
+            )
         return self._rtk_map_ids.get(serial_number)
 
     @staticmethod
