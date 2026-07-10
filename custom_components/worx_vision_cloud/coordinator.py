@@ -888,22 +888,34 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         return None if cached is None else cached[1]
 
     def rtk_position_trail(
-        self, serial_number: str, max_points: int = 120
+        self, serial_number: str, max_points: int | None = None
     ) -> list[tuple[float, float]]:
-        """Return recent RTK positions for map rendering."""
+        """Return the day's RTK positions for map rendering."""
         trail = self._rtk_position_trails.get(serial_number)
         if trail is None:
             return []
-        return [(lat, lon) for _, lat, lon in list(trail)[-max_points:]]
+        points = list(trail)
+        if max_points is not None:
+            points = points[-max_points:]
+        return [(lat, lon) for _, lat, lon in points]
 
     def rtk_position_timed_trail(
-        self, serial_number: str, max_points: int = 120
+        self, serial_number: str, max_points: int | None = None
     ) -> list[tuple[datetime, float, float]]:
-        """Return recent RTK positions with timestamps for map rendering."""
+        """Return the day's RTK positions with timestamps for map rendering.
+
+        Defaults to the whole day's trail: the deque is already reset at
+        local midnight and capped per day, so slicing further here would
+        turn the full-day trail back into a rolling window (the camera
+        used to render only the last 120 points because of exactly that).
+        """
         trail = self._rtk_position_trails.get(serial_number)
         if trail is None:
             return []
-        return list(trail)[-max_points:]
+        points = list(trail)
+        if max_points is not None:
+            points = points[-max_points:]
+        return points
 
     async def async_reverse_geocode_rtk_position(
         self, position: tuple[float, float] | None, *, force: bool = False

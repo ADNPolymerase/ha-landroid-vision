@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed the map camera still rendering only the last 120 trail points despite the full-day trail introduced in 1.6.2. The coordinator kept (and persisted) the whole day correctly, but the camera's trail accessor had a leftover `max_points=120` default from the old rolling-window design, so the start of the trail silently slid out of the rendered map as the mower kept adding points — visible as the morning's mowing disappearing from the card during the afternoon. The accessor now returns the full day's trail by default.
+
 ## 1.6.3 - 2026-07-09
 
 - Added a set_rtk_map_id service to manually seed or correct the cached RTK map id when Worx doesn't resend it promptly (observed live: it can go quiet for a long stretch, even during active mowing with a good GPS fix). The last known value can be recovered from the RTK map sensor's own state history and set through this service to unblock the map camera and the lawn-area-dependent sensors immediately, without waiting for Worx's cloud to cooperate.
