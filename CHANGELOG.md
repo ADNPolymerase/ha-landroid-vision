@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.4 - 2026-07-10
 
 - Fixed the map camera still rendering only the last 120 trail points despite the full-day trail introduced in 1.6.2. The coordinator kept (and persisted) the whole day correctly, but the camera's trail accessor had a leftover `max_points=120` default from the old rolling-window design, so the start of the trail silently slid out of the rendered map as the mower kept adding points — visible as the morning's mowing disappearing from the card during the afternoon. The accessor now returns the full day's trail by default.
 
