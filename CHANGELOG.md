@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1 - 2026-07-27
+
+- Bumped pyworxcloud from 6.4.1 to 6.4.2. Upstream now decodes the GPS position natively from `dat.rtk.pos` for Vision/RTK mowers, and the `time_extension` step requirement was relaxed to 1 for finer mowing-time adjustments. No functional change in the integration itself; the native GPS decode opens the door to simplifying the map trail parsing in a future release.
+
 ## 1.7.0 - 2026-07-26
 
 - Added a NearLink connection diagnostic sensor, contributed by @Razzertaz (#1). It exposes the mower's active NearLink peer as a translated enum state (Dock / RadioLink adapter / Disconnected / Unknown) with detailed attributes: NearLink module status and error, link RSSI, peer MAC and firmware, and robot/peer Wi-Fi status and RSSI. The sensor is only created for mowers whose payload actually reports an `NL` module, the private payload is parsed defensively, and the type→peer mapping (1 = dock, 2 = RadioLink adapter) is a best-effort mapping live-validated on a WR342E with a WA0900 adapter — unknown future peer types show as Unknown while keeping the raw type in attributes. Ships with translations in all 11 languages and unit tests.
