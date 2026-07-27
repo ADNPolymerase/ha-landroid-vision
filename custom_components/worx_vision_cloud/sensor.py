@@ -47,6 +47,8 @@ from .helpers import (
     raw_entity_values,
     raw_path_enabled_default,
     rtk_at_station,
+    rtk_current_zone,
+    rtk_current_zone_name,
     rtk_distance_to_station_m,
     rtk_map_attributes,
     rtk_position,
@@ -198,6 +200,34 @@ def _rtk_station_status_attrs(device) -> dict[str, Any]:
 
 def _zone(device, key, default=None):
     return get_dict_value(getattr(device, "zone", {}), key, default)
+
+
+def _zone_current_state(device) -> Any:
+    """Return legacy current zone or RTK map zone name."""
+    legacy_value = _zone(device, "current")
+    if legacy_value not in (None, ""):
+        return legacy_value
+    return rtk_current_zone_name(device)
+
+
+def _zone_current_attributes(device) -> dict[str, Any]:
+    """Return current-zone diagnostic attributes for legacy and RTK mowers."""
+    current_zone = rtk_current_zone(device)
+    legacy_value = _zone(device, "current")
+    if legacy_value not in (None, ""):
+        source = "legacy"
+    elif current_zone is not None:
+        source = "rtk_map"
+    else:
+        source = None
+    return {
+        "source": source,
+        "zone_id": get_dict_value(current_zone or {}, "id"),
+        "zone_name": get_dict_value(current_zone or {}, "name"),
+        "legacy_index": _zone(device, "index"),
+        "legacy_ids": _zone(device, "ids"),
+        "legacy_starting_point": _zone(device, "starting_point"),
+    }
 
 
 def _statistics(device, key, default=None):
@@ -679,12 +709,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         key="zone_current",
         translation_key="zone_current",
         icon="mdi:map-marker-path",
-        value_fn=lambda d: _zone(d, "current"),
-        attrs_fn=lambda d: {
-            "index": _zone(d, "index"),
-            "ids": _zone(d, "ids"),
-            "starting_point": _zone(d, "starting_point"),
-        },
+        value_fn=_zone_current_state,
+        attrs_fn=_zone_current_attributes,
     ),
     WorxSensorDescription(
         key="mowing_readiness",

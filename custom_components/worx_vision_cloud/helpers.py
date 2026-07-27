@@ -385,6 +385,105 @@ def rtk_at_station(device: Any, threshold_m: float = 2.5) -> bool:
     return distance is not None and distance <= threshold_m
 
 
+def _zone_point_pair(point: Any) -> tuple[float, float] | None:
+    """Return a latitude/longitude pair from a Worx RTK map point."""
+    if not isinstance(point, list | tuple) or len(point) < 2:
+        return None
+    try:
+        latitude = float(point[0])
+        longitude = float(point[1])
+    except (TypeError, ValueError):
+        return None
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return None
+    return latitude, longitude
+
+
+def _zone_contour_points(contour: Any) -> list[tuple[float, float]]:
+    """Return normalized latitude/longitude points from one RTK map contour."""
+    if not isinstance(contour, dict):
+        return []
+    return [
+        pair
+        for pair in (
+            _zone_point_pair(point)
+            for point in get_dict_value(contour, "points", []) or []
+        )
+        if pair is not None
+    ]
+
+
+def _point_in_ring(
+    point: tuple[float, float], ring: list[tuple[float, float]]
+) -> bool:
+    """Return whether a latitude/longitude point is inside a polygon ring."""
+    if len(ring) < 3:
+        return False
+
+    x, y = point[1], point[0]
+    inside = False
+    x1, y1 = ring[-1][1], ring[-1][0]
+    for latitude, longitude in ring:
+        x2, y2 = longitude, latitude
+        if (y1 > y) != (y2 > y):
+            x_intersect = (x2 - x1) * (y - y1) / (y2 - y1) + x1
+            if x < x_intersect:
+                inside = not inside
+        x1, y1 = x2, y2
+    return inside
+
+
+def _point_in_contour(point: tuple[float, float], contour: Any) -> bool:
+    """Return whether point is inside a contour and outside its hole children."""
+    if not _point_in_ring(point, _zone_contour_points(contour)):
+        return False
+
+    for child in get_dict_value(contour, "children", []) or []:
+        if isinstance(child, dict) and _point_in_ring(
+            point, _zone_contour_points(child)
+        ):
+            return False
+    return True
+
+
+def rtk_current_zone(device: Any) -> dict[str, Any] | None:
+    """Return the RTK map zone containing the mower's current position."""
+    position = rtk_position(device)
+    if position is None:
+        return None
+
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    if not isinstance(map_data, dict):
+        return None
+
+    boundaries = get_nested_value(map_data, "layers", "boundaries", default=[]) or []
+    if not isinstance(boundaries, list | tuple):
+        return None
+
+    for boundary in boundaries:
+        for zone in get_dict_value(boundary, "zones", []) or []:
+            if not isinstance(zone, dict):
+                continue
+            for contour in get_dict_value(zone, "contours", []) or []:
+                if _point_in_contour(position, contour):
+                    return zone
+    return None
+
+
+def rtk_current_zone_name(device: Any) -> str | None:
+    """Return the configured RTK zone name containing the current position."""
+    zone = rtk_current_zone(device)
+    if zone is None:
+        return None
+
+    name = get_dict_value(zone, "name")
+    if name not in (None, ""):
+        return str(name)
+
+    zone_id = get_dict_value(zone, "id")
+    return f"Zone {zone_id}" if zone_id not in (None, "") else None
+
+
 def rtk_location_attributes(device: Any) -> dict[str, Any]:
     """Return RTK location diagnostic attributes."""
     dat_rtk = get_nested_value(_raw_dat(device), "rtk", default={}) or {}
