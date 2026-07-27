@@ -153,7 +153,7 @@ async def _set_rain_delay(coordinator, serial_number: str, value: float) -> None
 
 
 async def _set_time_extension(coordinator, serial_number: str, value: float) -> None:
-    await coordinator.async_set_time_extension(serial_number, round(value / 10) * 10)
+    await coordinator.async_set_time_extension(serial_number, round(value))
 
 
 async def _set_lawn_area(coordinator, serial_number: str, value: float) -> None:
@@ -192,7 +192,7 @@ NUMBERS: tuple[WorxNumberDescription, ...] = (
         entity_registry_enabled_default=False,
         native_min_value=-100,
         native_max_value=100,
-        native_step=10,
+        native_step=1,
         native_unit_of_measurement=PERCENTAGE,
         mode=NumberMode.BOX,
         value_fn=lambda d: _as_float(_schedule_value(d, "time_extension")),
