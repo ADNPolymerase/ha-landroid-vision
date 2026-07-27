@@ -13,7 +13,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import BORDER_DISTANCE_OPTIONS_MM, DOMAIN
 from .entity import WorxVisionEntity
-from .helpers import get_dict_value, rtk_map_attributes
+from .helpers import get_dict_value, get_nested_value, rtk_map_attributes
 
 DEFAULT_LANGUAGE = "en"
 MAX_COMBINATION_ZONES = 5
@@ -167,13 +167,54 @@ class OneTimeMowingZonesSelect(WorxVisionEntity, SelectEntity):
         )
 
 
+def _raw_cfg(device) -> dict[str, Any]:
+    """Return the latest raw mower config payload."""
+    value = getattr(device, "raw_cfg", {}) or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _first_raw_zone_cutting(device) -> dict[str, Any]:
+    """Return the first zone cutting config from known protocol 1 locations."""
+    raw_cfg = _raw_cfg(device)
+    for zone_path in (("rtk", "zs"), ("mz", "s")):
+        zones = get_nested_value(raw_cfg, *zone_path, default=[]) or []
+        if not isinstance(zones, list | tuple):
+            continue
+        for zone in zones:
+            cutting = get_nested_value(zone, "cfg", "cut", default={}) or {}
+            if isinstance(cutting, dict) and cutting:
+                return cutting
+    return {}
+
+
+def _live_border_distance(device) -> int | None:
+    """Return the border distance reported by the mower config, if any."""
+    zone_cutting = _first_raw_zone_cutting(device)
+    candidates = (
+        get_nested_value(_raw_cfg(device), "cut", "bd"),
+        get_nested_value(_raw_cfg(device), "cut", "co"),
+        get_dict_value(zone_cutting, "bd"),
+        get_dict_value(zone_cutting, "co"),
+    )
+    for candidate in candidates:
+        try:
+            value = int(candidate)
+        except (TypeError, ValueError):
+            continue
+        if value > 0:
+            return value
+    return None
+
+
 class WorxBorderDistanceSelect(WorxVisionEntity, SelectEntity):
     """Vision border cutting distance.
 
-    The Worx API accepts writing this setting but never reports the current
-    value back, so the entity is optimistic: it shows the last value set
-    through Home Assistant (persisted across restarts) and stays unknown
-    until set here once.
+    Newer Vision firmwares report the configured value back in the raw
+    config (cfg.cut.bd/co, or per-zone cutting configs on protocol 1), so
+    the live value is preferred when present. When the mower doesn't
+    report it, the entity falls back to the last value set through Home
+    Assistant (persisted across restarts) and stays unknown until set
+    here once.
     """
 
     _attr_translation_key = "border_distance"
@@ -197,16 +238,32 @@ class WorxBorderDistanceSelect(WorxVisionEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        """Return the last border distance sent through Home Assistant."""
+        """Return the live border distance, falling back to the last one set."""
+        live_value = _live_border_distance(self.device)
+        if live_value is not None and live_value in BORDER_DISTANCE_OPTIONS_MM:
+            return str(live_value)
         value = self.coordinator.border_distance(self._serial_number)
         return None if value is None else str(value)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Explain the optimistic behavior."""
+        """Expose the raw values behind the live/optimistic state."""
+        zone_cutting = _first_raw_zone_cutting(self.device)
         return {
             "api_method": "pyworxcloud.set_border_distance",
-            "note": "write-only setting; shows the last value set from Home Assistant",
+            "source": (
+                "live"
+                if _live_border_distance(self.device) is not None
+                else "last_set_from_home_assistant"
+            ),
+            "raw_top_level_border_distance": get_nested_value(
+                _raw_cfg(self.device), "cut", "bd"
+            ),
+            "raw_top_level_cut_offset": get_nested_value(
+                _raw_cfg(self.device), "cut", "co"
+            ),
+            "raw_zone_border_distance": get_dict_value(zone_cutting, "bd"),
+            "raw_zone_cut_offset": get_dict_value(zone_cutting, "co"),
         }
 
     async def async_select_option(self, option: str) -> None:

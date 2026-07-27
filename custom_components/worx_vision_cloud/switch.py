@@ -59,6 +59,26 @@ def _rtk_map_data(device) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _raw_cfg(device) -> dict[str, Any]:
+    """Return the latest raw mower config payload."""
+    value = getattr(device, "raw_cfg", {}) or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _first_raw_zone_cutting(device) -> dict[str, Any]:
+    """Return the first zone cutting config from known protocol 1 locations."""
+    raw_cfg = _raw_cfg(device)
+    for zone_path in (("rtk", "zs"), ("mz", "s")):
+        zones = get_nested_value(raw_cfg, *zone_path, default=[]) or []
+        if not isinstance(zones, list | tuple):
+            continue
+        for zone in zones:
+            cutting = get_nested_value(zone, "cfg", "cut", default={}) or {}
+            if isinstance(cutting, dict) and cutting:
+                return cutting
+    return {}
+
+
 def _first_map_zone_metadata(device) -> dict[str, Any]:
     """Return metadata from the first RTK map boundary zone."""
     layers = get_dict_value(_rtk_map_data(device), "layers", {}) or {}
@@ -74,8 +94,12 @@ def _first_map_zone_metadata(device) -> dict[str, Any]:
 
 def _smart_edge_cut_enabled(device) -> bool | None:
     """Return whether Vision border cutting may cut over the border."""
-    raw_value = get_nested_value(getattr(device, "raw_cfg", {}) or {}, "cut", "ob")
+    raw_value = get_nested_value(_raw_cfg(device), "cut", "ob")
     value = _as_bool(raw_value)
+    if value is not None:
+        return value
+
+    value = _as_bool(get_dict_value(_first_raw_zone_cutting(device), "ob"))
     if value is not None:
         return value
 
@@ -94,15 +118,22 @@ def _smart_edge_cut_enabled(device) -> bool | None:
 def _smart_edge_cut_attributes(device) -> dict[str, Any]:
     """Return map metadata related to intelligent edge cutting."""
     metadata = _first_map_zone_metadata(device)
+    raw_zone_cut = _first_raw_zone_cutting(device)
     product_item = _product_item(device)
     capabilities = get_dict_value(product_item, "capabilities", []) or []
     if not isinstance(capabilities, list | tuple):
         capabilities = []
 
     return {
-        "api_field": "cfg.cut.ob / layers.boundaries[].zones[].metadata.cut_over_border",
+        "api_field": "cfg.cut.ob / cfg.rtk.zs[].cfg.cut.ob / cfg.mz.s[].cfg.cut.ob",
         "capability_border_cut": "border_cut" in capabilities,
         "capability_pause_over_border": "pause_over_border" in capabilities,
+        "raw_top_level_cut_over_border": get_nested_value(
+            _raw_cfg(device), "cut", "ob"
+        ),
+        "raw_zone_cut_over_border": get_dict_value(raw_zone_cut, "ob"),
+        "raw_zone_border_distance": get_dict_value(raw_zone_cut, "bd"),
+        "raw_zone_cut_offset": get_dict_value(raw_zone_cut, "co"),
         "cut_type": get_dict_value(metadata, "cut_type"),
         "cut_direction": get_dict_value(metadata, "cut_direction"),
         "pattern_width": get_dict_value(metadata, "pattern_width"),
