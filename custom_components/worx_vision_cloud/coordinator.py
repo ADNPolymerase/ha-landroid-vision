@@ -134,6 +134,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._rtk_map_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._rtk_address_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._product_item_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        # Tracks when the product-item payload last actually CHANGED (not just
+        # when it was re-fetched), so the "cloud statistics updated" sensor
+        # only moves when the statistics move -- avoids recorder churn.
+        self._product_item_changed_at: dict[str, datetime] = {}
         self._firmware_upgrade_cache: dict[
             str, tuple[datetime, dict[str, Any]]
         ] = {}
@@ -820,6 +824,8 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         product_item = await self._api_get(f"/api/v2/product-items/{serial_number}")
         if isinstance(product_item, dict):
+            if cached is None or cached[1] != product_item:
+                self._product_item_changed_at[serial_number] = now
             self._product_item_cache[serial_number] = (now, product_item)
             return product_item
 
@@ -1037,12 +1043,12 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         product_item = await self.async_get_product_item(serial_number)
         if product_item is not None:
             setattr(device, "_worx_vision_product_item", product_item)
-            cached_product_item = self._product_item_cache.get(serial_number)
-            if cached_product_item is not None:
+            changed_at = self._product_item_changed_at.get(serial_number)
+            if changed_at is not None:
                 setattr(
                     device,
                     "_worx_vision_product_item_updated_at",
-                    cached_product_item[0],
+                    changed_at,
                 )
             _LOGGER.debug(
                 "Enriched device %s: area_mowed=%s",

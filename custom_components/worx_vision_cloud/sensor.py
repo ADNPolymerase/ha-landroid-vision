@@ -24,6 +24,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
@@ -334,13 +335,6 @@ def _cloud_statistics_updated(device) -> datetime | None:
     if isinstance(value, datetime):
         return value.astimezone(UTC)
     return None
-
-
-def _last_update_age(device) -> int | None:
-    updated = _last_update(device)
-    if updated is None:
-        return None
-    return max(0, round((datetime.now(UTC) - updated).total_seconds() / 60))
 
 
 def _capability_summary(device) -> str | None:
@@ -942,16 +936,6 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         icon="mdi:axis-z-rotate-clockwise",
         value_fn=lambda d: _orientation(d, "yaw"),
     ),
-    WorxSensorDescription(
-        key="last_update_age",
-        translation_key="last_update_age",
-        native_unit_of_measurement=UnitOfTime.MINUTES,
-        device_class=SensorDeviceClass.DURATION,
-        state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:timer-sand",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=_last_update_age,
-    ),
 )
 
 
@@ -966,6 +950,17 @@ async def async_setup_entry(
 
     entities: list[SensorEntity] = []
     known_raw: set[str] = set()
+
+    # 1.7.2: the "last update age" sensor was removed (redundant with the
+    # timestamp sensor, and its minute-counter state hammered the recorder).
+    # Drop the leftover registry entry so users don't keep an orphan.
+    entity_registry = er.async_get(hass)
+    for serial_number in coordinator.data:
+        stale = entity_registry.async_get_entity_id(
+            "sensor", DOMAIN, f"{serial_number}_last_update_age"
+        )
+        if stale is not None:
+            entity_registry.async_remove(stale)
 
     for serial_number in coordinator.data:
         device = coordinator.data[serial_number]
