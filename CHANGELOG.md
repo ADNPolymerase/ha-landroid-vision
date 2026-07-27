@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.2 - 2026-07-27
+
+- The "Cloud statistics updated" timestamp now only changes when the Worx product statistics actually change, instead of on every 5-minute poll. Observed live: ~236 recorder writes per day for a sensor that mostly repeated itself; it now only moves during mowing/charging activity. The polling cadence itself is unchanged -- only the sensor state updates are deduplicated.
+- Removed the "Last update age" sensor. Its minute-counter state changed ~600 times per day in the recorder, and it duplicated what Home Assistant already renders for free from the "Last update" timestamp sensor ("5 minutes ago", refreshed in the UI without any database writes). The orphaned entity is cleaned from the registry automatically on upgrade; if you used it in an automation, trigger on the "Last update" timestamp instead.
+
 ## 1.7.1 - 2026-07-27
 
 - Bumped pyworxcloud from 6.4.1 to 6.4.2. Upstream now decodes the GPS position natively from `dat.rtk.pos` for Vision/RTK mowers, and the `time_extension` step requirement was relaxed to 1 for finer mowing-time adjustments. No functional change in the integration itself; the native GPS decode opens the door to simplifying the map trail parsing in a future release.
