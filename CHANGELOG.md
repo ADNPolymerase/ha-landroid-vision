@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.0 - 2026-07-28
+
+Feature sync with upstream SmartServicePL 1.3.0/1.3.1, adapted to this fork's entity layer.
+
+- Fixed the Current zone sensor staying unknown on Vision/RTK mowers: when the legacy Worx zone field is empty (common on these models), the sensor now resolves the mower's live RTK position against the map zone polygons (point-in-polygon, honoring exclusion holes) and reports the matching zone name, falling back to `Zone <id>` when the zone is unnamed. Attributes expose the resolution source (`legacy` vs `rtk_map`) alongside the legacy fields. Ships with unit tests.
+- Made mower commands resilient to stale cloud sessions: the Worx MQTT connection is now checked and reconnected before edge-cut and one-time-mowing commands, with one automatic retry if the publish still hits a dead connection. The post-command state refresh is now best effort — an accepted command is no longer reported as failed just because the immediate refresh timed out.
+- The Border distance select now shows the real configured value when the mower reports it back (newer Vision firmwares expose it in `cfg.cut.bd`/`co` and in per-zone cutting configs), and only falls back to the last value set through Home Assistant otherwise. A `source` attribute says which one you're looking at, and setting a distance updates the cached raw config immediately.
+- Improved Smart edge cutting state detection on protocol 1 mowers: the switch (and its attributes) now also reads the per-zone cutting configs (`cfg.rtk.zs[].cfg.cut.ob` / `cfg.mz.s[].cfg.cut.ob`) instead of only the top-level flag and map metadata, and toggling it updates all zone configs in the cached state.
+- Added five diagnostic capability sensors read from the Worx product item: PIN setting supported, Vision disable supported, random mowing pattern supported, map training supported and diagnostic upload supported. Status only for now — pyworxcloud does not expose safe control methods for these functions. Translated in all 11 languages.
+- The schedule Time extension number now accepts 1% steps instead of 10% (allowed by pyworxcloud 6.4.2, already shipped in 1.7.1).
+
 ## 1.7.2 - 2026-07-27
 
 - The "Cloud statistics updated" timestamp now only changes when the Worx product statistics actually change, instead of on every 5-minute poll. Observed live: ~236 recorder writes per day for a sensor that mostly repeated itself; it now only moves during mowing/charging activity. The polling cadence itself is unchanged -- only the sensor state updates are deduplicated.

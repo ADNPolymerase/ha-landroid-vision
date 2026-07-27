@@ -1,21 +1,21 @@
 {
-    "domain": "worx_vision_cloud",
-    "name": "Worx Landroid Vision PLUS",
-    "after_dependencies": [],
-    "codeowners": [
-        "@ADNPolymerase"
-    ],
-    "config_flow": true,
-    "dependencies": [],
-    "documentation": "https://github.com/ADNPolymerase/ha-landroid-vision",
-    "integration_type": "hub",
-    "iot_class": "cloud_push",
-    "issue_tracker": "https://github.com/ADNPolymerase/ha-landroid-vision/issues",
-    "loggers": [
-        "pyworxcloud"
-    ],
-    "requirements": [
-        "pyworxcloud==6.4.2"
-    ],
-    "version": "1.7.2"
+  "domain": "worx_vision_cloud",
+  "name": "Worx Landroid Vision PLUS",
+  "after_dependencies": [],
+  "codeowners": [
+    "@ADNPolymerase"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/ADNPolymerase/ha-landroid-vision",
+  "integration_type": "hub",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/ADNPolymerase/ha-landroid-vision/issues",
+  "loggers": [
+    "pyworxcloud"
+  ],
+  "requirements": [
+    "pyworxcloud==6.4.2"
+  ],
+  "version": "1.8.0"
 }
