@@ -5,6 +5,10 @@ on:
   pull_request:
     types: [opened]
 
+permissions:
+  issues: write
+  pull-requests: write
+
 jobs:
   assign:
     runs-on: ubuntu-latest
@@ -21,4 +25,3 @@ jobs:
                 : context.payload.pull_request.number,
               assignees: ['ADNPolymerase'],
             });
-
