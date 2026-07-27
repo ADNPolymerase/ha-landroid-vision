@@ -243,6 +243,21 @@
       },
       "pause_mode_enabled": {
         "name": "Mode pause activé"
+      },
+      "pin_setting_supported": {
+        "name": "Réglage du PIN pris en charge"
+      },
+      "vision_disable_supported": {
+        "name": "Désactivation de Vision prise en charge"
+      },
+      "random_pattern_supported": {
+        "name": "Motif de tonte aléatoire pris en charge"
+      },
+      "map_training_supported": {
+        "name": "Apprentissage de carte pris en charge"
+      },
+      "diagnostic_upload_supported": {
+        "name": "Envoi de diagnostic pris en charge"
       }
     },
     "switch": {

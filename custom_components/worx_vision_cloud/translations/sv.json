@@ -243,6 +243,21 @@
       },
       "pause_mode_enabled": {
         "name": "Pausläge aktiverat"
+      },
+      "pin_setting_supported": {
+        "name": "PIN-inställning stöds"
+      },
+      "vision_disable_supported": {
+        "name": "Avaktivering av Vision stöds"
+      },
+      "random_pattern_supported": {
+        "name": "Slumpmässigt klippmönster stöds"
+      },
+      "map_training_supported": {
+        "name": "Kartträning stöds"
+      },
+      "diagnostic_upload_supported": {
+        "name": "Diagnostikuppladdning stöds"
       }
     },
     "switch": {

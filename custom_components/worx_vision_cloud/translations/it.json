@@ -243,6 +243,21 @@
       },
       "pause_mode_enabled": {
         "name": "Modalità pausa attiva"
+      },
+      "pin_setting_supported": {
+        "name": "Impostazione PIN supportata"
+      },
+      "vision_disable_supported": {
+        "name": "Disattivazione Vision supportata"
+      },
+      "random_pattern_supported": {
+        "name": "Schema di taglio casuale supportato"
+      },
+      "map_training_supported": {
+        "name": "Addestramento mappa supportato"
+      },
+      "diagnostic_upload_supported": {
+        "name": "Caricamento diagnostica supportato"
       }
     },
     "switch": {

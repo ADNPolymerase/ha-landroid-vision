@@ -243,6 +243,21 @@
       },
       "pause_mode_enabled": {
         "name": "Pausenmodus aktiviert"
+      },
+      "pin_setting_supported": {
+        "name": "PIN-Einstellung unterstützt"
+      },
+      "vision_disable_supported": {
+        "name": "Vision-Deaktivierung unterstützt"
+      },
+      "random_pattern_supported": {
+        "name": "Zufälliges Mähmuster unterstützt"
+      },
+      "map_training_supported": {
+        "name": "Kartentraining unterstützt"
+      },
+      "diagnostic_upload_supported": {
+        "name": "Diagnose-Upload unterstützt"
       }
     },
     "switch": {

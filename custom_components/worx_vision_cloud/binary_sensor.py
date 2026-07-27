@@ -60,6 +60,17 @@ def _product_item(device) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _capabilities(device) -> list[str]:
+    """Return API capability strings from the product item."""
+    value = get_dict_value(_product_item(device), "capabilities", []) or []
+    return list(value) if isinstance(value, list | tuple) else []
+
+
+def _has_capability(device, capability: str) -> bool:
+    """Return true when the mower reports one API capability."""
+    return capability in _capabilities(device)
+
+
 def _as_bool(value: Any) -> bool | None:
     """Return a bool from common API bool/int/string values."""
     if isinstance(value, bool):
@@ -159,6 +170,72 @@ BINARY_SENSORS: tuple[WorxBinarySensorDescription, ...] = (
         translation_key="pause_mode_enabled",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: getattr(d, "pause_mode_enabled", None),
+    ),
+    WorxBinarySensorDescription(
+        key="pin_setting_supported",
+        translation_key="pin_setting_supported",
+        icon="mdi:dialpad",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _has_capability(d, "set_pin"),
+        attrs_fn=lambda d: {
+            "capability": "set_pin",
+            "auto_lock_supported": _has_capability(d, "auto_lock"),
+            "note": (
+                "PIN status only; pyworxcloud does not expose a safe set-pin "
+                "method."
+            ),
+        },
+    ),
+    WorxBinarySensorDescription(
+        key="vision_disable_supported",
+        translation_key="vision_disable_supported",
+        icon="mdi:eye-off-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _has_capability(d, "disable_vision"),
+        attrs_fn=lambda d: {
+            "capability": "disable_vision",
+            "vision_supported": _has_capability(d, "vision"),
+        },
+    ),
+    WorxBinarySensorDescription(
+        key="random_pattern_supported",
+        translation_key="random_pattern_supported",
+        icon="mdi:shuffle-variant",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _has_capability(d, "maps_random_pattern"),
+        attrs_fn=lambda d: {
+            "capability": "maps_random_pattern",
+            "maps_supported": _has_capability(d, "maps"),
+        },
+    ),
+    WorxBinarySensorDescription(
+        key="map_training_supported",
+        translation_key="map_training_supported",
+        icon="mdi:map-marker-path",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _has_capability(d, "maps_training")
+        or _has_capability(d, "maps_training_zones"),
+        attrs_fn=lambda d: {
+            "capability_maps_training": _has_capability(d, "maps_training"),
+            "capability_maps_training_zones": _has_capability(
+                d, "maps_training_zones"
+            ),
+            "api_method": "pyworxcloud.zonetraining",
+        },
+    ),
+    WorxBinarySensorDescription(
+        key="diagnostic_upload_supported",
+        translation_key="diagnostic_upload_supported",
+        icon="mdi:cloud-upload-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: _has_capability(d, "diagnostic_upload_v2"),
+        attrs_fn=lambda d: {
+            "capability": "diagnostic_upload_v2",
+            "note": (
+                "Capability only; pyworxcloud does not expose a diagnostic "
+                "upload method."
+            ),
+        },
     ),
 )
 

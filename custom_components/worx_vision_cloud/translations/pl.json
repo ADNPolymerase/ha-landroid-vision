@@ -243,6 +243,21 @@
       },
       "pause_mode_enabled": {
         "name": "Tryb pauzy aktywny"
+      },
+      "pin_setting_supported": {
+        "name": "Obsługa ustawiania PIN"
+      },
+      "vision_disable_supported": {
+        "name": "Obsługa wyłączania Vision"
+      },
+      "random_pattern_supported": {
+        "name": "Obsługa losowego wzoru koszenia"
+      },
+      "map_training_supported": {
+        "name": "Obsługa treningu mapy"
+      },
+      "diagnostic_upload_supported": {
+        "name": "Obsługa wysyłania diagnostyki"
       }
     },
     "switch": {

@@ -243,6 +243,21 @@
       },
       "pause_mode_enabled": {
         "name": "Pauzemodus ingeschakeld"
+      },
+      "pin_setting_supported": {
+        "name": "PIN-instelling ondersteund"
+      },
+      "vision_disable_supported": {
+        "name": "Vision uitschakelen ondersteund"
+      },
+      "random_pattern_supported": {
+        "name": "Willekeurig maaipatroon ondersteund"
+      },
+      "map_training_supported": {
+        "name": "Kaarttraining ondersteund"
+      },
+      "diagnostic_upload_supported": {
+        "name": "Diagnose-upload ondersteund"
       }
     },
     "switch": {
