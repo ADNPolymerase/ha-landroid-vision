@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -35,6 +35,8 @@ from .const import (
     BATTERY_SERVICE_THRESHOLD_CYCLES,
     BLADE_SERVICE_THRESHOLD_MINUTES,
     BORDER_DISTANCE_OPTIONS_MM,
+    CONF_DISCONNECT_GRACE,
+    DEFAULT_DISCONNECT_GRACE,
     DOMAIN,
 )
 from .helpers import (
@@ -42,6 +44,7 @@ from .helpers import (
     STARTING_STATUS_IDS,
     device_display_name,
     get_dict_value,
+    masked_connectivity,
     rtk_map_id,
     rtk_position,
 )
@@ -168,6 +171,16 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         )
         self._one_time_mowing_options: dict[str, dict[str, Any]] = {}
         self._unsub_periodic_refresh: Callable[[], None] | None = None
+        # First observed moment of an ongoing disconnection, per
+        # (serial_number, kind) with kind in ("online", "mqtt"). Used to hide
+        # short drops from the connectivity binary sensors (see
+        # masked_connectivity); in-memory only, so after an HA restart an
+        # already-offline mower gets one fresh grace period before showing
+        # as disconnected.
+        self._disconnected_since: dict[tuple[str, str], datetime] = {}
+        self._connectivity_recheck_unsubs: dict[
+            tuple[str, str], Callable[[], None]
+        ] = {}
 
     async def async_setup(self) -> None:
         """Attach pyworxcloud callbacks."""
@@ -217,6 +230,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if self._unsub_periodic_refresh is not None:
             self._unsub_periodic_refresh()
             self._unsub_periodic_refresh = None
+        for unsub in self._connectivity_recheck_unsubs.values():
+            unsub()
+        self._connectivity_recheck_unsubs.clear()
         self._statistics_save_pending = False
         self._rtk_trail_save_pending = False
         try:
@@ -246,6 +262,86 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                     exc_info=True,
                 )
 
+    def _disconnect_grace_minutes(self) -> int:
+        """Return the configured connectivity grace period in minutes."""
+        try:
+            return int(
+                self.config_entry.options.get(
+                    CONF_DISCONNECT_GRACE, DEFAULT_DISCONNECT_GRACE
+                )
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_DISCONNECT_GRACE
+
+    @staticmethod
+    def _live_connectivity(device: DeviceHandler, kind: str) -> bool | None:
+        """Return the raw connectivity flag for one kind ("online"/"mqtt")."""
+        if kind == "mqtt":
+            raw = getattr(device, "mqtt_connected", None)
+            return None if raw is None else bool(raw)
+        return bool(getattr(device, "online", False))
+
+    def _note_connectivity(self, serial_number: str, device: DeviceHandler) -> None:
+        """Track when a disconnection started, per connectivity kind."""
+        now = datetime.now(UTC)
+        for kind in ("online", "mqtt"):
+            key = (serial_number, kind)
+            if self._live_connectivity(device, kind) is False:
+                self._disconnected_since.setdefault(key, now)
+                self._schedule_connectivity_recheck(key)
+            else:
+                self._disconnected_since.pop(key, None)
+                unsub = self._connectivity_recheck_unsubs.pop(key, None)
+                if unsub is not None:
+                    unsub()
+
+    def _schedule_connectivity_recheck(self, key: tuple[str, str]) -> None:
+        """Re-render entities right when an ongoing drop outlives the grace.
+
+        Without this the masked sensor would only flip on the next push or
+        periodic refresh, up to several minutes after the grace expired.
+        """
+        grace = self._disconnect_grace_minutes()
+        since = self._disconnected_since.get(key)
+        if grace <= 0 or since is None or key in self._connectivity_recheck_unsubs:
+            return
+
+        remaining = grace * 60 - (datetime.now(UTC) - since).total_seconds()
+        if remaining <= 0:
+            return
+
+        def _recheck(_now: datetime) -> None:
+            self._connectivity_recheck_unsubs.pop(key, None)
+            self.async_set_updated_data(self.data or {})
+
+        self._connectivity_recheck_unsubs[key] = async_call_later(
+            self.hass, remaining + 1, _recheck
+        )
+
+    def reported_connectivity(self, serial_number: str, kind: str) -> bool | None:
+        """Return the connectivity state to expose, hiding short drops."""
+        device = (self.data or {}).get(serial_number)
+        if device is None:
+            return None
+        return masked_connectivity(
+            self._live_connectivity(device, kind),
+            self._disconnected_since.get((serial_number, kind)),
+            self._disconnect_grace_minutes(),
+            datetime.now(UTC),
+        )
+
+    def connectivity_attributes(self, serial_number: str, kind: str) -> dict[str, Any]:
+        """Return live-state attributes backing a masked connectivity sensor."""
+        device = (self.data or {}).get(serial_number)
+        since = self._disconnected_since.get((serial_number, kind))
+        return {
+            "live_connected": (
+                None if device is None else self._live_connectivity(device, kind)
+            ),
+            "disconnected_since": None if since is None else since.isoformat(),
+            "grace_minutes": self._disconnect_grace_minutes(),
+        }
+
     async def _handle_push_update(self, device: DeviceHandler) -> None:
         """Merge one pushed device update."""
         serial = getattr(device, "serial_number", None)
@@ -258,6 +354,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self._remember_rtk_position(str(serial), device)
             self._update_daily_statistics(str(serial), device)
             self._sync_repair_issues(str(serial), device)
+            self._note_connectivity(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
             self.async_set_updated_data(data)
@@ -1160,6 +1257,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._remember_rtk_position(serial_number, device)
         self._update_daily_statistics(serial_number, device)
         self._sync_repair_issues(serial_number, device)
+        self._note_connectivity(serial_number, device)
 
     async def _api_get(self, path: str) -> Any:
         """Fetch a private Worx API path using pyworxcloud's session/token."""

@@ -376,5 +376,18 @@
       "title": "Akkuwartung empfohlen ({mower_name})",
       "description": "{mower_name} hat seit dem letzten Zurücksetzen {cycles} Ladezyklen absolviert (Schwelle: {threshold_cycles}). Akkuzustand prüfen und anschließend auf der Geräteseite den Zyklenzähler zurücksetzen."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Verbindungsmeldung",
+        "data": {
+          "disconnect_grace_minutes": "Verzögerung vor Meldung einer Trennung (Minuten, 0 = sofort)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Kurze Cloud-/MQTT-Abbrüche sind normal (Reconnects, WLAN-Aussetzer, Mäher-Standby). Eine Trennung erscheint auf den Sensoren Online und MQTT verbunden erst, wenn sie länger als diese Verzögerung dauert; die Wiederverbindung wird immer sofort gemeldet. Der Live-Rohzustand bleibt in den Sensorattributen verfügbar."
+        }
+      }
+    }
   }
 }

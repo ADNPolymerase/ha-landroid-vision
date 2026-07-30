@@ -376,5 +376,18 @@
       "title": "Batteriservice anbefales ({mower_name})",
       "description": "{mower_name} har fullført {cycles} ladesykluser siden forrige nullstilling (grense: {threshold_cycles}). Sjekk batteriet, og trykk deretter på knappen for å nullstille syklustelleren på enhetssiden."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tilkoblingsrapportering",
+        "data": {
+          "disconnect_grace_minutes": "Forsinkelse før en frakobling rapporteres (minutter, 0 = umiddelbart)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Korte cloud-/MQTT-brudd er normale (gjentilkoblinger, wifi-brudd, hvilemodus). En frakobling vises på sensorene Online og MQTT tilkoblet først når den varer lenger enn denne forsinkelsen; gjentilkobling vises alltid umiddelbart. Den rå sanntidsstatusen forblir tilgjengelig i sensorattributtene."
+        }
+      }
+    }
   }
 }

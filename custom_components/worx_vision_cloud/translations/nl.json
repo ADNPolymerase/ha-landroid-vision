@@ -376,5 +376,18 @@
       "title": "Accuonderhoud aanbevolen ({mower_name})",
       "description": "{mower_name} heeft {cycles} laadcycli sinds de laatste reset (drempel: {threshold_cycles}). Controleer de accu en druk daarna op de resetknop voor de cyclusteller op de apparaatpagina."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Verbindingsrapportage",
+        "data": {
+          "disconnect_grace_minutes": "Vertraging voordat een verbroken verbinding wordt gemeld (minuten, 0 = direct)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Korte cloud-/MQTT-onderbrekingen zijn normaal (herverbindingen, wifi-dips, slaapstand van de maaier). Een verbroken verbinding verschijnt pas op de sensoren Online en MQTT verbonden wanneer deze langer duurt dan deze vertraging; herverbinding wordt altijd direct gemeld. De ruwe live-status blijft beschikbaar in de sensorattributen."
+        }
+      }
+    }
   }
 }

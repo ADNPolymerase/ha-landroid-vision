@@ -376,5 +376,18 @@
       "title": "Battery service recommended ({mower_name})",
       "description": "{mower_name} has completed {cycles} charge cycles since the last reset (threshold: {threshold_cycles}). Check the battery condition, then press the Reset battery cycle counter button on the mower's device page."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Connectivity reporting",
+        "data": {
+          "disconnect_grace_minutes": "Delay before reporting a disconnection (minutes, 0 = immediately)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Short cloud/MQTT drops are routine (reconnections, wifi blips, mower sleep). A disconnection only shows on the Online and MQTT connected sensors once it lasts longer than this delay; reconnection always shows immediately. The raw live state stays available in the sensor attributes."
+        }
+      }
+    }
   }
 }

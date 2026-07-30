@@ -376,5 +376,18 @@
       "title": "Batteriservice rekommenderas ({mower_name})",
       "description": "{mower_name} har genomfört {cycles} laddcykler sedan senaste återställningen (gräns: {threshold_cycles}). Kontrollera batteriet och tryck sedan på knappen för att nollställa cykelräknaren på enhetssidan."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Anslutningsrapportering",
+        "data": {
+          "disconnect_grace_minutes": "Fördröjning innan en frånkoppling rapporteras (minuter, 0 = direkt)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Korta cloud-/MQTT-avbrott är normala (återanslutningar, wifi-störningar, gräsklipparens viloläge). En frånkoppling visas på sensorerna Online och MQTT ansluten först när den varar längre än denna fördröjning; återanslutning visas alltid direkt. Det råa liveläget finns kvar i sensorernas attribut."
+        }
+      }
+    }
   }
 }

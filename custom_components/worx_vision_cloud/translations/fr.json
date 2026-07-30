@@ -376,5 +376,18 @@
       "title": "Entretien de la batterie recommandé ({mower_name})",
       "description": "{mower_name} a effectué {cycles} cycles de charge depuis la dernière réinitialisation (seuil : {threshold_cycles}). Vérifiez l'état de la batterie, puis appuyez sur le bouton de réinitialisation du compteur de cycles sur la page de l'appareil."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Signalement de connectivité",
+        "data": {
+          "disconnect_grace_minutes": "Délai avant de signaler une déconnexion (minutes, 0 = immédiat)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Les micro-coupures cloud/MQTT sont normales (reconnexions, coupures wifi, veille de la tondeuse). Une déconnexion n'apparaît sur les capteurs En ligne et MQTT connecté que si elle dure plus longtemps que ce délai ; la reconnexion est toujours signalée immédiatement. L'état brut en direct reste disponible dans les attributs des capteurs."
+        }
+      }
+    }
   }
 }

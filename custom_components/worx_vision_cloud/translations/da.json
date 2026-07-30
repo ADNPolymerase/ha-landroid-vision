@@ -376,5 +376,18 @@
       "title": "Batteriservice anbefales ({mower_name})",
       "description": "{mower_name} har gennemført {cycles} opladningscyklusser siden sidste nulstilling (grænse: {threshold_cycles}). Tjek batteriet, og tryk derefter på knappen til nulstilling af cyklustælleren på enhedssiden."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Forbindelsesrapportering",
+        "data": {
+          "disconnect_grace_minutes": "Forsinkelse før en afbrydelse rapporteres (minutter, 0 = straks)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Korte cloud-/MQTT-afbrydelser er normale (genforbindelser, wifi-udfald, plæneklipperens dvale). En afbrydelse vises først på sensorerne Online og MQTT forbundet, når den varer længere end denne forsinkelse; genforbindelse vises altid straks. Den rå livestatus er stadig tilgængelig i sensorernes attributter."
+        }
+      }
+    }
   }
 }

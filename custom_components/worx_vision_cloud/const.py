@@ -8,10 +8,15 @@ DOMAIN = "worx_vision_cloud"
 CONF_CLOUD = "cloud"
 CONF_VERIFY_SSL = "verify_ssl"
 CONF_EXPOSE_RAW = "expose_raw_entities"
+CONF_DISCONNECT_GRACE = "disconnect_grace_minutes"
 
 DEFAULT_CLOUD = "worx"
 DEFAULT_VERIFY_SSL = True
 DEFAULT_EXPOSE_RAW = False
+# Short cloud/MQTT drops are routine (AWS IoT reconnects, wifi blips, mower
+# sleep); only a drop lasting longer than this shows on the connectivity
+# binary sensors. 0 = report disconnections immediately.
+DEFAULT_DISCONNECT_GRACE = 30
 
 CLOUDS = ["worx", "kress", "landxcape"]
 

@@ -376,5 +376,18 @@
       "title": "Zalecany serwis akumulatora ({mower_name})",
       "description": "Kosiarka {mower_name} wykonała {cycles} cykli ładowania od ostatniego resetu (próg: {threshold_cycles}). Sprawdź stan akumulatora, a następnie naciśnij przycisk resetu licznika cykli na stronie urządzenia."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Raportowanie łączności",
+        "data": {
+          "disconnect_grace_minutes": "Opóźnienie zgłaszania rozłączenia (minuty, 0 = natychmiast)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Krótkie przerwy cloud/MQTT są normalne (ponowne połączenia, zaniki wifi, uśpienie kosiarki). Rozłączenie pojawia się na czujnikach Online i MQTT połączono dopiero, gdy trwa dłużej niż to opóźnienie; ponowne połączenie jest zawsze zgłaszane natychmiast. Surowy stan na żywo pozostaje dostępny w atrybutach czujników."
+        }
+      }
+    }
   }
 }

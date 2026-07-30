@@ -117,13 +117,17 @@ def _robot_lifted_attributes(device) -> dict[str, Any]:
     }
 
 
+# The "online" and "mqtt_connected" sensors are NOT plain descriptions: their
+# state is debounced through the coordinator so that short cloud/MQTT drops
+# (AWS IoT reconnects, wifi blips, mower sleep) don't spam the recorder and
+# logbook with connected/disconnected churn. See WorxConnectivityBinarySensor.
+CONNECTIVITY_SENSORS: tuple[tuple[str, str, EntityCategory | None], ...] = (
+    # (entity key, coordinator connectivity kind, entity category)
+    ("online", "online", None),
+    ("mqtt_connected", "mqtt", EntityCategory.DIAGNOSTIC),
+)
+
 BINARY_SENSORS: tuple[WorxBinarySensorDescription, ...] = (
-    WorxBinarySensorDescription(
-        key="online",
-        translation_key="online",
-        device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        value_fn=lambda d: bool(getattr(d, "online", False)),
-    ),
     WorxBinarySensorDescription(
         key="iot_registered",
         translation_key="iot_registered",
@@ -144,13 +148,6 @@ BINARY_SENSORS: tuple[WorxBinarySensorDescription, ...] = (
             "mqtt_endpoint": get_dict_value(_product_item(d), "mqtt_endpoint"),
             "mqtt_topics": get_dict_value(_product_item(d), "mqtt_topics"),
         },
-    ),
-    WorxBinarySensorDescription(
-        key="mqtt_connected",
-        translation_key="mqtt_connected",
-        device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: _as_bool(getattr(d, "mqtt_connected", None)),
     ),
     WorxBinarySensorDescription(
         key="rain_triggered",
@@ -254,6 +251,12 @@ async def async_setup_entry(
 
     for serial_number in coordinator.data:
         entities.extend(
+            WorxConnectivityBinarySensor(
+                coordinator, entry, serial_number, key, kind, category
+            )
+            for key, kind, category in CONNECTIVITY_SENSORS
+        )
+        entities.extend(
             WorxVisionBinarySensor(coordinator, entry, serial_number, description)
             for description in BINARY_SENSORS
         )
@@ -319,6 +322,51 @@ class WorxVisionBinarySensor(WorxVisionEntity, BinarySensorEntity):
             return None
         attrs = self.entity_description.attrs_fn(self.device)
         return {key: value for key, value in (attrs or {}).items() if value is not None}
+
+
+class WorxConnectivityBinarySensor(WorxVisionEntity, BinarySensorEntity):
+    """Connectivity sensor with short-drop masking.
+
+    Reads the coordinator's debounced connectivity state instead of the raw
+    device flag: a disconnection only shows once it has outlived the grace
+    period configured in the integration options (0 = live). The raw state
+    stays available through the live_connected attribute so automations can
+    still react immediately when wanted.
+    """
+
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+
+    def __init__(
+        self,
+        coordinator,
+        entry,
+        serial_number: str,
+        key: str,
+        kind: str,
+        entity_category: EntityCategory | None,
+    ) -> None:
+        """Initialize connectivity sensor."""
+        self._kind = kind
+        self._attr_translation_key = key
+        if entity_category is not None:
+            self._attr_entity_category = entity_category
+        super().__init__(coordinator, entry, serial_number, key)
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return the debounced connectivity state."""
+        return self.coordinator.reported_connectivity(self._serial_number, self._kind)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the raw live state behind the debounced one."""
+        return {
+            key: value
+            for key, value in self.coordinator.connectivity_attributes(
+                self._serial_number, self._kind
+            ).items()
+            if value is not None
+        }
 
 
 class WorxVisionRawBinarySensor(WorxVisionEntity, BinarySensorEntity):

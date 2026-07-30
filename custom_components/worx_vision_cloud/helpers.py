@@ -484,6 +484,27 @@ def rtk_current_zone_name(device: Any) -> str | None:
     return f"Zone {zone_id}" if zone_id not in (None, "") else None
 
 
+def masked_connectivity(
+    live_connected: bool | None,
+    disconnected_since: datetime | None,
+    grace_minutes: int,
+    now: datetime,
+) -> bool | None:
+    """Return the connectivity state to report, hiding short drops.
+
+    Short cloud/MQTT drops are routine (AWS IoT reconnects, wifi blips,
+    mower sleep) and would otherwise spam the recorder and logbook with
+    connected/disconnected churn. A drop only becomes reportable once it
+    has lasted longer than the grace period; reconnection always shows
+    immediately. grace_minutes <= 0 reports the live state unchanged.
+    """
+    if live_connected or live_connected is None:
+        return live_connected
+    if grace_minutes <= 0 or disconnected_since is None:
+        return False
+    return now - disconnected_since < timedelta(minutes=grace_minutes)
+
+
 def rtk_location_attributes(device: Any) -> dict[str, Any]:
     """Return RTK location diagnostic attributes."""
     dat_rtk = get_nested_value(_raw_dat(device), "rtk", default={}) or {}

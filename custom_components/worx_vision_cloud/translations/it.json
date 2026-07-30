@@ -376,5 +376,18 @@
       "title": "Manutenzione batteria consigliata ({mower_name})",
       "description": "{mower_name} ha completato {cycles} cicli di ricarica dall'ultimo azzeramento (soglia: {threshold_cycles}). Controlla la batteria, poi premi il pulsante di azzeramento del contatore cicli nella pagina del dispositivo."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Segnalazione connettività",
+        "data": {
+          "disconnect_grace_minutes": "Ritardo prima di segnalare una disconnessione (minuti, 0 = immediato)"
+        },
+        "data_description": {
+          "disconnect_grace_minutes": "Le brevi interruzioni cloud/MQTT sono normali (riconnessioni, cali wifi, standby del robot). Una disconnessione appare sui sensori Online e MQTT connesso solo se dura più di questo ritardo; la riconnessione è sempre segnalata immediatamente. Lo stato grezzo in tempo reale resta disponibile negli attributi dei sensori."
+        }
+      }
+    }
   }
 }

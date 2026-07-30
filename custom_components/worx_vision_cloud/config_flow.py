@@ -16,9 +16,11 @@ from pyworxcloud.exceptions import AuthorizationError, TooManyRequestsError
 from .const import (
     CLOUDS,
     CONF_CLOUD,
+    CONF_DISCONNECT_GRACE,
     CONF_EXPOSE_RAW,
     CONF_VERIFY_SSL,
     DEFAULT_CLOUD,
+    DEFAULT_DISCONNECT_GRACE,
     DEFAULT_EXPOSE_RAW,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
@@ -62,10 +64,43 @@ async def _validate_input(data: dict[str, Any]) -> None:
             _LOGGER.debug("Validation disconnect failed", exc_info=True)
 
 
+class WorxVisionOptionsFlow(config_entries.OptionsFlow):
+    """Handle integration options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_DISCONNECT_GRACE,
+                        default=self.config_entry.options.get(
+                            CONF_DISCONNECT_GRACE, DEFAULT_DISCONNECT_GRACE
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=240)),
+                }
+            ),
+        )
+
+
 class WorxVisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Worx Vision Cloud Plus."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> WorxVisionOptionsFlow:
+        """Return the options flow handler."""
+        return WorxVisionOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
