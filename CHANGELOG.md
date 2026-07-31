@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.9.0 - 2026-07-31
 
 - The Online and MQTT connected sensors no longer flood the logbook and recorder with connected/disconnected churn: short drops (AWS IoT reconnects, wifi blips, mower sleep) are now hidden behind a configurable grace period, and a disconnection only shows once it has lasted longer than that delay. Reconnection always shows immediately. The delay is a new integration option (Settings > Devices & services > Worx Landroid Vision PLUS > Configure), default 30 minutes, one shared setting for both sensors — set it to 0 to keep the old live behavior. For automations that still want to react instantly, both sensors expose the raw state in a live_connected attribute plus a disconnected_since timestamp. In-memory only: after a Home Assistant restart an already-offline mower gets one fresh grace period before showing as disconnected.
 
