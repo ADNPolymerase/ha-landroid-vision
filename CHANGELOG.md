@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.9.1 - 2026-08-04
 
 - Fixed a thread-safety RuntimeError introduced in 1.9.0 (#2): the callback that flips a connectivity sensor right when the grace period expires was scheduled without the @callback decorator, so Home Assistant ran it in the executor thread pool instead of the event loop — logged as "calls async_write_ha_state from a thread other than the event loop" once per grace expiry. The state flip still happened within 5 minutes via the periodic refresh, so the visible impact was limited to log spam and a delayed flip. The callback now runs in the event loop as intended.
 
