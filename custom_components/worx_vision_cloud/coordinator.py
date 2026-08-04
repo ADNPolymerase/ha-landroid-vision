@@ -11,7 +11,7 @@ from typing import Any, Callable
 from aiohttp import ClientError, ClientTimeout
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -310,6 +310,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if remaining <= 0:
             return
 
+        # @callback is required: async_call_later runs undecorated sync
+        # callables in the executor thread pool, and async_set_updated_data
+        # must run in the event loop (issue #2).
+        @callback
         def _recheck(_now: datetime) -> None:
             self._connectivity_recheck_unsubs.pop(key, None)
             self.async_set_updated_data(self.data or {})
