@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The connectivity sensors now react to pyworxcloud's MQTT connection events instead of waiting for the next data push or 5-minute refresh. Before this, a disconnection was only noticed on the next refresh (so the grace-period timestamp could start up to 5 minutes late, delaying a real outage's appearance to up to ~35 minutes with the default 30-minute grace), and a reconnection could keep showing as disconnected for a few minutes. Both edges are now picked up the moment the MQTT session state changes, with the event hopping from the MQTT thread onto the event loop before touching any entity state.
+
 ## 1.9.1 - 2026-08-04
 
 - Fixed a thread-safety RuntimeError introduced in 1.9.0 (#2): the callback that flips a connectivity sensor right when the grace period expires was scheduled without the @callback decorator, so Home Assistant ran it in the executor thread pool instead of the event loop — logged as "calls async_write_ha_state from a thread other than the event loop" once per grace expiry. The state flip still happened within 5 minutes via the periodic refresh, so the visible impact was limited to log spam and a delayed flip. The callback now runs in the event loop as intended.

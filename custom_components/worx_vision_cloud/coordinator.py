@@ -213,8 +213,17 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             del api_data
             self._schedule_api_refresh()
 
+        def _on_mqtt_connection(state: bool, **_: Any) -> None:
+            # Without this event, a connect/disconnect only reaches the
+            # connectivity sensors on the next data push or 5-minute refresh:
+            # the disconnection timestamp behind the grace period starts late
+            # and a reconnection can show as disconnected for minutes.
+            del state
+            self._schedule_connectivity_refresh()
+
         self.cloud.set_callback(LandroidEvent.DATA_RECEIVED, _on_data_received)
         self.cloud.set_callback(LandroidEvent.API, _on_api_update)
+        self.cloud.set_callback(LandroidEvent.MQTT_CONNECTION, _on_mqtt_connection)
 
         self._unsub_periodic_refresh = async_track_time_interval(
             self.hass, self._async_periodic_device_refresh, LIVE_REFRESH_INTERVAL
@@ -227,6 +236,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._shutdown_complete = True
         self.cloud.set_callback(LandroidEvent.DATA_RECEIVED, lambda **_: None)
         self.cloud.set_callback(LandroidEvent.API, lambda **_: None)
+        self.cloud.set_callback(LandroidEvent.MQTT_CONNECTION, lambda **_: None)
         if self._unsub_periodic_refresh is not None:
             self._unsub_periodic_refresh()
             self._unsub_periodic_refresh = None
@@ -1218,6 +1228,24 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self.hass.loop.call_soon_threadsafe(self._create_api_refresh_task)
         except RuntimeError:
             _LOGGER.debug("Ignoring API update after HA loop shutdown")
+
+    def _schedule_connectivity_refresh(self) -> None:
+        """Schedule a connectivity re-render on the HA loop.
+
+        Fired from pyworxcloud's MQTT thread, so it must hop onto the
+        event loop before touching entity state (see issue #2).
+        """
+        try:
+            self.hass.loop.call_soon_threadsafe(self._refresh_connectivity_state)
+        except RuntimeError:
+            _LOGGER.debug("Ignoring MQTT connection event after HA loop shutdown")
+
+    @callback
+    def _refresh_connectivity_state(self) -> None:
+        """Re-evaluate connectivity for all mowers and re-render entities."""
+        for serial_number, device in (self.data or {}).items():
+            self._note_connectivity(serial_number, device)
+        self.async_set_updated_data(self.data or {})
 
     def _create_push_update_task(self, device: DeviceHandler) -> None:
         """Create task for a pushed update."""
