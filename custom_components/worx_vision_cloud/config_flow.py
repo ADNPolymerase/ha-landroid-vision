@@ -15,10 +15,14 @@ from pyworxcloud.exceptions import AuthorizationError, TooManyRequestsError
 
 from .const import (
     CLOUDS,
+    CONF_BATTERY_SERVICE_CYCLES,
+    CONF_BLADE_SERVICE_HOURS,
     CONF_CLOUD,
     CONF_DISCONNECT_GRACE,
     CONF_EXPOSE_RAW,
     CONF_VERIFY_SSL,
+    DEFAULT_BATTERY_SERVICE_CYCLES,
+    DEFAULT_BLADE_SERVICE_HOURS,
     DEFAULT_CLOUD,
     DEFAULT_DISCONNECT_GRACE,
     DEFAULT_EXPOSE_RAW,
@@ -84,6 +88,19 @@ class WorxVisionOptionsFlow(config_entries.OptionsFlow):
                             CONF_DISCONNECT_GRACE, DEFAULT_DISCONNECT_GRACE
                         ),
                     ): vol.All(vol.Coerce(int), vol.Range(min=0, max=240)),
+                    vol.Optional(
+                        CONF_BLADE_SERVICE_HOURS,
+                        default=self.config_entry.options.get(
+                            CONF_BLADE_SERVICE_HOURS, DEFAULT_BLADE_SERVICE_HOURS
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=1000)),
+                    vol.Optional(
+                        CONF_BATTERY_SERVICE_CYCLES,
+                        default=self.config_entry.options.get(
+                            CONF_BATTERY_SERVICE_CYCLES,
+                            DEFAULT_BATTERY_SERVICE_CYCLES,
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=50, max=5000)),
                 }
             ),
         )

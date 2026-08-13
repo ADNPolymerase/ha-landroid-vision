@@ -382,10 +382,14 @@
       "init": {
         "title": "Segnalazione connettività",
         "data": {
-          "disconnect_grace_minutes": "Ritardo prima di segnalare una disconnessione (minuti, 0 = immediato)"
+          "disconnect_grace_minutes": "Ritardo prima di segnalare una disconnessione (minuti, 0 = immediato)",
+          "blade_service_hours": "Intervallo di manutenzione lame (ore di taglio)",
+          "battery_service_cycles": "Soglia di manutenzione batteria (cicli di carica)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Le brevi interruzioni cloud/MQTT sono normali (riconnessioni, cali wifi, standby del robot). Una disconnessione appare sui sensori Online e MQTT connesso solo se dura più di questo ritardo; la riconnessione è sempre segnalata immediatamente. Lo stato grezzo in tempo reale resta disponibile negli attributi dei sensori."
+          "disconnect_grace_minutes": "Le brevi interruzioni cloud/MQTT sono normali (riconnessioni, cali wifi, standby del robot). Una disconnessione appare sui sensori Online e MQTT connesso solo se dura più di questo ritardo; la riconnessione è sempre segnalata immediatamente. Lo stato grezzo in tempo reale resta disponibile negli attributi dei sensori.",
+          "blade_service_hours": "Il sensore di manutenzione e l'avviso Riparazioni segnalano la manutenzione delle lame quando il tempo di taglio dall'ultimo azzeramento supera questo valore. Le lame a perno tipiche durano 60-120 ore.",
+          "battery_service_cycles": "Segnala la manutenzione della batteria quando i cicli di carica dall'ultimo azzeramento superano questo valore. Le batterie Li-Ion Worx sono previste per circa 500-800 cicli."
         }
       }
     }

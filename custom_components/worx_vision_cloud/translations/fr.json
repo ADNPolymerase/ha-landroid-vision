@@ -382,10 +382,14 @@
       "init": {
         "title": "Signalement de connectivité",
         "data": {
-          "disconnect_grace_minutes": "Délai avant de signaler une déconnexion (minutes, 0 = immédiat)"
+          "disconnect_grace_minutes": "Délai avant de signaler une déconnexion (minutes, 0 = immédiat)",
+          "blade_service_hours": "Intervalle d'entretien des lames (heures de coupe)",
+          "battery_service_cycles": "Seuil d'entretien de la batterie (cycles de charge)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Les micro-coupures cloud/MQTT sont normales (reconnexions, coupures wifi, veille de la tondeuse). Une déconnexion n'apparaît sur les capteurs En ligne et MQTT connecté que si elle dure plus longtemps que ce délai ; la reconnexion est toujours signalée immédiatement. L'état brut en direct reste disponible dans les attributs des capteurs."
+          "disconnect_grace_minutes": "Les micro-coupures cloud/MQTT sont normales (reconnexions, coupures wifi, veille de la tondeuse). Une déconnexion n'apparaît sur les capteurs En ligne et MQTT connecté que si elle dure plus longtemps que ce délai ; la reconnexion est toujours signalée immédiatement. L'état brut en direct reste disponible dans les attributs des capteurs.",
+          "blade_service_hours": "Le capteur de maintenance et l'alerte Réparations signalent l'entretien des lames quand le temps de coupe depuis le dernier reset dépasse cette valeur. Les lames pivotantes durent typiquement 60-120 heures.",
+          "battery_service_cycles": "Signale l'entretien de la batterie quand les cycles de charge depuis le dernier reset dépassent cette valeur. Les packs Li-Ion Worx sont donnés pour environ 500-800 cycles."
         }
       }
     }

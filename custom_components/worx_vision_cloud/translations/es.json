@@ -382,10 +382,14 @@
       "init": {
         "title": "Notificación de conectividad",
         "data": {
-          "disconnect_grace_minutes": "Retraso antes de notificar una desconexión (minutos, 0 = inmediato)"
+          "disconnect_grace_minutes": "Retraso antes de notificar una desconexión (minutos, 0 = inmediato)",
+          "blade_service_hours": "Intervalo de mantenimiento de cuchillas (horas de corte)",
+          "battery_service_cycles": "Umbral de mantenimiento de batería (ciclos de carga)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Los cortes breves de cloud/MQTT son normales (reconexiones, microcortes de wifi, reposo del cortacésped). Una desconexión solo aparece en los sensores En línea y MQTT conectado cuando dura más que este retraso; la reconexión siempre se notifica de inmediato. El estado bruto en vivo sigue disponible en los atributos de los sensores."
+          "disconnect_grace_minutes": "Los cortes breves de cloud/MQTT son normales (reconexiones, microcortes de wifi, reposo del cortacésped). Una desconexión solo aparece en los sensores En línea y MQTT conectado cuando dura más que este retraso; la reconexión siempre se notifica de inmediato. El estado bruto en vivo sigue disponible en los atributos de los sensores.",
+          "blade_service_hours": "El sensor de mantenimiento y la alerta de Reparaciones marcan el mantenimiento de cuchillas cuando el tiempo de corte desde el último reinicio supera este valor. Las cuchillas pivotantes típicas duran 60-120 horas.",
+          "battery_service_cycles": "Marca el mantenimiento de la batería cuando los ciclos de carga desde el último reinicio superan este valor. Las baterías Li-Ion de Worx están previstas para unos 500-800 ciclos."
         }
       }
     }

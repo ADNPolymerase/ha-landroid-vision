@@ -382,10 +382,14 @@
       "init": {
         "title": "Verbindungsmeldung",
         "data": {
-          "disconnect_grace_minutes": "Verzögerung vor Meldung einer Trennung (Minuten, 0 = sofort)"
+          "disconnect_grace_minutes": "Verzögerung vor Meldung einer Trennung (Minuten, 0 = sofort)",
+          "blade_service_hours": "Wartungsintervall der Messer (Schnittstunden)",
+          "battery_service_cycles": "Wartungsschwelle der Batterie (Ladezyklen)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Kurze Cloud-/MQTT-Abbrüche sind normal (Reconnects, WLAN-Aussetzer, Mäher-Standby). Eine Trennung erscheint auf den Sensoren Online und MQTT verbunden erst, wenn sie länger als diese Verzögerung dauert; die Wiederverbindung wird immer sofort gemeldet. Der Live-Rohzustand bleibt in den Sensorattributen verfügbar."
+          "disconnect_grace_minutes": "Kurze Cloud-/MQTT-Abbrüche sind normal (Reconnects, WLAN-Aussetzer, Mäher-Standby). Eine Trennung erscheint auf den Sensoren Online und MQTT verbunden erst, wenn sie länger als diese Verzögerung dauert; die Wiederverbindung wird immer sofort gemeldet. Der Live-Rohzustand bleibt in den Sensorattributen verfügbar.",
+          "blade_service_hours": "Der Wartungssensor und die Reparatur-Meldung melden den Messerwechsel, sobald die Schnittzeit seit dem letzten Reset diesen Wert überschreitet. Typische Pendelmesser halten 60-120 Stunden.",
+          "battery_service_cycles": "Meldet die Batteriewartung, sobald die Ladezyklen seit dem letzten Reset diesen Wert überschreiten. Worx-Li-Ion-Akkus sind für etwa 500-800 Zyklen ausgelegt."
         }
       }
     }

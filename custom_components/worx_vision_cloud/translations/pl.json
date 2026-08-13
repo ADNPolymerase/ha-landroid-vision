@@ -382,10 +382,14 @@
       "init": {
         "title": "Raportowanie łączności",
         "data": {
-          "disconnect_grace_minutes": "Opóźnienie zgłaszania rozłączenia (minuty, 0 = natychmiast)"
+          "disconnect_grace_minutes": "Opóźnienie zgłaszania rozłączenia (minuty, 0 = natychmiast)",
+          "blade_service_hours": "Interwał serwisu ostrzy (godziny koszenia)",
+          "battery_service_cycles": "Próg serwisu baterii (cykle ładowania)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Krótkie przerwy cloud/MQTT są normalne (ponowne połączenia, zaniki wifi, uśpienie kosiarki). Rozłączenie pojawia się na czujnikach Online i MQTT połączono dopiero, gdy trwa dłużej niż to opóźnienie; ponowne połączenie jest zawsze zgłaszane natychmiast. Surowy stan na żywo pozostaje dostępny w atrybutach czujników."
+          "disconnect_grace_minutes": "Krótkie przerwy cloud/MQTT są normalne (ponowne połączenia, zaniki wifi, uśpienie kosiarki). Rozłączenie pojawia się na czujnikach Online i MQTT połączono dopiero, gdy trwa dłużej niż to opóźnienie; ponowne połączenie jest zawsze zgłaszane natychmiast. Surowy stan na żywo pozostaje dostępny w atrybutach czujników.",
+          "blade_service_hours": "Czujnik konserwacji i alert Napraw zgłaszają serwis ostrzy, gdy czas koszenia od ostatniego resetu przekroczy tę wartość. Typowe ostrza obrotowe wytrzymują 60-120 godzin.",
+          "battery_service_cycles": "Zgłasza serwis baterii, gdy cykle ładowania od ostatniego resetu przekroczą tę wartość. Akumulatory Li-Ion Worx są przewidziane na około 500-800 cykli."
         }
       }
     }

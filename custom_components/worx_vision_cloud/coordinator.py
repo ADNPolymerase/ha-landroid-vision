@@ -32,10 +32,12 @@ from pyworxcloud.exceptions import (
 from pyworxcloud.utils.requests import AGET, HEADERS
 
 from .const import (
-    BATTERY_SERVICE_THRESHOLD_CYCLES,
-    BLADE_SERVICE_THRESHOLD_MINUTES,
     BORDER_DISTANCE_OPTIONS_MM,
+    CONF_BATTERY_SERVICE_CYCLES,
+    CONF_BLADE_SERVICE_HOURS,
     CONF_DISCONNECT_GRACE,
+    DEFAULT_BATTERY_SERVICE_CYCLES,
+    DEFAULT_BLADE_SERVICE_HOURS,
     DEFAULT_DISCONNECT_GRACE,
     DOMAIN,
 )
@@ -282,6 +284,32 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             )
         except (TypeError, ValueError):
             return DEFAULT_DISCONNECT_GRACE
+
+    def blade_service_threshold_minutes(self) -> int:
+        """Return the configured blade service threshold in minutes."""
+        try:
+            hours = float(
+                self.config_entry.options.get(
+                    CONF_BLADE_SERVICE_HOURS, DEFAULT_BLADE_SERVICE_HOURS
+                )
+            )
+        except (TypeError, ValueError):
+            hours = DEFAULT_BLADE_SERVICE_HOURS
+        return max(60, round(hours * 60))
+
+    def battery_service_threshold_cycles(self) -> int:
+        """Return the configured battery service threshold in charge cycles."""
+        try:
+            return max(
+                50,
+                int(
+                    self.config_entry.options.get(
+                        CONF_BATTERY_SERVICE_CYCLES, DEFAULT_BATTERY_SERVICE_CYCLES
+                    )
+                ),
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_BATTERY_SERVICE_CYCLES
 
     @staticmethod
     def _live_connectivity(device: DeviceHandler, kind: str) -> bool | None:
@@ -1572,6 +1600,20 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if not product_item:
             return
 
+        blade_threshold_minutes = self.blade_service_threshold_minutes()
+        battery_threshold_cycles = self.battery_service_threshold_cycles()
+        # Stash the configured thresholds on the device so the maintenance
+        # sensor (whose value_fn only receives the device) uses the same
+        # values as the Repairs panel.
+        setattr(
+            device,
+            "_worx_vision_service_thresholds",
+            {
+                "blade_minutes": blade_threshold_minutes,
+                "battery_cycles": battery_threshold_cycles,
+            },
+        )
+
         blade_issue_id = f"blade_service_due_{serial_number}"
         battery_issue_id = f"battery_service_due_{serial_number}"
 
@@ -1592,7 +1634,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         )
         blade_due = (
             blade_minutes is not None
-            and blade_minutes >= BLADE_SERVICE_THRESHOLD_MINUTES
+            and blade_minutes >= blade_threshold_minutes
         )
         if blade_due:
             ir.async_create_issue(
@@ -1606,7 +1648,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                     "mower_name": mower_name,
                     "hours": str(round(blade_minutes / 60, 1)),
                     "threshold_hours": str(
-                        round(BLADE_SERVICE_THRESHOLD_MINUTES / 60)
+                        round(blade_threshold_minutes / 60)
                     ),
                 },
             )
@@ -1618,7 +1660,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         )
         battery_due = (
             battery_cycles is not None
-            and battery_cycles >= BATTERY_SERVICE_THRESHOLD_CYCLES
+            and battery_cycles >= battery_threshold_cycles
         )
         if battery_due:
             ir.async_create_issue(
@@ -1631,7 +1673,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 translation_placeholders={
                     "mower_name": mower_name,
                     "cycles": str(battery_cycles),
-                    "threshold_cycles": str(BATTERY_SERVICE_THRESHOLD_CYCLES),
+                    "threshold_cycles": str(battery_threshold_cycles),
                 },
             )
         else:

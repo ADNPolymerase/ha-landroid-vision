@@ -382,10 +382,14 @@
       "init": {
         "title": "Tilkoblingsrapportering",
         "data": {
-          "disconnect_grace_minutes": "Forsinkelse før en frakobling rapporteres (minutter, 0 = umiddelbart)"
+          "disconnect_grace_minutes": "Forsinkelse før en frakobling rapporteres (minutter, 0 = umiddelbart)",
+          "blade_service_hours": "Serviceintervall for kniver (klippetimer)",
+          "battery_service_cycles": "Serviceterskel for batteri (ladesykluser)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Korte cloud-/MQTT-brudd er normale (gjentilkoblinger, wifi-brudd, hvilemodus). En frakobling vises på sensorene Online og MQTT tilkoblet først når den varer lenger enn denne forsinkelsen; gjentilkobling vises alltid umiddelbart. Den rå sanntidsstatusen forblir tilgjengelig i sensorattributtene."
+          "disconnect_grace_minutes": "Korte cloud-/MQTT-brudd er normale (gjentilkoblinger, wifi-brudd, hvilemodus). En frakobling vises på sensorene Online og MQTT tilkoblet først når den varer lenger enn denne forsinkelsen; gjentilkobling vises alltid umiddelbart. Den rå sanntidsstatusen forblir tilgjengelig i sensorattributtene.",
+          "blade_service_hours": "Vedlikeholdssensoren og Reparasjoner-varselet flagger knivservice når klippetiden siden siste nullstilling overskrider denne verdien. Typiske pivotkniver varer 60-120 timer.",
+          "battery_service_cycles": "Flagger batteriservice når ladesyklusene siden siste nullstilling overskrider denne verdien. Worx Li-Ion-batterier er klassifisert for omtrent 500-800 sykluser."
         }
       }
     }

@@ -32,9 +32,9 @@ from homeassistant.util import dt as dt_util
 from .const import (
     ATTR_RAW_PATH,
     ATTR_RAW_SOURCE,
-    BATTERY_SERVICE_THRESHOLD_CYCLES,
-    BLADE_SERVICE_THRESHOLD_MINUTES,
     CONF_EXPOSE_RAW,
+    DEFAULT_BATTERY_SERVICE_CYCLES,
+    DEFAULT_BLADE_SERVICE_HOURS,
     DEFAULT_EXPOSE_RAW,
     DOMAIN,
 )
@@ -422,6 +422,26 @@ def _push_notification_state(device) -> str | None:
     return None
 
 
+def _service_thresholds(device) -> dict[str, Any]:
+    """Return configured maintenance thresholds stashed by the coordinator."""
+    value = getattr(device, "_worx_vision_service_thresholds", {}) or {}
+    return value if isinstance(value, dict) else {}
+
+
+def _blade_threshold_minutes(device) -> int:
+    try:
+        return int(_service_thresholds(device)["blade_minutes"])
+    except (KeyError, TypeError, ValueError):
+        return DEFAULT_BLADE_SERVICE_HOURS * 60
+
+
+def _battery_threshold_cycles(device) -> int:
+    try:
+        return int(_service_thresholds(device)["battery_cycles"])
+    except (KeyError, TypeError, ValueError):
+        return DEFAULT_BATTERY_SERVICE_CYCLES
+
+
 def _maintenance_state(device) -> str | None:
     blade_minutes = _since_reset(device, "blade_work_time", "blade_work_time_reset")
     battery_cycles = _since_reset(
@@ -429,11 +449,11 @@ def _maintenance_state(device) -> str | None:
     )
     if blade_minutes is None and battery_cycles is None:
         return None
-    if blade_minutes is not None and blade_minutes >= BLADE_SERVICE_THRESHOLD_MINUTES:
+    if blade_minutes is not None and blade_minutes >= _blade_threshold_minutes(device):
         return "blade_service_due"
     if (
         battery_cycles is not None
-        and battery_cycles >= BATTERY_SERVICE_THRESHOLD_CYCLES
+        and battery_cycles >= _battery_threshold_cycles(device)
     ):
         return "battery_service_due"
     return "ok"
@@ -450,9 +470,9 @@ def _maintenance_attributes(device) -> dict[str, Any]:
     )
     return {
         "blade_runtime_since_reset": blade_minutes,
-        "blade_service_threshold_minutes": BLADE_SERVICE_THRESHOLD_MINUTES,
+        "blade_service_threshold_minutes": _blade_threshold_minutes(device),
         "battery_cycles_since_reset": battery_cycles,
-        "battery_service_threshold_cycles": BATTERY_SERVICE_THRESHOLD_CYCLES,
+        "battery_service_threshold_cycles": _battery_threshold_cycles(device),
         "blade_runtime_reset_at": blade_reset_at.isoformat()
         if blade_reset_at
         else None,

@@ -38,9 +38,16 @@ ATTR_RAW_PATH = "raw_path"
 ATTR_RAW_SOURCE = "raw_source"
 ATTR_SERIAL_NUMBER = "serial_number"
 
-# Maintenance thresholds shared by the maintenance sensor and HA repairs.
-BLADE_SERVICE_THRESHOLD_MINUTES = 720
-BATTERY_SERVICE_THRESHOLD_CYCLES = 500
+# Maintenance thresholds shared by the maintenance sensor and HA repairs,
+# configurable through the integration options. The blade default follows
+# observed real-world practice for robotic mower pivot blades (a change
+# roughly every 6-8 weeks of typical mowing); the battery default matches
+# the top of the rated cycle life for the Li-Ion chemistry Worx PowerShare
+# packs use (500-800 cycles).
+CONF_BLADE_SERVICE_HOURS = "blade_service_hours"
+CONF_BATTERY_SERVICE_CYCLES = "battery_service_cycles"
+DEFAULT_BLADE_SERVICE_HOURS = 100
+DEFAULT_BATTERY_SERVICE_CYCLES = 800
 
 # Vision border distances accepted by the Worx API (millimeters).
 BORDER_DISTANCE_OPTIONS_MM = (50, 100, 150, 200)

@@ -382,10 +382,14 @@
       "init": {
         "title": "Connectivity reporting",
         "data": {
-          "disconnect_grace_minutes": "Delay before reporting a disconnection (minutes, 0 = immediately)"
+          "disconnect_grace_minutes": "Delay before reporting a disconnection (minutes, 0 = immediately)",
+          "blade_service_hours": "Blade service interval (hours of cutting)",
+          "battery_service_cycles": "Battery service threshold (charge cycles)"
         },
         "data_description": {
-          "disconnect_grace_minutes": "Short cloud/MQTT drops are routine (reconnections, wifi blips, mower sleep). A disconnection only shows on the Online and MQTT connected sensors once it lasts longer than this delay; reconnection always shows immediately. The raw live state stays available in the sensor attributes."
+          "disconnect_grace_minutes": "Short cloud/MQTT drops are routine (reconnections, wifi blips, mower sleep). A disconnection only shows on the Online and MQTT connected sensors once it lasts longer than this delay; reconnection always shows immediately. The raw live state stays available in the sensor attributes.",
+          "blade_service_hours": "The maintenance sensor and the Repairs alert flag blade service once the cutting time since the last blade reset exceeds this. Typical pivot blades last 60-120 hours.",
+          "battery_service_cycles": "Flags battery service once the charge cycles since the last battery reset exceed this. Worx Li-Ion packs are rated for roughly 500-800 cycles."
         }
       }
     }
