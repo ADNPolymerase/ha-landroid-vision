@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.11.0 - 2026-08-13
 
 - Made the maintenance thresholds configurable in the integration options (Settings > Devices & services > Worx Landroid Vision PLUS > Configure), and replaced the unrealistic hard-coded defaults inherited from the original integration. Blade service was flagged after only 12 hours of cutting — roughly 9 days of typical mowing — and now defaults to 100 hours, in line with real-world pivot blade life (a change every 6-8 weeks). Battery service was flagged at 500 charge cycles and now defaults to 800, the top of the rated cycle life for the Li-Ion chemistry Worx PowerShare packs use (500-800 cycles, 2-5 year replacement window). Both the maintenance sensor and the Repairs alerts follow the configured values, existing over-eager alerts clear automatically on upgrade, and the previous behavior can be restored by setting the old values in the options.
 
