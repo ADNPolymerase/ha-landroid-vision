@@ -266,6 +266,17 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         mowing, so ask every known device to report in on this interval.
         """
         for serial_number in list((self.data or {}).keys()):
+            # A mower disabled in the device registry (e.g. an old mower
+            # still registered on the Worx cloud account) would time out on
+            # every ping and flood the log — its entities are disabled, so
+            # nothing consumes the refresh anyway. Checked live each pass,
+            # so re-enabling the device resumes refreshes within a cycle.
+            if self._is_registry_disabled(serial_number):
+                _LOGGER.debug(
+                    "Skipping periodic refresh for disabled device %s",
+                    serial_number,
+                )
+                continue
             try:
                 await self.async_request_device_update(serial_number)
             except Exception:  # noqa: BLE001
@@ -274,6 +285,13 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                     serial_number,
                     exc_info=True,
                 )
+
+    def _is_registry_disabled(self, serial_number: str) -> bool:
+        """Return whether the mower's device registry entry is disabled."""
+        device_entry = dr.async_get(self.hass).async_get_device(
+            identifiers={(DOMAIN, serial_number)}
+        )
+        return device_entry is not None and bool(device_entry.disabled)
 
     def _disconnect_grace_minutes(self) -> int:
         """Return the configured connectivity grace period in minutes."""
@@ -1620,10 +1638,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         # No repairs for mowers the user disabled in the device registry
         # (e.g. an old mower still registered on the Worx account).
-        device_entry = dr.async_get(self.hass).async_get_device(
-            identifiers={(DOMAIN, serial_number)}
-        )
-        if device_entry is not None and device_entry.disabled:
+        if self._is_registry_disabled(serial_number):
             ir.async_delete_issue(self.hass, DOMAIN, blade_issue_id)
             ir.async_delete_issue(self.hass, DOMAIN, battery_issue_id)
             return

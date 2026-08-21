@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The 5-minute periodic refresh no longer pings mowers that are disabled in the Home Assistant device registry. A retired mower still registered on the Worx cloud account would time out on every ping (observed live: one MQTT "Timeout waiting for device response" warning every 5 minutes, ~288 per day, each tying up a worker for 30 seconds) even though all its entities are disabled and nothing consumes the data. The registry is checked live on each pass, so re-enabling the device resumes its refreshes within one cycle.
+
 ## 1.12.0 - 2026-08-22
 
 Hardening pass following the HACS review of the store submission (thanks @frenck).
