@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.12.0 - 2026-08-22
 
 Hardening pass following the HACS review of the store submission (thanks @frenck).
 
