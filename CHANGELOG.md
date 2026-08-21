@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Restored the brand/ directory inside the integration (icon.png, icon@2x.png, logo.png — genuine files only, no dark/2x placeholder copies): the 1.12.0 asset cleanup removed it, but HACS validation specifically requires custom_components/<domain>/brand/icon.png for repositories not listed in home-assistant/brands, which failed the HACS check on 1.12.0/1.12.1. The copies at the integration root remain — Home Assistant's local brand serving (HA 2026.3+) reads those, while HACS validation reads brand/; the two locations serve different consumers.
+
 ## 1.12.1 - 2026-08-26
 
 - The 5-minute periodic refresh no longer pings mowers that are disabled in the Home Assistant device registry. A retired mower still registered on the Worx cloud account would time out on every ping (observed live: one MQTT "Timeout waiting for device response" warning every 5 minutes, ~288 per day, each tying up a worker for 30 seconds) even though all its entities are disabled and nothing consumes the data. The registry is checked live on each pass, so re-enabling the device resumes its refreshes within one cycle.
