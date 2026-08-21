@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Démarrer une tonte ponctuelle",
+      "description": "Démarre une tonte ponctuelle avec une durée choisie, une coupe de bordure optionnelle et une liste optionnelle de zones RTK.",
+      "fields": {
+        "entity_id": {
+          "name": "Tondeuse",
+          "description": "L'entité tondeuse Worx Landroid Vision PLUS."
+        },
+        "runtime": {
+          "name": "Durée de tonte",
+          "description": "Durée de la tonte ponctuelle en minutes. Mettre 0 avec la coupe de bordure activée pour ne faire que les bordures."
+        },
+        "edge_cut": {
+          "name": "Coupe de bordure",
+          "description": "Si la tonte ponctuelle inclut la coupe de bordure."
+        },
+        "zones": {
+          "name": "Zones",
+          "description": "Liste optionnelle d'identifiants de zones RTK, par exemple [1, 2]. Laisser vide pour une tonte par défaut sans restriction de zone."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "Définir l'identifiant de carte RTK",
+      "description": "Définit manuellement l'identifiant de carte RTK en cache quand Worx ne le renvoie pas. Retrouvez la dernière valeur connue dans l'historique du capteur Carte RTK pour débloquer immédiatement la caméra de carte et les capteurs dépendants.",
+      "fields": {
+        "entity_id": {
+          "name": "Tondeuse",
+          "description": "L'entité tondeuse Worx Landroid Vision PLUS."
+        },
+        "map_id": {
+          "name": "Identifiant de carte",
+          "description": "Un identifiant de carte RTK connu (UUID), par exemple depuis l'historique du capteur Carte RTK."
+        }
+      }
+    }
   }
 }

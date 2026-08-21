@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Uruchom koszenie jednorazowe",
+      "description": "Uruchamia jednorazowe koszenie z wybranym czasem pracy, opcjonalnym koszeniem krawędzi i opcjonalną listą stref RTK.",
+      "fields": {
+        "entity_id": {
+          "name": "Kosiarka",
+          "description": "Encja kosiarki Worx Landroid Vision PLUS."
+        },
+        "runtime": {
+          "name": "Czas koszenia",
+          "description": "Czas koszenia jednorazowego w minutach. Ustaw 0 z włączonym koszeniem krawędzi, aby kosić tylko krawędzie."
+        },
+        "edge_cut": {
+          "name": "Koszenie krawędzi",
+          "description": "Czy jednorazowe koszenie ma zawierać koszenie krawędzi."
+        },
+        "zones": {
+          "name": "Strefy",
+          "description": "Opcjonalna lista identyfikatorów stref RTK, np. [1, 2]. Puste pole oznacza domyślne koszenie bez ograniczenia stref."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "Ustaw identyfikator mapy RTK",
+      "description": "Ręcznie ustawia identyfikator mapy RTK w pamięci podręcznej, gdy Worx go nie wysyła. Ostatnią znaną wartość znajdziesz w historii czujnika mapy RTK, aby natychmiast odblokować kamerę mapy i zależne czujniki.",
+      "fields": {
+        "entity_id": {
+          "name": "Kosiarka",
+          "description": "Encja kosiarki Worx Landroid Vision PLUS."
+        },
+        "map_id": {
+          "name": "Identyfikator mapy",
+          "description": "Znany identyfikator mapy RTK (UUID), np. z historii czujnika mapy RTK."
+        }
+      }
+    }
   }
 }

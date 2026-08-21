@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Start one-time mowing",
+      "description": "Starts a one-time mowing session with a chosen runtime, optional edge cutting and an optional RTK zone list.",
+      "fields": {
+        "entity_id": {
+          "name": "Mower",
+          "description": "The Worx Landroid Vision PLUS lawn mower entity."
+        },
+        "runtime": {
+          "name": "Mowing time",
+          "description": "One-time mowing runtime in minutes. Set 0 with edge cutting enabled to run edges only."
+        },
+        "edge_cut": {
+          "name": "Edge cutting",
+          "description": "Whether the one-time mowing session includes edge cutting."
+        },
+        "zones": {
+          "name": "Zones",
+          "description": "Optional list of RTK zone ids, for example [1, 2]. Leave empty for default mowing without zone restriction."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "Set RTK map id",
+      "description": "Manually sets the cached RTK map id when Worx does not resend it. Find the last known value in the RTK map sensor's history to unblock the map camera and dependent sensors immediately.",
+      "fields": {
+        "entity_id": {
+          "name": "Mower",
+          "description": "The Worx Landroid Vision PLUS lawn mower entity."
+        },
+        "map_id": {
+          "name": "Map id",
+          "description": "A known RTK map id (UUID), for example from the RTK map sensor's history."
+        }
+      }
+    }
   }
 }

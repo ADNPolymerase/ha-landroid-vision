@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Eenmalig maaien starten",
+      "description": "Start een eenmalige maaisessie met gekozen duur, optioneel randen maaien en een optionele RTK-zonelijst.",
+      "fields": {
+        "entity_id": {
+          "name": "Maaier",
+          "description": "De Worx Landroid Vision PLUS maaier-entiteit."
+        },
+        "runtime": {
+          "name": "Maaitijd",
+          "description": "Duur van het eenmalige maaien in minuten. Zet 0 met randen maaien aan om alleen randen te maaien."
+        },
+        "edge_cut": {
+          "name": "Randen maaien",
+          "description": "Of de eenmalige maaisessie randen maaien omvat."
+        },
+        "zones": {
+          "name": "Zones",
+          "description": "Optionele lijst met RTK-zone-id's, bijvoorbeeld [1, 2]. Leeg laten voor standaard maaien zonder zonebeperking."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "RTK-kaart-id instellen",
+      "description": "Stelt de gecachte RTK-kaart-id handmatig in wanneer Worx deze niet opnieuw verstuurt. De laatst bekende waarde staat in de geschiedenis van de RTK-kaartsensor en deblokkeert de camera en afhankelijke sensoren direct.",
+      "fields": {
+        "entity_id": {
+          "name": "Maaier",
+          "description": "De Worx Landroid Vision PLUS maaier-entiteit."
+        },
+        "map_id": {
+          "name": "Kaart-id",
+          "description": "Een bekende RTK-kaart-id (UUID), bijvoorbeeld uit de geschiedenis van de RTK-kaartsensor."
+        }
+      }
+    }
   }
 }

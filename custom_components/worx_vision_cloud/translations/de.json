@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Einmaliges Mähen starten",
+      "description": "Startet eine einmalige Mähsitzung mit gewählter Dauer, optionalem Kantenschnitt und optionaler RTK-Zonenliste.",
+      "fields": {
+        "entity_id": {
+          "name": "Mäher",
+          "description": "Die Worx Landroid Vision PLUS Mäher-Entität."
+        },
+        "runtime": {
+          "name": "Mähdauer",
+          "description": "Dauer des einmaligen Mähens in Minuten. 0 mit aktiviertem Kantenschnitt mäht nur die Kanten."
+        },
+        "edge_cut": {
+          "name": "Kantenschnitt",
+          "description": "Ob das einmalige Mähen den Kantenschnitt einschließt."
+        },
+        "zones": {
+          "name": "Zonen",
+          "description": "Optionale Liste von RTK-Zonen-IDs, z. B. [1, 2]. Leer lassen für Standardmähen ohne Zonenbeschränkung."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "RTK-Karten-ID setzen",
+      "description": "Setzt die zwischengespeicherte RTK-Karten-ID manuell, wenn Worx sie nicht erneut sendet. Der letzte bekannte Wert steht im Verlauf des RTK-Karten-Sensors und gibt Kamera und abhängige Sensoren sofort wieder frei.",
+      "fields": {
+        "entity_id": {
+          "name": "Mäher",
+          "description": "Die Worx Landroid Vision PLUS Mäher-Entität."
+        },
+        "map_id": {
+          "name": "Karten-ID",
+          "description": "Eine bekannte RTK-Karten-ID (UUID), z. B. aus dem Verlauf des RTK-Karten-Sensors."
+        }
+      }
+    }
   }
 }

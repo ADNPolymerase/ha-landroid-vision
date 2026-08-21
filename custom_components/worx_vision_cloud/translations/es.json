@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Iniciar corte puntual",
+      "description": "Inicia un corte puntual con la duración elegida, corte de bordes opcional y una lista opcional de zonas RTK.",
+      "fields": {
+        "entity_id": {
+          "name": "Cortacésped",
+          "description": "La entidad del cortacésped Worx Landroid Vision PLUS."
+        },
+        "runtime": {
+          "name": "Tiempo de corte",
+          "description": "Duración del corte puntual en minutos. Ponga 0 con el corte de bordes activado para cortar solo los bordes."
+        },
+        "edge_cut": {
+          "name": "Corte de bordes",
+          "description": "Si el corte puntual incluye el corte de bordes."
+        },
+        "zones": {
+          "name": "Zonas",
+          "description": "Lista opcional de identificadores de zonas RTK, por ejemplo [1, 2]. Dejar vacío para el corte por defecto sin restricción de zonas."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "Establecer id de mapa RTK",
+      "description": "Establece manualmente el id de mapa RTK en caché cuando Worx no lo reenvía. Busque el último valor conocido en el historial del sensor de mapa RTK para desbloquear de inmediato la cámara y los sensores dependientes.",
+      "fields": {
+        "entity_id": {
+          "name": "Cortacésped",
+          "description": "La entidad del cortacésped Worx Landroid Vision PLUS."
+        },
+        "map_id": {
+          "name": "Id de mapa",
+          "description": "Un id de mapa RTK conocido (UUID), por ejemplo del historial del sensor de mapa RTK."
+        }
+      }
+    }
   }
 }

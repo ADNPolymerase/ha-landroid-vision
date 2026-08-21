@@ -512,7 +512,7 @@ def _render_svg_map(
 ) -> tuple[str, float | None]:
     """Render map data to SVG."""
     if not isinstance(map_data, dict):
-        return _placeholder_svg("Brak mapy RTK z API"), None
+        return _placeholder_svg("No RTK map from the API"), None
 
     trail_segments = _trail_segments(map_data, trail)
     trail_points = [
@@ -522,7 +522,7 @@ def _render_svg_map(
     ]
     points = _iter_bounds_points(map_data, robot_position, trail_points)
     if not points:
-        return _placeholder_svg("Mapa RTK nie zawiera punktow"), None
+        return _placeholder_svg("RTK map contains no points"), None
 
     project, meters_to_pixels = _projector(points)
     swath_width_px = _mowed_swath_width_px(cutting_width_m, meters_to_pixels)

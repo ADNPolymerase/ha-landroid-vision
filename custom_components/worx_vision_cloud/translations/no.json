@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Start engangsklipping",
+      "description": "Starter en engangsklipping med valgt varighet, valgfri kantklipping og en valgfri RTK-soneliste.",
+      "fields": {
+        "entity_id": {
+          "name": "Gressklipper",
+          "description": "Worx Landroid Vision PLUS gressklipper-entiteten."
+        },
+        "runtime": {
+          "name": "Klippetid",
+          "description": "Varighet for engangsklippingen i minutter. Sett 0 med kantklipping aktivert for kun å klippe kanter."
+        },
+        "edge_cut": {
+          "name": "Kantklipping",
+          "description": "Om engangsklippingen skal inkludere kantklipping."
+        },
+        "zones": {
+          "name": "Soner",
+          "description": "Valgfri liste med RTK-sone-id-er, for eksempel [1, 2]. La stå tomt for standardklipping uten sonebegrensning."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "Sett RTK-kart-id",
+      "description": "Setter den mellomlagrede RTK-kart-id-en manuelt når Worx ikke sender den på nytt. Den sist kjente verdien finnes i RTK-kartsensorens historikk og låser opp kameraet og avhengige sensorer umiddelbart.",
+      "fields": {
+        "entity_id": {
+          "name": "Gressklipper",
+          "description": "Worx Landroid Vision PLUS gressklipper-entiteten."
+        },
+        "map_id": {
+          "name": "Kart-id",
+          "description": "En kjent RTK-kart-id (UUID), for eksempel fra RTK-kartsensorens historikk."
+        }
+      }
+    }
   }
 }

@@ -393,5 +393,43 @@
         }
       }
     }
+  },
+  "services": {
+    "start_one_time_mowing": {
+      "name": "Avvia taglio singolo",
+      "description": "Avvia una sessione di taglio singolo con durata scelta, taglio bordi opzionale e un elenco opzionale di zone RTK.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot",
+          "description": "L'entità del robot Worx Landroid Vision PLUS."
+        },
+        "runtime": {
+          "name": "Durata taglio",
+          "description": "Durata del taglio singolo in minuti. Impostare 0 con il taglio bordi attivo per tagliare solo i bordi."
+        },
+        "edge_cut": {
+          "name": "Taglio bordi",
+          "description": "Se il taglio singolo include il taglio dei bordi."
+        },
+        "zones": {
+          "name": "Zone",
+          "description": "Elenco opzionale di id delle zone RTK, ad esempio [1, 2]. Lasciare vuoto per il taglio predefinito senza restrizioni di zona."
+        }
+      }
+    },
+    "set_rtk_map_id": {
+      "name": "Imposta id mappa RTK",
+      "description": "Imposta manualmente l'id della mappa RTK in cache quando Worx non lo reinvia. L'ultimo valore noto è nella cronologia del sensore mappa RTK e sblocca subito la fotocamera e i sensori dipendenti.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot",
+          "description": "L'entità del robot Worx Landroid Vision PLUS."
+        },
+        "map_id": {
+          "name": "Id mappa",
+          "description": "Un id di mappa RTK noto (UUID), ad esempio dalla cronologia del sensore mappa RTK."
+        }
+      }
+    }
   }
 }
