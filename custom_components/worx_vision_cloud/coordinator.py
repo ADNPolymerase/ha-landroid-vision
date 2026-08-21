@@ -6,6 +6,7 @@ from collections import deque
 from datetime import UTC, datetime, time, timedelta
 import json
 import logging
+from urllib.parse import quote
 from typing import Any, Callable
 
 from aiohttp import ClientError, ClientTimeout
@@ -1019,7 +1020,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 return None
 
             map_data = await AGET(
-                f"https://{endpoint}/api/v2/maps/{map_id}",
+                f"https://{endpoint}/api/v2/maps/{quote(str(map_id), safe='')}",
                 HEADERS(api.access_token),
                 session=await api._ensure_session(),
             )

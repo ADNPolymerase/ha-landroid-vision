@@ -24,6 +24,7 @@ from homeassistant.helpers import (
     entity_registry as er,
 )
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.util import slugify
 import voluptuous as vol
 
@@ -61,10 +62,17 @@ START_ONE_TIME_MOWING_SCHEMA = vol.Schema(
     }
 )
 
+# Worx RTK map ids are UUIDs; anything else is rejected so the value can
+# never smuggle path segments into the private map API URL.
+RTK_MAP_ID_REGEX = (
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}"
+    r"-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
 SET_RTK_MAP_ID_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-        vol.Required(ATTR_MAP_ID): cv.string,
+        vol.Required(ATTR_MAP_ID): vol.All(cv.string, vol.Match(RTK_MAP_ID_REGEX)),
     }
 )
 
@@ -253,13 +261,16 @@ def _async_setup_services(hass: HomeAssistant) -> None:
             serial_number, call.data[ATTR_MAP_ID]
         )
 
-    hass.services.async_register(
+    # Admin-only: one starts the blades, the other rewrites persisted state.
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_START_ONE_TIME_MOWING,
         async_start_one_time_mowing,
         schema=START_ONE_TIME_MOWING_SCHEMA,
     )
-    hass.services.async_register(
+    async_register_admin_service(
+        hass,
         DOMAIN,
         SERVICE_SET_RTK_MAP_ID,
         async_set_rtk_map_id,
