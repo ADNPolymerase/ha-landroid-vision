@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+Hardening pass following the HACS review of the store submission (thanks @frenck).
+
+- Security: the start_one_time_mowing and set_rtk_map_id services now require admin privileges (async_register_admin_service) — the first one starts the blades, the second rewrites persisted state.
+- Security: the map_id service input is now strictly validated as a UUID, and the value is URL-quoted before being interpolated into the private Worx map API path, closing a path-injection vector.
+- Localization: services.yaml no longer carries hard-coded Polish text — service names, descriptions and field labels now come from the translations (all 11 languages), and the two remaining Polish placeholder strings in the map camera SVG are gone.
+- Consistency: the minimum Home Assistant version is now declared as 2026.3.0 everywhere (hacs.json and README) — that has been the effective requirement since 1.6.1, when the bundled brand images started relying on HA 2026.3's local brand serving.
+- Brand assets: removed 17 byte-identical placeholder files (fake dark_* variants and a fake logo@2x that were exact copies of the light/1x versions, plus two duplicated brand/ directories). The logo is a single-color orange mark that renders identically on light and dark themes, and Home Assistant falls back to the light/1x assets automatically, so nothing changes visually.
+
 ## 1.11.0 - 2026-08-13
 
 - Made the maintenance thresholds configurable in the integration options (Settings > Devices & services > Worx Landroid Vision PLUS > Configure), and replaced the unrealistic hard-coded defaults inherited from the original integration. Blade service was flagged after only 12 hours of cutting — roughly 9 days of typical mowing — and now defaults to 100 hours, in line with real-world pivot blade life (a change every 6-8 weeks). Battery service was flagged at 500 charge cycles and now defaults to 800, the top of the rated cycle life for the Li-Ion chemistry Worx PowerShare packs use (500-800 cycles, 2-5 year replacement window). Both the maintenance sensor and the Repairs alerts follow the configured values, existing over-eager alerts clear automatically on upgrade, and the previous behavior can be restored by setting the old values in the options.
