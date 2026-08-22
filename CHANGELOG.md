@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.12.3 - 2026-08-27
 
 - Rebuilt the brand logo from a vector source: the original 478×215 PNG was traced into an exact SVG (logo.svg at the repository root, single-color #EE7700, 27 contours), and both logo.png (478×215) and a genuine logo@2x.png (956×430, real double resolution rather than a copy) are now rendered from it with a transparent background. The previous PNG carried an opaque white background, which showed up as a white box on Home Assistant's dark theme; the new assets blend into both themes. Addresses the remaining brand-asset point from the HACS review.
 - The icons now come from the same vector source (icon.svg at the repository root: the logo lockup centered in a square, same placement as before): icon.png (256) and icon@2x.png (512) are rendered transparent instead of on an opaque white square.
