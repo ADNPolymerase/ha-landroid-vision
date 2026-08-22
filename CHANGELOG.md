@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Rebuilt the brand logo from a vector source: the original 478×215 PNG was traced into an exact SVG (logo.svg at the repository root, single-color #EE7700, 27 contours), and both logo.png (478×215) and a genuine logo@2x.png (956×430, real double resolution rather than a copy) are now rendered from it with a transparent background. The previous PNG carried an opaque white background, which showed up as a white box on Home Assistant's dark theme; the new assets blend into both themes. Addresses the remaining brand-asset point from the HACS review.
+
 ## 1.12.2 - 2026-08-26
 
 - Restored the brand/ directory inside the integration (icon.png, icon@2x.png, logo.png — genuine files only, no dark/2x placeholder copies): the 1.12.0 asset cleanup removed it, but HACS validation specifically requires custom_components/<domain>/brand/icon.png for repositories not listed in home-assistant/brands, which failed the HACS check on 1.12.0/1.12.1. The copies at the integration root remain — Home Assistant's local brand serving (HA 2026.3+) reads those, while HACS validation reads brand/; the two locations serve different consumers.
