@@ -1,16 +1,16 @@
 # Changelog
 
-## 1.12.3 - 2026-08-27
+## 1.12.3 - 2026-08-22
 
 - Rebuilt the brand logo from a vector source: the original 478×215 PNG was traced into an exact SVG (logo.svg at the repository root, single-color #EE7700, 27 contours), and both logo.png (478×215) and a genuine logo@2x.png (956×430, real double resolution rather than a copy) are now rendered from it with a transparent background. The previous PNG carried an opaque white background, which showed up as a white box on Home Assistant's dark theme; the new assets blend into both themes. Addresses the remaining brand-asset point from the HACS review.
 - The icons now come from the same vector source (icon.svg at the repository root: the logo lockup centered in a square, same placement as before): icon.png (256) and icon@2x.png (512) are rendered transparent instead of on an opaque white square.
 - Removed the three image copies at the integration root (icon.png, icon@2x.png, logo.png). Correction to the 1.12.2 note: Home Assistant's local brand serving reads the integration's brand/ directory (loader.has_branding checks for a brand folder, and the brands view resolves images inside it with its own dark/2x fallbacks), the same directory HACS validates — the root copies were never read by anything. brand/ is now the single source of the served assets, alongside the two root-level files GitHub and HACS display for the repository itself.
 
-## 1.12.2 - 2026-08-26
+## 1.12.2 - 2026-08-22
 
 - Restored the brand/ directory inside the integration (icon.png, icon@2x.png, logo.png — genuine files only, no dark/2x placeholder copies): the 1.12.0 asset cleanup removed it, but HACS validation specifically requires custom_components/<domain>/brand/icon.png for repositories not listed in home-assistant/brands, which failed the HACS check on 1.12.0/1.12.1. The copies at the integration root remain — Home Assistant's local brand serving (HA 2026.3+) reads those, while HACS validation reads brand/; the two locations serve different consumers.
 
-## 1.12.1 - 2026-08-26
+## 1.12.1 - 2026-08-22
 
 - The 5-minute periodic refresh no longer pings mowers that are disabled in the Home Assistant device registry. A retired mower still registered on the Worx cloud account would time out on every ping (observed live: one MQTT "Timeout waiting for device response" warning every 5 minutes, ~288 per day, each tying up a worker for 30 seconds) even though all its entities are disabled and nothing consumes the data. The registry is checked live on each pass, so re-enabling the device resumes its refreshes within one cycle.
 
