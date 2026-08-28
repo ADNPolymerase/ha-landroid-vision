@@ -25,6 +25,40 @@ TRAIL_MAX_SEGMENT_DISTANCE_M = 35.0
 TRAIL_MIN_POINT_DISTANCE_M = 0.25
 TRAIL_MAP_MARGIN_M = 12.0
 DEFAULT_CUTTING_WIDTH_M = 0.18
+
+DEFAULT_LANGUAGE = "en"
+
+# The map SVG is rendered server-side, so these placeholder strings cannot go
+# through translations/*.json (entity translations only cover names and
+# states). Same per-locale dict pattern as the dynamic option labels in
+# select.py, resolved from the Home Assistant UI language with an English
+# fallback.
+PLACEHOLDER_NO_MAP = {
+    "en": "No RTK map from the API",
+    "fr": "Aucune carte RTK reçue de l'API",
+    "de": "Keine RTK-Karte von der API",
+    "pl": "Brak mapy RTK z API",
+    "nl": "Geen RTK-kaart van de API",
+    "es": "No se recibió mapa RTK de la API",
+    "it": "Nessuna mappa RTK dall'API",
+    "sv": "Ingen RTK-karta från API:et",
+    "no": "Ingen RTK-kart fra API-et",
+    "da": "Intet RTK-kort fra API'et",
+    "ru": "Нет карты RTK от API",
+}
+PLACEHOLDER_NO_POINTS = {
+    "en": "RTK map contains no points",
+    "fr": "La carte RTK ne contient aucun point",
+    "de": "RTK-Karte enthält keine Punkte",
+    "pl": "Mapa RTK nie zawiera punktów",
+    "nl": "RTK-kaart bevat geen punten",
+    "es": "El mapa RTK no contiene puntos",
+    "it": "La mappa RTK non contiene punti",
+    "sv": "RTK-kartan innehåller inga punkter",
+    "no": "RTK-kartet inneholder ingen punkter",
+    "da": "RTK-kortet indeholder ingen punkter",
+    "ru": "Карта RTK не содержит точек",
+}
 MOWED_SWATH_MIN_WIDTH_PX = 3.0
 MOWED_SWATH_MAX_WIDTH_PX = 32.0
 MOWED_MAX_OPACITY = 0.58
@@ -142,11 +176,16 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
             map_data = self._last_map_data
 
         trail = self.coordinator.rtk_position_timed_trail(self._serial_number)
+        language = (
+            getattr(getattr(self.hass, "config", None), "language", None)
+            or DEFAULT_LANGUAGE
+        )
         svg, swath_width_px = _render_svg_map(
             map_data,
             rtk_position(self.device),
             trail,
             _cutting_width_m(self.device),
+            language,
         )
         self._last_mowed_swath_width_px = swath_width_px
         self.async_write_ha_state()
@@ -509,10 +548,16 @@ def _render_svg_map(
     robot_position: tuple[float, float] | None,
     trail: list[tuple[datetime, float, float]] | None = None,
     cutting_width_m: float = DEFAULT_CUTTING_WIDTH_M,
+    language: str = DEFAULT_LANGUAGE,
 ) -> tuple[str, float | None]:
     """Render map data to SVG."""
     if not isinstance(map_data, dict):
-        return _placeholder_svg("No RTK map from the API"), None
+        return (
+            _placeholder_svg(
+                PLACEHOLDER_NO_MAP.get(language, PLACEHOLDER_NO_MAP[DEFAULT_LANGUAGE])
+            ),
+            None,
+        )
 
     trail_segments = _trail_segments(map_data, trail)
     trail_points = [
@@ -522,7 +567,14 @@ def _render_svg_map(
     ]
     points = _iter_bounds_points(map_data, robot_position, trail_points)
     if not points:
-        return _placeholder_svg("RTK map contains no points"), None
+        return (
+            _placeholder_svg(
+                PLACEHOLDER_NO_POINTS.get(
+                    language, PLACEHOLDER_NO_POINTS[DEFAULT_LANGUAGE]
+                )
+            ),
+            None,
+        )
 
     project, meters_to_pixels = _projector(points)
     swath_width_px = _mowed_swath_width_px(cutting_width_m, meters_to_pixels)

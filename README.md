@@ -4,7 +4,7 @@
 
 # Worx Landroid Vision PLUS
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/ADNPolymerase/ha-landroid-vision)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://badgen.net/github/release/ADNPolymerase/ha-landroid-vision)](https://github.com/ADNPolymerase/ha-landroid-vision/releases)
 [![Validate](https://github.com/ADNPolymerase/ha-landroid-vision/actions/workflows/validate.yml/badge.svg)](https://github.com/ADNPolymerase/ha-landroid-vision/actions/workflows/validate.yml)
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2026.3%2B-blue.svg)](https://www.home-assistant.io/)
@@ -28,21 +28,20 @@ This integration is built on top of the community `pyworxcloud` library and adds
 - Download diagnostics with automatic redaction of coordinates, addresses and identifiers.
 - Translated into 11 languages (English, Polish, French, German, Dutch, Spanish, Italian, Swedish, Norwegian, Danish, Russian), including entity states, schedule and calendar.
 
-## Installation With HACS
+## Installation
 
-1. Open HACS.
-2. Add this repository as a custom repository.
-3. Select category `Integration`.
-4. Install Worx Landroid Vision PLUS.
-5. Restart Home Assistant.
-6. Go to `Settings > Devices & services > Add integration`.
-7. Search for `Worx Landroid Vision PLUS`.
+### Option 1 — HACS (recommended)
 
-At setup, sign in with the same e-mail and password as in your mower app and pick your brand cloud: `worx`, `kress` or `landxcape`.
+The integration is in the HACS default store — no custom repository needed:
 
-## Manual Installation
+1. Open HACS and search for `Worx Landroid Vision PLUS`.
+2. Download it.
+3. Restart Home Assistant.
+4. Go to `Settings > Devices & services > Add integration` and search for `Worx Landroid Vision PLUS`.
 
-Copy this directory:
+### Option 2 — Direct from this repository
+
+Without HACS, copy this directory:
 
 ```text
 custom_components/worx_vision_cloud
@@ -54,7 +53,9 @@ to your Home Assistant config directory:
 /config/custom_components/worx_vision_cloud
 ```
 
-Then restart Home Assistant and add the integration from `Settings > Devices & services`.
+Then restart Home Assistant and add the integration from `Settings > Devices & services`. You are responsible for updates with this method — HACS handles them for you with option 1.
+
+At setup, sign in with the same e-mail and password as in your mower app and pick your brand cloud: `worx`, `kress` or `landxcape`.
 
 ## Entities
 

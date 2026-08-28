@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.0 - 2026-08-28
+
+Now in the HACS default store — installable directly from HACS without adding a custom repository (hacs/default#9049, thanks @frenck for the review and merge).
+
+- Localized the two placeholder strings rendered inside the map camera SVG ("No RTK map from the API" / "RTK map contains no points") in all 11 languages, resolved from the Home Assistant UI language with an English fallback — the follow-up point from the HACS review. They previously showed in English regardless of locale (and in Polish before 1.12.0).
+- README: the installation section now covers both paths — the HACS default store (recommended) and a direct copy from the repository — and the HACS badge reflects the default-store status.
+
 ## 1.12.3 - 2026-08-22
 
 - Rebuilt the brand logo from a vector source: the original 478×215 PNG was traced into an exact SVG (logo.svg at the repository root, single-color #EE7700, 27 contours), and both logo.png (478×215) and a genuine logo@2x.png (956×430, real double resolution rather than a copy) are now rendered from it with a transparent background. The previous PNG carried an opaque white background, which showed up as a white box on Home Assistant's dark theme; the new assets blend into both themes. Addresses the remaining brand-asset point from the HACS review.
