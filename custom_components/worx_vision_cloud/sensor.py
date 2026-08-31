@@ -283,16 +283,37 @@ def _rtk_map_data(device):
     return getattr(device, "_worx_vision_rtk_map", {}) or {}
 
 
-def _first_map_zone(device):
+def _map_zones(device) -> list[dict[str, Any]]:
+    """Return every boundary zone declared on the RTK map."""
     boundaries = get_dict_value(
         get_dict_value(_rtk_map_data(device), "layers", {}) or {}, "boundaries", []
     )
+    zones: list[dict[str, Any]] = []
     for boundary in boundaries or []:
-        zones = get_dict_value(boundary, "zones", []) or []
-        for zone in zones:
+        for zone in get_dict_value(boundary, "zones", []) or []:
             if isinstance(zone, dict):
-                return zone
-    return {}
+                zones.append(zone)
+    return zones
+
+
+def _is_mowing_zone(zone: dict[str, Any]) -> bool:
+    """Return whether a map zone is actually mowed.
+
+    A Vision map can also hold transit zones — corridors the mower drives
+    through to reach another zone without cutting. Observed on a real map,
+    mowed zones carry cutting metadata (cut_type/cut_direction, matching the
+    per-zone cutting config in cfg.rtk.zs) while a transit zone's metadata is
+    an empty dict, so treat cutting metadata as the marker.
+    """
+    metadata = get_dict_value(zone, "metadata", {}) or {}
+    if not isinstance(metadata, dict):
+        return False
+    return any(key in metadata for key in ("cut_type", "cut_direction"))
+
+
+def _first_map_zone(device):
+    zones = _map_zones(device)
+    return zones[0] if zones else {}
 
 
 def _area_mowed_total(device):
@@ -601,12 +622,30 @@ def _lawn_area(device):
     except (TypeError, ValueError):
         pass
 
-    value = get_dict_value(_first_map_zone(device), "area")
-    try:
-        area = float(value) / 1_000_000
-    except (TypeError, ValueError):
-        return None
-    return round(area, 2) if area > 0 else None
+    # Sum the mowed zones rather than taking the first one: a multi-zone map
+    # would otherwise report a fraction of the lawn (observed live: 305.45 m2
+    # for the first zone instead of 339.15 m2 across both mowing zones),
+    # which in turn skews every progress percentage derived from it.
+    total = 0.0
+    for zone in _map_zones(device):
+        if not _is_mowing_zone(zone):
+            continue
+        try:
+            area = float(get_dict_value(zone, "area"))
+        except (TypeError, ValueError):
+            continue
+        if area > 0:
+            total += area / 1_000_000
+
+    if total <= 0:
+        # No cutting metadata anywhere (older firmware or a single unnamed
+        # zone): fall back to the previous first-zone behavior.
+        try:
+            total = float(get_dict_value(_first_map_zone(device), "area")) / 1_000_000
+        except (TypeError, ValueError):
+            return None
+
+    return round(total, 2) if total > 0 else None
 
 
 def _first_address_text(address: dict[str, Any], *keys: str) -> str | None:

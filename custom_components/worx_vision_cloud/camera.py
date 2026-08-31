@@ -136,6 +136,9 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
         """Return RTK map metadata."""
         map_data = self._last_map_data or {}
         zone = _first_zone(map_data)
+        zones = _map_zones(map_data)
+        mowing_zones = [z for z in zones if _is_mowing_zone(z)]
+        current_zone = rtk_current_zone(self.device) or {}
         exclusion_count = len(get_nested_value(map_data, "layers", "exclusions", default=[]) or [])
         marker_count = len(get_nested_value(map_data, "layers", "markers", default=[]) or [])
 
@@ -145,9 +148,23 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
             "map_type": get_dict_value(map_data, "type"),
             "active": get_dict_value(map_data, "active"),
             "rtk_provider": get_dict_value(map_data, "rtk_provider"),
+            # zone_* describe the FIRST zone on the map, not the one the mower
+            # is in. Kept for backwards compatibility; prefer the explicit
+            # current_zone_* / first_zone_* pairs below.
             "zone_name": get_dict_value(zone, "name"),
             "zone_area_m2": _scaled_area(get_dict_value(zone, "area")),
             "zone_perimeter_m": _scaled_length(get_dict_value(zone, "perimeter")),
+            "current_zone_name": rtk_current_zone_name(self.device),
+            "current_zone_area_m2": _scaled_area(
+                get_dict_value(current_zone, "area")
+            ),
+            "first_zone_name": get_dict_value(zone, "name"),
+            "first_zone_area_m2": _scaled_area(get_dict_value(zone, "area")),
+            "first_zone_perimeter_m": _scaled_length(
+                get_dict_value(zone, "perimeter")
+            ),
+            "zone_count": len(zones),
+            "mowing_zone_count": len(mowing_zones),
             "exclusion_count": exclusion_count,
             "marker_count": marker_count,
             "cutting_width_cm": round(_cutting_width_m(self.device) * 100, 1),
@@ -235,15 +252,29 @@ def _scaled_length(value: Any) -> float | None:
         return None
 
 
-def _first_zone(map_data: dict[str, Any]) -> dict[str, Any]:
-    """Return the first boundary zone from map data."""
+def _map_zones(map_data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return every boundary zone from map data."""
+    zones: list[dict[str, Any]] = []
     boundaries = get_nested_value(map_data, "layers", "boundaries", default=[]) or []
     for boundary in boundaries:
-        zones = get_dict_value(boundary, "zones", []) or []
-        for zone in zones:
+        for zone in get_dict_value(boundary, "zones", []) or []:
             if isinstance(zone, dict):
-                return zone
-    return {}
+                zones.append(zone)
+    return zones
+
+
+def _is_mowing_zone(zone: dict[str, Any]) -> bool:
+    """Return whether a map zone is mowed rather than only driven through."""
+    metadata = get_dict_value(zone, "metadata", {}) or {}
+    if not isinstance(metadata, dict):
+        return False
+    return any(key in metadata for key in ("cut_type", "cut_direction"))
+
+
+def _first_zone(map_data: dict[str, Any]) -> dict[str, Any]:
+    """Return the first boundary zone from map data."""
+    zones = _map_zones(map_data)
+    return zones[0] if zones else {}
 
 
 def _point_pair(point: Any) -> tuple[float, float] | None:
