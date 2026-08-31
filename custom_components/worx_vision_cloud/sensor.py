@@ -51,6 +51,7 @@ from .helpers import (
     rtk_current_zone_name,
     rtk_distance_to_station_m,
     rtk_map_attributes,
+    rtk_map_id,
     rtk_position,
     schedule_attributes,
     schedule_summary,
@@ -202,19 +203,40 @@ def _zone(device, key, default=None):
     return get_dict_value(getattr(device, "zone", {}), key, default)
 
 
+def _has_rtk_map(device) -> bool:
+    """Return whether the mower has RTK map geometry to resolve zones from."""
+    return rtk_map_id(device) not in (None, "") or isinstance(
+        getattr(device, "_worx_vision_rtk_map", None), dict
+    )
+
+
 def _zone_current_state(device) -> Any:
-    """Return legacy current zone or RTK map zone name."""
+    """Return the live RTK zone when available, else the legacy zone value.
+
+    Vision/RTK mowers report a placeholder legacy zone of 0 (observed while
+    parked and during mowing), so preferring the legacy field would pin the
+    sensor to "0" and never surface the real zone. Zone 0 stays meaningful
+    for older boundary-wire mowers, which have no RTK map to resolve from.
+    """
     legacy_value = _zone(device, "current")
-    if legacy_value not in (None, ""):
-        return legacy_value
-    return rtk_current_zone_name(device)
+    if _has_rtk_map(device):
+        rtk_value = rtk_current_zone_name(device)
+        if rtk_value is not None:
+            return rtk_value
+        if legacy_value in (None, "", 0, "0"):
+            return None
+    return legacy_value if legacy_value not in (None, "") else None
 
 
 def _zone_current_attributes(device) -> dict[str, Any]:
     """Return current-zone diagnostic attributes for legacy and RTK mowers."""
     current_zone = rtk_current_zone(device)
     legacy_value = _zone(device, "current")
-    if legacy_value not in (None, ""):
+    if _has_rtk_map(device) and rtk_current_zone_name(device) is not None:
+        source = "rtk_map"
+    elif legacy_value not in (None, "") and not (
+        _has_rtk_map(device) and legacy_value in (0, "0")
+    ):
         source = "legacy"
     elif current_zone is not None:
         source = "rtk_map"

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed the Current zone sensor reading `0` on Vision/RTK mowers: the protocol reports a placeholder legacy zone of 0 (observed both parked and while mowing), which the sensor preferred over the live map lookup and so never surfaced the real zone. Mowers with RTK map geometry now resolve the zone from the map first and only fall back to the legacy field, while zone 0 stays meaningful for older boundary-wire mowers that have no map to resolve from. Ported from upstream SmartServicePL 1.4.0. Note: the sensor's state changes from `0` to the zone name on affected mowers.
+
 ## 1.13.0 - 2026-08-28
 
 Now in the HACS default store — installable directly from HACS without adding a custom repository (hacs/default#9049, thanks @frenck for the review and merge).
