@@ -287,7 +287,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         for serial_number in list((self.data or {}).keys()):
             # A mower disabled in the device registry (e.g. an old mower
             # still registered on the Worx cloud account) would time out on
-            # every ping and flood the log — its entities are disabled, so
+            # every ping and flood the log: its entities are disabled, so
             # nothing consumes the refresh anyway. Checked live each pass,
             # so re-enabling the device resumes refreshes within a cycle.
             if self._is_registry_disabled(serial_number):

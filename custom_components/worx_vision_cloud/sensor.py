@@ -299,7 +299,7 @@ def _map_zones(device) -> list[dict[str, Any]]:
 def _is_mowing_zone(zone: dict[str, Any]) -> bool:
     """Return whether a map zone is actually mowed.
 
-    A Vision map can also hold transit zones — corridors the mower drives
+    A Vision map can also hold transit zones: corridors the mower drives
     through to reach another zone without cutting. Observed on a real map,
     mowed zones carry cutting metadata (cut_type/cut_direction, matching the
     per-zone cutting config in cfg.rtk.zs) while a transit zone's metadata is

@@ -30,16 +30,16 @@ This integration is built on top of the community `pyworxcloud` library and adds
 
 ## Installation
 
-### Option 1 — HACS (recommended)
+### Option 1: HACS (recommended)
 
-The integration is in the HACS default store — no custom repository needed:
+The integration is in the HACS default store, so no custom repository is needed:
 
 1. Open HACS and search for `Worx Landroid Vision PLUS`.
 2. Download it.
 3. Restart Home Assistant.
 4. Go to `Settings > Devices & services > Add integration` and search for `Worx Landroid Vision PLUS`.
 
-### Option 2 — Direct from this repository
+### Option 2: direct from this repository
 
 Without HACS, copy this directory:
 
@@ -53,7 +53,7 @@ to your Home Assistant config directory:
 /config/custom_components/worx_vision_cloud
 ```
 
-Then restart Home Assistant and add the integration from `Settings > Devices & services`. You are responsible for updates with this method — HACS handles them for you with option 1.
+Then restart Home Assistant and add the integration from `Settings > Devices & services`. You are responsible for updates with this method. HACS handles them for you with option 1.
 
 At setup, sign in with the same e-mail and password as in your mower app and pick your brand cloud: `worx`, `kress` or `landxcape`.
 
@@ -76,7 +76,7 @@ See [docs/entities.md](docs/entities.md) for a more detailed list.
 
 ## RTK Map & Address
 
-For compatible Vision Cloud / RTK mowers, a camera entity renders the mowing boundary, excluded areas, station and the current day's mowing trail as SVG from the private Worx map endpoint — not a video stream, it updates when new data arrives. The trail covers the full local day (like the Worx app) rather than a fixed time window: it resets at local midnight, is persisted so a Home Assistant restart mid-day doesn't lose it, and keeps showing the last known map if a fetch briefly fails.
+For compatible Vision Cloud / RTK mowers, a camera entity renders the mowing boundary, excluded areas, station and the current day's mowing trail as SVG from the private Worx map endpoint. It is not a video stream: it updates when new data arrives. The trail covers the full local day (like the Worx app) rather than a fixed time window: it resets at local midnight, is persisted so a Home Assistant restart mid-day doesn't lose it, and keeps showing the last known map if a fetch briefly fails.
 
 ### Recovering the map after upgrading from an older version
 
@@ -89,15 +89,15 @@ For compatible Vision Cloud / RTK mowers, a camera entity renders the mowing bou
 
 An `RTK address` sensor (disabled by default) can reverse-geocode the mower's rounded position with OpenStreetMap Nominatim, cached 24h. It's opt-in because RTK coordinates can reveal a home or garden location.
 
-RTK maps and address lookups can contain precise garden geometry and coordinates — don't publish debug dumps, storage files, tokens or screenshots showing exact locations. See [SECURITY.md](SECURITY.md).
+RTK maps and address lookups can contain precise garden geometry and coordinates, so don't publish debug dumps, storage files, tokens or screenshots showing exact locations. See [SECURITY.md](SECURITY.md).
 
 ## Mowed area
 
-Mowing figures are covered area (surface the blades pass over), not unique lawn area — overlapping passes mean Today/Total mowed area can legitimately exceed your lawn size, and Daily progress reaches 100% once covered area matches it. The daily baseline is kept in Home Assistant storage per mower, so it survives restarts and entity renames, and correctly handles cloud counter resets and multi-day gaps.
+Mowing figures are covered area (surface the blades pass over), not unique lawn area: overlapping passes mean Today/Total mowed area can legitimately exceed your lawn size, and Daily progress reaches 100% once covered area matches it. The daily baseline is kept in Home Assistant storage per mower, so it survives restarts and entity renames, and correctly handles cloud counter resets and multi-day gaps.
 
 ## Entity naming
 
-The `lawn_mower` entity has no name of its own — it displays exactly the device name (e.g. "Vision Cloud" rather than "Vision Cloud Mower"), for readability and for compatibility with third-party cards such as [landroid-card](https://github.com/Barma-lej/landroid-card) that strip the device name from every other entity's label using this one as the prefix.
+The `lawn_mower` entity has no name of its own: it displays exactly the device name (e.g. "Vision Cloud" rather than "Vision Cloud Mower"), for readability and for compatibility with third-party cards such as [landroid-card](https://github.com/Barma-lej/landroid-card) that strip the device name from every other entity's label using this one as the prefix.
 
 As the device's primary entity, its availability doesn't depend on the mower's own online status: a wifi/cloud connectivity blip keeps showing the last known status and attributes instead of going unavailable (which would otherwise blank cards like landroid-card that hide their body when their main entity is unavailable). Only commands (start/pause/dock) are blocked while genuinely offline, with a clear error.
 

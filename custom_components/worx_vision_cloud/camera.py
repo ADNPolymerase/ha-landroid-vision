@@ -492,7 +492,7 @@ def _trail_segments(
 
     Kept for the current local day (matching the Worx app, which shows the
     full day's trail rather than a fixed rolling window), not a fixed age
-    cutoff — the coordinator itself drops yesterday's points at local
+    cutoff: the coordinator itself drops yesterday's points at local
     midnight, so this only needs to guard against a stale point landing here
     right at the day boundary.
     """
