@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Diagnostics now include an RTK map zone summary (id, name, area, perimeter, available keys and contour count per zone — no coordinates, so the dump stays safe to share). Vision maps can hold zones that are never mowed, such as transit corridors linking two mowing zones, and this makes the difference visible when troubleshooting lawn-area figures.
 - Fixed the Current zone sensor reading `0` on Vision/RTK mowers: the protocol reports a placeholder legacy zone of 0 (observed both parked and while mowing), which the sensor preferred over the live map lookup and so never surfaced the real zone. Mowers with RTK map geometry now resolve the zone from the map first and only fall back to the legacy field, while zone 0 stays meaningful for older boundary-wire mowers that have no map to resolve from. Ported from upstream SmartServicePL 1.4.0. Note: the sensor's state changes from `0` to the zone name on affected mowers.
 
 ## 1.13.0 - 2026-08-28

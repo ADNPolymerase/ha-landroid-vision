@@ -16,6 +16,7 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
+from .helpers import get_dict_value, get_nested_value
 
 TO_REDACT = {
     CONF_EMAIL,
@@ -77,6 +78,41 @@ def _serializable(value: Any) -> Any:
     return str(value)
 
 
+
+def _rtk_map_zone_summary(device: Any) -> list[dict[str, Any]] | None:
+    """Summarize RTK map zones without leaking any coordinates.
+
+    Only identity and measurements are included (no contour points), so the
+    dump stays safe to attach to an issue while still showing how many zones
+    the map holds and what each one measures. Useful because the map can
+    contain zones that are not mowed (transit corridors between mowing
+    zones), which have no counterpart in the cfg.rtk.zs schedule config.
+    """
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    if not isinstance(map_data, dict):
+        return None
+
+    zones: list[dict[str, Any]] = []
+    boundaries = get_nested_value(map_data, "layers", "boundaries", default=[]) or []
+    for boundary in boundaries:
+        for zone in get_dict_value(boundary, "zones", []) or []:
+            if not isinstance(zone, dict):
+                continue
+            contours = get_dict_value(zone, "contours", []) or []
+            zones.append(
+                {
+                    "id": get_dict_value(zone, "id"),
+                    "name": get_dict_value(zone, "name"),
+                    "area": get_dict_value(zone, "area"),
+                    "perimeter": get_dict_value(zone, "perimeter"),
+                    "metadata": get_dict_value(zone, "metadata"),
+                    "keys": sorted(zone.keys()),
+                    "contour_count": len(contours) if isinstance(contours, list) else 0,
+                }
+            )
+    return zones
+
+
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
@@ -99,6 +135,7 @@ async def async_get_config_entry_diagnostics(
         sections["firmware_upgrade"] = _serializable(
             getattr(device, "_worx_vision_firmware_upgrade", None)
         )
+        sections["rtk_map_zones"] = _rtk_map_zone_summary(device)
         sections["daily_statistics"] = {
             "area_mowed_today": coordinator.area_mowed_today(serial_number),
             "area_details": coordinator.daily_area_details(serial_number),
