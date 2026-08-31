@@ -77,6 +77,7 @@ RTK_TRAIL_SAVE_DELAY = 60
 # unbounded growth if positions ever streamed in absurdly often.
 RTK_TRAIL_MAX_POINTS_PER_DAY = 4000
 RTK_MAP_ID_STORAGE_VERSION = 1
+STATE_DURATION_STORAGE_VERSION = 1
 DEFAULT_ONE_TIME_MOWING_RUNTIME = 60
 DEFAULT_ONE_TIME_MOWING_EDGE_CUT = False
 
@@ -189,6 +190,11 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         # restart, like the connectivity timestamps above.
         self._docked_since: dict[str, datetime] = {}
         self._error_since: dict[str, datetime] = {}
+        self._state_duration_store = Store[dict[str, Any]](
+            hass,
+            STATE_DURATION_STORAGE_VERSION,
+            f"{DOMAIN}.{config_entry.entry_id}.state_durations",
+        )
         self._connectivity_recheck_unsubs: dict[
             tuple[str, str], Callable[[], None]
         ] = {}
@@ -215,6 +221,8 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 for serial, value in stored_map_ids.items()
                 if value
             }
+
+        await self._load_state_durations()
 
         def _on_data_received(name: str, device: DeviceHandler) -> None:
             del name
@@ -260,6 +268,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             await self._statistics_store.async_save(self._statistics.as_dict())
             await self._rtk_trail_store.async_save(self._rtk_trail_store_data())
             await self._rtk_map_id_store.async_save(dict(self._rtk_map_ids))
+            await self._state_duration_store.async_save(
+                self._state_duration_data()
+            )
         finally:
             await super().async_shutdown()
 
@@ -386,14 +397,65 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
     def _note_state_durations(self, serial_number: str, device: DeviceHandler) -> None:
         """Track when the current docked / error stretch started."""
         now = datetime.now(UTC)
+        changed = False
         for tracker, active in (
             (self._docked_since, self._is_docked(device)),
             (self._error_since, self._is_in_error(device)),
         ):
             if active:
-                tracker.setdefault(serial_number, now)
-            else:
-                tracker.pop(serial_number, None)
+                if serial_number not in tracker:
+                    tracker[serial_number] = now
+                    changed = True
+            elif tracker.pop(serial_number, None) is not None:
+                changed = True
+
+        if changed:
+            # Only written when a stretch actually starts or ends, so this
+            # stays a rare fire-and-forget write rather than a per-update one.
+            self.hass.async_create_task(
+                self._state_duration_store.async_save(self._state_duration_data())
+            )
+
+    def _state_duration_data(self) -> dict[str, Any]:
+        """Return the state timers in a JSON-serializable shape."""
+        return {
+            "docked_since": {
+                serial: value.isoformat()
+                for serial, value in self._docked_since.items()
+            },
+            "error_since": {
+                serial: value.isoformat()
+                for serial, value in self._error_since.items()
+            },
+        }
+
+    async def _load_state_durations(self) -> None:
+        """Restore the docked / error timers from storage.
+
+        A Home Assistant restart is not a mower state change, so the timers
+        should survive it instead of restarting from zero. The restored
+        timestamps are only kept for mowers still in that state: the first
+        refresh runs _note_state_durations, which drops any entry whose state
+        no longer holds. If the mower left and came back while Home Assistant
+        was down we cannot tell, which is the known trade-off of trusting the
+        stored start.
+        """
+        stored = await self._state_duration_store.async_load()
+        if not isinstance(stored, dict):
+            return
+
+        for key, tracker in (
+            ("docked_since", self._docked_since),
+            ("error_since", self._error_since),
+        ):
+            entries = stored.get(key)
+            if not isinstance(entries, dict):
+                continue
+            for serial, value in entries.items():
+                try:
+                    tracker[str(serial)] = datetime.fromisoformat(str(value))
+                except (TypeError, ValueError):
+                    continue
 
     def docked_minutes(self, serial_number: str) -> float:
         """Return minutes spent on the base in the current stretch."""
