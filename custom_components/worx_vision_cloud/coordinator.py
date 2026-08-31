@@ -1421,7 +1421,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         """Re-evaluate connectivity for all mowers and re-render entities."""
         for serial_number, device in (self.data or {}).items():
             self._note_connectivity(serial_number, device)
-        self._note_state_durations(serial_number, device)
+            self._note_state_durations(serial_number, device)
         self.async_set_updated_data(self.data or {})
 
     def _create_push_update_task(self, device: DeviceHandler) -> None:
@@ -1467,6 +1467,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._update_daily_statistics(serial_number, device)
         self._sync_repair_issues(serial_number, device)
         self._note_connectivity(serial_number, device)
+        self._note_state_durations(serial_number, device)
 
     async def _api_get(self, path: str) -> Any:
         """Fetch a private Worx API path using pyworxcloud's session/token."""
