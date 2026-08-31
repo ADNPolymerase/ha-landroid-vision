@@ -79,28 +79,123 @@ def _zone_ids(device: Any) -> list[int]:
     return sorted(zone_ids)
 
 
-def _option_label(zone_ids: list[int], language: str = DEFAULT_LANGUAGE) -> str:
-    """Return a user-facing label for one zone selection."""
+def _zone_names(device: Any) -> dict[int, str]:
+    """Map RTK zone ids to the names configured in the Worx app.
+
+    The schedule config (cfg.rtk.zs) carries the zone ids the mower accepts
+    for one-time mowing but no names, while the map holds the names without
+    those ids. Both sides expose the cutting direction, so zones are paired
+    on it when every direction is distinct, and by order otherwise. Transit
+    zones are skipped: they have no cutting metadata and no schedule entry.
+    """
+    cfg_zones = rtk_map_attributes(device).get("zones", []) or []
+    pairs: list[tuple[int, Any]] = []
+    for zone in cfg_zones:
+        try:
+            zone_id = int(get_dict_value(zone, "id"))
+        except (TypeError, ValueError):
+            continue
+        if zone_id > 0:
+            pairs.append(
+                (zone_id, get_nested_value(zone, "cutting", "d", default=None))
+            )
+
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    map_zones: list[tuple[str, Any]] = []
+    if isinstance(map_data, dict):
+        boundaries = (
+            get_nested_value(map_data, "layers", "boundaries", default=[]) or []
+        )
+        for boundary in boundaries:
+            for zone in get_dict_value(boundary, "zones", []) or []:
+                if not isinstance(zone, dict):
+                    continue
+                metadata = get_dict_value(zone, "metadata", {}) or {}
+                if not isinstance(metadata, dict) or not any(
+                    key in metadata for key in ("cut_type", "cut_direction")
+                ):
+                    continue
+                name = get_dict_value(zone, "name")
+                if name in (None, ""):
+                    continue
+                map_zones.append(
+                    (str(name), get_dict_value(metadata, "cut_direction"))
+                )
+
+    if not pairs or not map_zones:
+        return {}
+
+    names: dict[int, str] = {}
+    cfg_dirs = [d for _, d in pairs if d is not None]
+    map_dirs = [d for _, d in map_zones if d is not None]
+    if (
+        len(cfg_dirs) == len(pairs)
+        and len(map_dirs) == len(map_zones)
+        and len(set(cfg_dirs)) == len(cfg_dirs)
+        and len(set(map_dirs)) == len(map_dirs)
+    ):
+        by_direction = {direction: name for name, direction in map_zones}
+        for zone_id, direction in pairs:
+            name = by_direction.get(direction)
+            if name is not None:
+                names[zone_id] = name
+
+    if len(names) != len(pairs):
+        # Directions were ambiguous or missing: fall back to map order.
+        names = {}
+        for (zone_id, _), (name, _) in zip(sorted(pairs), map_zones):
+            names[zone_id] = name
+
+    # Keep labels unambiguous if the app reuses a name across zones.
+    seen: dict[str, int] = {}
+    for zone_id, name in list(names.items()):
+        seen[name] = seen.get(name, 0) + 1
+    for zone_id, name in list(names.items()):
+        if seen[name] > 1:
+            names[zone_id] = f"{name} ({zone_id})"
+    return names
+
+
+def _option_label(
+    zone_ids: list[int],
+    language: str = DEFAULT_LANGUAGE,
+    names: dict[int, str] | None = None,
+) -> str:
+    """Return a user-facing label for one zone selection.
+
+    Uses the zone names configured in the Worx app when they can be
+    resolved, so the picker reads like the app instead of "Zone 1".
+    """
+    names = names or {}
     if not zone_ids:
         return _all_zones_label(language)
     if len(zone_ids) == 1:
+        named = names.get(zone_ids[0])
+        if named:
+            return named
         singular = ZONE_SINGULAR_LABELS.get(language, ZONE_SINGULAR_LABELS[DEFAULT_LANGUAGE])
         return f"{singular} {zone_ids[0]}"
+    if all(zone_id in names for zone_id in zone_ids):
+        return " + ".join(names[zone_id] for zone_id in zone_ids)
     plural = ZONE_PLURAL_LABELS.get(language, ZONE_PLURAL_LABELS[DEFAULT_LANGUAGE])
     return plural + " " + ", ".join(str(zone_id) for zone_id in zone_ids)
 
 
-def _option_map(zone_ids: list[int], language: str = DEFAULT_LANGUAGE) -> dict[str, list[int]]:
+def _option_map(
+    zone_ids: list[int],
+    language: str = DEFAULT_LANGUAGE,
+    names: dict[int, str] | None = None,
+) -> dict[str, list[int]]:
     """Return select option label to zone ID list mapping."""
     result: dict[str, list[int]] = {_all_zones_label(language): []}
     if len(zone_ids) <= MAX_COMBINATION_ZONES:
         for count in range(1, len(zone_ids) + 1):
             for combo in combinations(zone_ids, count):
                 selected = list(combo)
-                result[_option_label(selected, language)] = selected
+                result[_option_label(selected, language, names)] = selected
     else:
         for zone_id in zone_ids:
-            result[_option_label([zone_id], language)] = [zone_id]
+            result[_option_label([zone_id], language, names)] = [zone_id]
     return result
 
 
@@ -125,9 +220,13 @@ class OneTimeMowingZonesSelect(WorxVisionEntity, SelectEntity):
     def options(self) -> list[str]:
         """Return available zone choices."""
         language = self._language
-        options = _option_map(_zone_ids(self.device), language)
+        options = _option_map(
+            _zone_ids(self.device), language, _zone_names(self.device)
+        )
         current_label = _option_label(
-            self.coordinator.one_time_mowing_zones(self._serial_number), language
+            self.coordinator.one_time_mowing_zones(self._serial_number),
+            language,
+            _zone_names(self.device),
         )
         if current_label not in options:
             options[current_label] = self.coordinator.one_time_mowing_zones(
@@ -139,7 +238,9 @@ class OneTimeMowingZonesSelect(WorxVisionEntity, SelectEntity):
     def current_option(self) -> str | None:
         """Return selected zone choice."""
         return _option_label(
-            self.coordinator.one_time_mowing_zones(self._serial_number), self._language
+            self.coordinator.one_time_mowing_zones(self._serial_number),
+            self._language,
+            _zone_names(self.device),
         )
 
     @property
@@ -155,9 +256,13 @@ class OneTimeMowingZonesSelect(WorxVisionEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Select one zone choice."""
         language = self._language
-        options = _option_map(_zone_ids(self.device), language)
+        options = _option_map(
+            _zone_ids(self.device), language, _zone_names(self.device)
+        )
         current_zones = self.coordinator.one_time_mowing_zones(self._serial_number)
-        current_label = _option_label(current_zones, language)
+        current_label = _option_label(
+            current_zones, language, _zone_names(self.device)
+        )
         if current_label not in options:
             options[current_label] = current_zones
         if option not in options:

@@ -43,6 +43,7 @@ from .const import (
     DOMAIN,
 )
 from .helpers import (
+    DOCKED_STATUS_IDS,
     MOWING_STATUS_IDS,
     STARTING_STATUS_IDS,
     device_display_name,
@@ -181,6 +182,13 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         # already-offline mower gets one fresh grace period before showing
         # as disconnected.
         self._disconnected_since: dict[tuple[str, str], datetime] = {}
+        # Start of the mower's current docked / error stretch, per mower.
+        # Both reset the moment the mower leaves that state, so these are
+        # "how long has it been like this right now" timers, not totals.
+        # In-memory only: they restart from zero after a Home Assistant
+        # restart, like the connectivity timestamps above.
+        self._docked_since: dict[str, datetime] = {}
+        self._error_since: dict[str, datetime] = {}
         self._connectivity_recheck_unsubs: dict[
             tuple[str, str], Callable[[], None]
         ] = {}
@@ -352,6 +360,64 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 if unsub is not None:
                     unsub()
 
+    @staticmethod
+    def _is_docked(device: DeviceHandler) -> bool:
+        """Return whether the mower currently sits on its base."""
+        status = getattr(device, "status", None)
+        status_id = get_dict_value(status, "id") if isinstance(status, dict) else None
+        return status_id in DOCKED_STATUS_IDS
+
+    @staticmethod
+    def _is_in_error(device: DeviceHandler) -> bool:
+        """Return whether the mower reports a real error.
+
+        Rain delay is surfaced as an error by some models but is a normal
+        waiting state, not a fault, so it does not count here.
+        """
+        error = getattr(device, "error", None)
+        if not isinstance(error, dict):
+            return False
+        error_id = get_dict_value(error, "id")
+        if error_id in (None, 0, -1):
+            return False
+        description = str(get_dict_value(error, "description") or "").strip().lower()
+        return description.replace("_", " ") != "rain delay"
+
+    def _note_state_durations(self, serial_number: str, device: DeviceHandler) -> None:
+        """Track when the current docked / error stretch started."""
+        now = datetime.now(UTC)
+        for tracker, active in (
+            (self._docked_since, self._is_docked(device)),
+            (self._error_since, self._is_in_error(device)),
+        ):
+            if active:
+                tracker.setdefault(serial_number, now)
+            else:
+                tracker.pop(serial_number, None)
+
+    def docked_minutes(self, serial_number: str) -> float:
+        """Return minutes spent on the base in the current stretch."""
+        since = self._docked_since.get(serial_number)
+        if since is None:
+            return 0.0
+        return round((datetime.now(UTC) - since).total_seconds() / 60, 2)
+
+    def error_minutes(self, serial_number: str) -> float:
+        """Return minutes spent in the current error state."""
+        since = self._error_since.get(serial_number)
+        if since is None:
+            return 0.0
+        return round((datetime.now(UTC) - since).total_seconds() / 60, 2)
+
+    def state_duration_details(self, serial_number: str) -> dict[str, Any]:
+        """Return diagnostics for the computed state timers."""
+        docked = self._docked_since.get(serial_number)
+        errored = self._error_since.get(serial_number)
+        return {
+            "docked_since": docked.isoformat() if docked else None,
+            "error_since": errored.isoformat() if errored else None,
+        }
+
     def _schedule_connectivity_recheck(self, key: tuple[str, str]) -> None:
         """Re-render entities right when an ongoing drop outlives the grace.
 
@@ -416,6 +482,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self._update_daily_statistics(str(serial), device)
             self._sync_repair_issues(str(serial), device)
             self._note_connectivity(str(serial), device)
+            self._note_state_durations(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
             self.async_set_updated_data(data)
@@ -1292,6 +1359,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         """Re-evaluate connectivity for all mowers and re-render entities."""
         for serial_number, device in (self.data or {}).items():
             self._note_connectivity(serial_number, device)
+        self._note_state_durations(serial_number, device)
         self.async_set_updated_data(self.data or {})
 
     def _create_push_update_task(self, device: DeviceHandler) -> None:

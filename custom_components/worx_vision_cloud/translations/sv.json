@@ -214,6 +214,12 @@
       },
       "mowing_time_today": {
         "name": "Klipptid idag"
+      },
+      "computed_dock_time": {
+        "name": "Beräknad tid i laddstationen"
+      },
+      "computed_error_time": {
+        "name": "Beräknad feltid"
       }
     },
     "binary_sensor": {

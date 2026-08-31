@@ -1080,6 +1080,12 @@ async def async_setup_entry(
         entities.append(WorxScheduleSensor(coordinator, entry, serial_number))
         entities.append(WorxNextScheduleSensor(coordinator, entry, serial_number))
         entities.append(WorxRtkMapSensor(coordinator, entry, serial_number))
+        entities.append(
+            WorxStateDurationSensor(coordinator, entry, serial_number, "dock")
+        )
+        entities.append(
+            WorxStateDurationSensor(coordinator, entry, serial_number, "error")
+        )
         entities.append(WorxLastUpdateSensor(coordinator, entry, serial_number))
         entities.append(WorxAreaMowedTodaySensor(coordinator, entry, serial_number))
         entities.append(WorxMowingTimeTodaySensor(coordinator, entry, serial_number))
@@ -1165,6 +1171,50 @@ class WorxNextScheduleSensor(WorxVisionEntity, SensorEntity):
     def native_value(self) -> datetime | None:
         """Return the next scheduled mowing start."""
         return next_schedule_start(self.device, dt_util.now())
+
+
+class WorxStateDurationSensor(WorxVisionEntity, SensorEntity):
+    """Minutes the mower has spent in its current docked or error stretch.
+
+    Worx exposes lifetime "home time" and "error time" counters, but leaves
+    them at 0 on some accounts and models (confirmed on both a WR143E and a
+    Vision Cloud400 whose work-time counter updates normally), which makes
+    the cloud-backed sensors useless there. These are measured locally
+    instead and answer a different question: how long has it been like this
+    right now. Each resets to 0 as soon as the mower leaves the state, and
+    both restart from zero after a Home Assistant restart.
+    """
+
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator, entry, serial_number: str, kind: str) -> None:
+        """Initialize a computed state-duration sensor."""
+        self._kind = kind
+        self._attr_translation_key = f"computed_{kind}_time"
+        self._attr_icon = (
+            "mdi:home-clock" if kind == "dock" else "mdi:alert-circle-outline"
+        )
+        super().__init__(coordinator, entry, serial_number, f"computed_{kind}_time")
+
+    @property
+    def native_value(self) -> float:
+        """Return minutes spent in the current stretch, 0 when not in it."""
+        if self._kind == "dock":
+            return self.coordinator.docked_minutes(self._serial_number)
+        return self.coordinator.error_minutes(self._serial_number)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose when the current stretch started."""
+        details = self.coordinator.state_duration_details(self._serial_number)
+        key = "docked_since" if self._kind == "dock" else "error_since"
+        return {
+            "started_at": details.get(key),
+            "resets_when_state_changes": True,
+        }
 
 
 class WorxRtkMapSensor(WorxVisionEntity, SensorEntity):
