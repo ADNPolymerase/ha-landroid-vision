@@ -140,7 +140,14 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return RTK map metadata."""
-        map_data = self._last_map_data or {}
+        # Falls back to the coordinator's cached map so the attributes are
+        # right from the first update after a restart, instead of reporting
+        # zero zones until something renders the image for the first time.
+        map_data = (
+            self._last_map_data
+            or getattr(self.device, "_worx_vision_rtk_map", None)
+            or {}
+        )
         zone = _first_zone(map_data)
         zones = _map_zones(map_data)
         mowing_zones = [z for z in zones if _is_mowing_zone(z)]

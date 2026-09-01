@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 - 2026-09-01
+
+- The map camera reports its zone attributes correctly right after a restart. They were read only from the last rendered image, so `zone_count` and `mowing_zone_count` read 0 until something displayed the camera for the first time. The coordinator's cached map is now used as a fallback.
+- Documented a caveat on daily attribution in the README: Today mowed area and Daily progress follow the moment Worx publishes a session, not the moment the mower mowed. Observed live: a session running from 14:02 to 17:54 was only published at 03:26 the next morning, so its 310 m² were credited to the following day. Total mowed area stays correct, and the locally computed estimate sensors track the current day as it happens.
+- Documented how lawn area is derived, including the exclusion of transit zones.
+
 ## 2.0.0 - 2026-09-01
 
 ### Breaking changes

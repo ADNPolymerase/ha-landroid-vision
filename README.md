@@ -95,6 +95,14 @@ RTK maps and address lookups can contain precise garden geometry and coordinates
 
 Mowing figures are covered area (surface the blades pass over), not unique lawn area: overlapping passes mean Today/Total mowed area can legitimately exceed your lawn size, and Daily progress reaches 100% once covered area matches it. The daily baseline is kept in Home Assistant storage per mower, so it survives restarts and entity renames, and correctly handles cloud counter resets and multi-day gaps.
 
+Lawn area is read from the account's `lawn_size` when Worx provides one, and otherwise summed from the mowed zones of the RTK map. Zones the mower only drives through, such as a corridor linking two mowing areas, carry no cutting metadata and are excluded, so the figure matches what the Worx app reports rather than the raw map total.
+
+### A caveat on daily attribution
+
+Today mowed area and Daily progress derive from the cloud's cumulative counter, so they follow the moment Worx **publishes** a session, not the moment the mower actually mowed. That publication can lag by hours: on one observed day the mower worked from 14:02 to 17:54, the counter stayed flat all evening, and the resulting 310 m² only appeared at 03:26 the next morning, after the local midnight rollover. Those square meters were therefore credited to the following day, leaving the first day understated and the second starting well above zero before the mower had moved.
+
+Nothing is lost: Total mowed area stays correct, and the sum across days is right. If you need a figure that tracks the current day as it happens, use the locally computed Estimated mowed area today and Estimated daily progress sensors, which are derived from observed mowing time rather than the cloud counter.
+
 ## Entity naming
 
 The `lawn_mower` entity has no name of its own: it displays exactly the device name (e.g. "Vision Cloud" rather than "Vision Cloud Mower"), for readability and for compatibility with third-party cards such as [landroid-card](https://github.com/Barma-lej/landroid-card) that strip the device name from every other entity's label using this one as the prefix.
