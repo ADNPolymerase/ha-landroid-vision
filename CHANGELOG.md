@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.1.0 - 2026-09-01
+
+### Fixed
+
+- **The firmware update entity reported "Up to date" while an update was pending.** Worx numbers its firmware as `3.46.0+40` and `3.46.0+47`. Semantic versioning treats everything after a plus sign as build metadata and requires it to be ignored when comparing precedence, so Home Assistant rated `3.46.0+47` as not newer than `3.46.0+40` and kept the entity off, even though the versions shown in its own dialog clearly differed. The versions handed to Home Assistant now use a dot instead of the plus sign, which restores the ordering without losing a single digit.
+  - Side effect on display: the entity now shows `3.46.0.40` rather than `3.46.0+40`. Home Assistant compares the exact strings an update entity reports and its state property cannot be overridden, so this was the only way to make the comparison correct. The untouched values stay available as the `installed_version_reported` and `latest_version_reported` attributes.
+
+### Added
+
+- The firmware entity exposes `latest_head_version` and `latest_product_version`. The Worx app shows a pair such as `2.5.7+12 - 3.46.0+47`, the vision head first and the mower second. The OTA endpoint only reports the version the mower currently runs, so the entity tracks the mower firmware and these attributes make a pending head update visible too.
+- The firmware entity exposes `installed_version_reported` and `latest_version_reported`, holding the versions exactly as Worx writes them.
+
 ## 2.0.1 - 2026-09-01
 
 - The map camera reports its zone attributes correctly right after a restart. They were read only from the last rendered image, so `zone_count` and `mowing_zone_count` read 0 until something displayed the camera for the first time. The coordinator's cached map is now used as a fallback.
