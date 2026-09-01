@@ -51,6 +51,7 @@ from .helpers import (
     masked_connectivity,
     rtk_map_id,
     rtk_position,
+    is_firmware_updating,
 )
 from .statistics import DailyStatisticsTracker
 
@@ -592,6 +593,25 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if not getattr(self.cloud, "mqtt_connected", False):
             raise HomeAssistantError("Worx MQTT connection is not ready")
 
+    def is_firmware_update_in_progress(self, serial_number: str) -> bool:
+        """Return whether that mower is currently applying a firmware update."""
+        device = (self.data or {}).get(serial_number)
+        return device is not None and is_firmware_updating(device)
+
+    def raise_if_updating(self, serial_number: str) -> None:
+        """Refuse a command while the mower is flashing new firmware.
+
+        Worx asks that the mower stays on its charging station and is left
+        alone for the whole update, so any command sent meanwhile is rejected
+        here rather than reaching a device that is rewriting its own firmware.
+        """
+        if self.is_firmware_update_in_progress(serial_number):
+            raise HomeAssistantError(
+                "The mower is installing a firmware update. It must stay on its "
+                "charging station and be left alone until that finishes, so no "
+                "command was sent."
+            )
+
     async def _async_publish_command(
         self, serial_number: str, topic: str, message: dict[str, Any], protocol: int
     ) -> None:
@@ -633,6 +653,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_start_edge_cut(self, serial_number: str) -> None:
         """Start an on-demand edge cutting task."""
+        self.raise_if_updating(serial_number)
         mower = self.cloud.get_mower(serial_number)
         if not mower.get("online"):
             raise HomeAssistantError(
@@ -671,6 +692,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         zones: list[int] | None = None,
     ) -> None:
         """Start a one-time mowing task, optionally limited to RTK zones."""
+        self.raise_if_updating(serial_number)
         mower = self.cloud.get_mower(serial_number)
         if not mower.get("online"):
             raise HomeAssistantError(
@@ -770,6 +792,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, runtime_minutes: int
     ) -> None:
         """Set local one-time mowing runtime."""
+        self.raise_if_updating(serial_number)
         runtime = max(10, min(120, int(runtime_minutes)))
         self._one_time_options(serial_number)["runtime"] = runtime
         self.async_set_updated_data(self.data or {})
@@ -778,6 +801,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, enabled: bool
     ) -> None:
         """Set whether local one-time mowing starts with edge cutting."""
+        self.raise_if_updating(serial_number)
         self._one_time_options(serial_number)["edge_cut"] = bool(enabled)
         self.async_set_updated_data(self.data or {})
 
@@ -785,11 +809,13 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, zones: list[int]
     ) -> None:
         """Set local one-time mowing RTK zones."""
+        self.raise_if_updating(serial_number)
         self._one_time_options(serial_number)["zones"] = _normalize_zone_ids(zones)
         self.async_set_updated_data(self.data or {})
 
     async def async_start_configured_one_time_mowing(self, serial_number: str) -> None:
         """Start one-time mowing using local UI options."""
+        self.raise_if_updating(serial_number)
         await self.async_start_one_time_mowing(
             serial_number,
             self.one_time_mowing_runtime(serial_number),
@@ -799,6 +825,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_rain_delay(self, serial_number: str, minutes: int) -> None:
         """Set rain delay in minutes."""
+        self.raise_if_updating(serial_number)
         raindelay = getattr(self.cloud, "raindelay", None)
         if raindelay is None:
             raise HomeAssistantError(
@@ -813,6 +840,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, time_extension: int
     ) -> None:
         """Set schedule time extension in percent."""
+        self.raise_if_updating(serial_number)
         set_time_extension = getattr(self.cloud, "set_time_extension", None)
         if set_time_extension is None:
             raise HomeAssistantError(
@@ -824,6 +852,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_lawn_size(self, serial_number: str, size_m2: int) -> None:
         """Set top-level lawn size in square meters."""
+        self.raise_if_updating(serial_number)
         set_lawn_size = getattr(self.cloud, "set_lawn_size", None)
         if set_lawn_size is None:
             raise HomeAssistantError(
@@ -838,6 +867,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, perimeter_m: int
     ) -> None:
         """Set top-level lawn perimeter in meters."""
+        self.raise_if_updating(serial_number)
         set_lawn_perimeter = getattr(self.cloud, "set_lawn_perimeter", None)
         if set_lawn_perimeter is None:
             raise HomeAssistantError(
@@ -854,6 +884,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, enabled: bool
     ) -> None:
         """Toggle vendor firmware auto-upgrades."""
+        self.raise_if_updating(serial_number)
         set_firmware_auto_upgrade = getattr(
             self.cloud, "set_firmware_auto_upgrade", None
         )
@@ -868,6 +899,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_lock(self, serial_number: str, enabled: bool) -> None:
         """Lock or unlock the mower."""
+        self.raise_if_updating(serial_number)
         set_lock = getattr(self.cloud, "set_lock", None)
         if set_lock is None:
             raise HomeAssistantError(
@@ -880,6 +912,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_party_mode(self, serial_number: str, enabled: bool) -> None:
         """Turn party mode on or off."""
+        self.raise_if_updating(serial_number)
         set_party_mode = getattr(self.cloud, "set_party_mode", None)
         if set_party_mode is None:
             raise HomeAssistantError(
@@ -897,6 +930,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_off_limits(self, serial_number: str, enabled: bool) -> None:
         """Turn the off-limits module on or off."""
+        self.raise_if_updating(serial_number)
         set_offlimits = getattr(self.cloud, "set_offlimits", None)
         if set_offlimits is None:
             raise HomeAssistantError(
@@ -914,6 +948,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_cutting_height(self, serial_number: str, height_mm: int) -> None:
         """Set the cutting height in millimeters."""
+        self.raise_if_updating(serial_number)
         set_cutting_height = getattr(self.cloud, "set_cutting_height", None)
         if set_cutting_height is None:
             raise HomeAssistantError(
@@ -931,6 +966,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_acs(self, serial_number: str, enabled: bool) -> None:
         """Turn the ACS (Automatic Cutting System) module on or off."""
+        self.raise_if_updating(serial_number)
         set_acs = getattr(self.cloud, "set_acs", None)
         if set_acs is None:
             raise HomeAssistantError(
@@ -948,6 +984,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_set_torque(self, serial_number: str, torque: int) -> None:
         """Set wheel torque percentage."""
+        self.raise_if_updating(serial_number)
         set_torque = getattr(self.cloud, "set_torque", None)
         if set_torque is None:
             raise HomeAssistantError(
@@ -974,6 +1011,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, distance_mm: int
     ) -> None:
         """Set the Vision border cutting distance in millimeters."""
+        self.raise_if_updating(serial_number)
         set_border_distance = getattr(self.cloud, "set_border_distance", None)
         if set_border_distance is None:
             raise HomeAssistantError(
@@ -1018,6 +1056,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def async_start_firmware_upgrade(self, serial_number: str) -> None:
         """Queue the latest firmware update for a mower."""
+        self.raise_if_updating(serial_number)
         start_firmware_upgrade = getattr(self.cloud, "start_firmware_upgrade", None)
         if start_firmware_upgrade is None:
             raise HomeAssistantError(
@@ -1045,6 +1084,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self, serial_number: str, enabled: bool
     ) -> None:
         """Persist whether Vision border cutting may cross the lawn border."""
+        self.raise_if_updating(serial_number)
         set_cut_over_border = getattr(self.cloud, "set_cut_over_border", None)
         if set_cut_over_border is not None:
             await set_cut_over_border(serial_number, enabled)
@@ -1674,6 +1714,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         and lawn-area-dependent sensors immediately, without waiting for
         Worx's cloud to cooperate. Persisted the same way as a live value.
         """
+        self.raise_if_updating(serial_number)
         value = str(map_id).strip()
         if not value:
             raise HomeAssistantError("map_id must not be empty")

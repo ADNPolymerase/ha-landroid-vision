@@ -165,6 +165,7 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
 
     async def async_start_mowing(self) -> None:
         """Start or resume mowing."""
+        self.coordinator.raise_if_updating(self._serial_number)
         try:
             await self.coordinator.cloud.start(self._serial_number)
         except OfflineError as err:
@@ -175,6 +176,7 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
 
     async def async_pause(self) -> None:
         """Pause mowing."""
+        self.coordinator.raise_if_updating(self._serial_number)
         try:
             await self.coordinator.cloud.pause(self._serial_number)
         except OfflineError as err:
@@ -185,6 +187,7 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
 
     async def async_dock(self) -> None:
         """Return mower to dock."""
+        self.coordinator.raise_if_updating(self._serial_number)
         try:
             await self.coordinator.cloud.home(self._serial_number)
         except OfflineError as err:

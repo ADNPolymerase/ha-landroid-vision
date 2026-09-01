@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.2.0 - 2026-09-01
+
+Everything below comes from watching a real firmware update run end to end on a Vision Cloud400, from 3.46.0+40 to 3.46.0+47.
+
+### Added
+
+- **Commands are refused while the mower is installing a firmware update.** Worx asks that the mower stays on its charging station and is left alone for the whole update, so a command sent meanwhile reaches a device that is rewriting its own firmware. Start, pause, dock and every setting write now raise a clear error instead. The mower reports status 102 for the entire update, from the first byte downloaded until it has rebooted, which is what this relies on. If the status cannot be read or looks malformed the command is allowed through, so a corrupt reading cannot lock you out of your own mower.
+  - Known limitation: the vision head is updated after the mower and its own phase is not reflected in the mower status. The Worx app still showed "restarting" while Home Assistant already reported the mower back on its dock, so the guard covers the mower phase only. Wait for the app to declare the update finished.
+- **The update entity now reports progress.** Worx never sets any in-progress flag in its OTA payload, verified across a complete update, so the mower status is used instead.
+
+### Fixed
+
+- **The update dialog was empty.** Release notes were looked up at the top level of the OTA payload, but Worx nests them inside its `product` and `head` sections, keyed by language. The dialog now shows one section per component, titled with that component's version. Section titles follow the Home Assistant language in the eleven languages the integration already supports; the note text itself stays as Worx publishes it, which today means English only.
+- **When Worx offers an update with no notes at all**, which is common, the dialog points at the Landroid app instead of showing nothing.
+- The release summary line was read from keys Worx never fills, so it was always empty. It now lists the offered versions of both components, for example `Mower firmware 3.46.0+47 · Vision head firmware 2.5.7+12`. A real summary from Worx still takes priority if one ever appears.
+
 ## 2.1.0 - 2026-09-01
 
 ### Fixed

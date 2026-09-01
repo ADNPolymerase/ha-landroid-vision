@@ -19,6 +19,26 @@ STARTING_STATUS_IDS = {2, 3, 33, 103}
 PAUSED_STATUS_IDS = {34}
 DOCKED_STATUS_IDS = {1}
 ERROR_STATUS_IDS = {9, 10, 13}
+# Observed live on a Vision Cloud400 during a firmware update started from the
+# Worx app: the mower reported status 102 from the moment the download began
+# until it had rebooted on the new firmware, then went back to 1. pyworxcloud
+# has no description for it, so every status readout showed "unknown".
+UPDATING_STATUS_IDS = {102}
+
+
+def is_firmware_updating(device: Any) -> bool:
+    """Return whether the mower is busy applying a firmware update.
+
+    The Worx OTA payload never sets an in-progress flag, so the mower status
+    is the only reliable signal that an update is running.
+    """
+    status = getattr(device, "status", None)
+    if not isinstance(status, dict):
+        return False
+    try:
+        return int(status.get("id")) in UPDATING_STATUS_IDS
+    except (TypeError, ValueError):
+        return False
 
 RAW_SOURCE_ATTRS = (
     "raw_dat",
