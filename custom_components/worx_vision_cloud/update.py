@@ -97,6 +97,24 @@ NOTES_UNAVAILABLE = {
 }
 
 
+def _build_sections(source: dict[str, Any], language: str) -> list[str]:
+    """Render one markdown section per firmware component that has notes.
+
+    Takes either the live OTA payload or a record kept from a past update:
+    both hold the component payloads under "product" and "head".
+    """
+    sections: list[str] = []
+    for table, key in ((HEADING_MOWER, "product"), (HEADING_HEAD, "head")):
+        text = _component_changelog(source.get(key), language)
+        if not text:
+            continue
+        version = _sub_version(source, key)
+        heading = _localized(table, language)
+        title = f"{heading} {version}" if version else heading
+        sections.append(f"## {title}\n\n{text}")
+    return sections
+
+
 def _localized(table: dict[str, str], language: str) -> str:
     """Pick a translation, falling back to the base language then English."""
     return (
@@ -314,20 +332,20 @@ class WorxVisionFirmwareUpdate(WorxVisionEntity, UpdateEntity):
             info = _firmware_info(self.device)
 
         language = self._language
-        sections: list[str] = []
-        for table, key in ((HEADING_MOWER, "product"), (HEADING_HEAD, "head")):
-            payload = info.get(key)
-            text = _component_changelog(payload, language)
-            if not text:
-                continue
-            version = _sub_version(info, key)
-            heading = _localized(table, language)
-            title = f"{heading} {version}" if version else heading
-            sections.append(f"## {title}\n\n{text}")
-
+        sections = _build_sections(info, language)
         if sections:
             return "\n\n".join(sections)
 
-        # Worx regularly offers an update with no notes at all. Point the user
-        # at the app rather than showing an empty dialog.
+        # Worx describes a firmware only while it is still being offered: once
+        # installed, the upgrade route answers 404 and the live payload is
+        # empty. Fall back to what was recorded when this very version was the
+        # one on offer.
+        stored = self.coordinator.firmware_notes(
+            self._serial_number, self._raw_installed_version()
+        )
+        if isinstance(stored, dict):
+            sections = _build_sections(stored, language)
+            if sections:
+                return "\n\n".join(sections)
+
         return _localized(NOTES_UNAVAILABLE, language)

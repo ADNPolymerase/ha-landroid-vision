@@ -68,15 +68,6 @@ RTK_ADDRESS_USER_AGENT = (
 PRODUCT_ITEM_CACHE_TTL = timedelta(minutes=5)
 LIVE_REFRESH_INTERVAL = timedelta(minutes=5)
 FIRMWARE_UPGRADE_CACHE_TTL = timedelta(minutes=30)
-# Candidate routes for the firmware catalogue behind the Worx account portal
-# page at account.worxlandroid.com/product-items/<serial>/firmwares. Probed
-# from diagnostics only, to find which one the portal actually uses.
-FIRMWARE_CATALOG_PROBE_PATHS = (
-    "firmwares",
-    "firmware",
-    "firmware-versions",
-    "firmware-upgrade",
-)
 STATISTICS_STORAGE_VERSION = 1
 STATISTICS_SAVE_DELAY = 60
 LOCAL_OPTIONS_STORAGE_VERSION = 1
@@ -88,6 +79,12 @@ RTK_TRAIL_SAVE_DELAY = 60
 RTK_TRAIL_MAX_POINTS_PER_DAY = 4000
 RTK_MAP_ID_STORAGE_VERSION = 1
 STATE_DURATION_STORAGE_VERSION = 1
+FIRMWARE_NOTES_STORAGE_VERSION = 1
+# Worx only serves release notes while an update is pending: once installed,
+# the firmware-upgrade route answers 404 and the notes are gone for good. They
+# are kept here as they go past, so the notes of the firmware a mower is
+# actually running stay readable afterwards.
+MAX_STORED_FIRMWARE_NOTES = 10
 DEFAULT_ONE_TIME_MOWING_RUNTIME = 60
 DEFAULT_ONE_TIME_MOWING_EDGE_CUT = False
 
@@ -205,6 +202,13 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             STATE_DURATION_STORAGE_VERSION,
             f"{DOMAIN}.{config_entry.entry_id}.state_durations",
         )
+        # serial -> offered version -> {"product", "head", "stored_at"}
+        self._firmware_notes: dict[str, dict[str, Any]] = {}
+        self._firmware_notes_store = Store[dict[str, Any]](
+            hass,
+            FIRMWARE_NOTES_STORAGE_VERSION,
+            f"{DOMAIN}.{config_entry.entry_id}.firmware_notes",
+        )
         self._connectivity_recheck_unsubs: dict[
             tuple[str, str], Callable[[], None]
         ] = {}
@@ -233,6 +237,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             }
 
         await self._load_state_durations()
+        await self._load_firmware_notes()
 
         def _on_data_received(name: str, device: DeviceHandler) -> None:
             del name
@@ -280,6 +285,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             await self._rtk_map_id_store.async_save(dict(self._rtk_map_ids))
             await self._state_duration_store.async_save(
                 self._state_duration_data()
+            )
+            await self._firmware_notes_store.async_save(
+                {"notes": self._firmware_notes}
             )
         finally:
             await super().async_shutdown()
@@ -621,76 +629,67 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 "command was sent."
             )
 
-    async def async_probe_firmware_catalog(
-        self, serial_number: str
-    ) -> dict[str, Any]:
-        """Probe candidate firmware catalogue routes. Diagnostics only.
+    async def _load_firmware_notes(self) -> None:
+        """Restore the firmware release notes recorded on previous updates."""
+        stored = await self._firmware_notes_store.async_load()
+        if not isinstance(stored, dict):
+            return
+        notes = stored.get("notes")
+        if not isinstance(notes, dict):
+            return
+        for serial, versions in notes.items():
+            if isinstance(versions, dict):
+                self._firmware_notes[str(serial)] = {
+                    str(version): record
+                    for version, record in versions.items()
+                    if isinstance(record, dict)
+                }
 
-        The Worx account portal lists every firmware release for a mower as a
-        pair of versions, vision head and mower, with its changelog and its
-        release date. pyworxcloud only calls the firmware-upgrade route, which
-        describes what is being offered right now, goes silent once the mower
-        is up to date, and never reports the version the head is running.
+    def _remember_firmware_notes(
+        self, serial_number: str, info: dict[str, Any]
+    ) -> None:
+        """Keep the notes of an offered firmware, keyed by the version offered.
 
-        The request is made through the session directly rather than through
-        pyworxcloud's AGET helper, because that helper turns every failure into
-        a typed exception and the actual HTTP status is what tells a missing
-        route apart from a rejected one. Refreshing the token first matters for
-        the same reason: pyworxcloud does it before every call, and a stale
-        token can be answered with 404 rather than 401.
-
-        Runs only from a diagnostics dump, and never raises.
+        Worx describes an update only while it is pending. Recording the notes
+        under the version being offered means that once that version is
+        installed, it can be looked up by the version the mower now runs.
         """
-        try:
-            from pyworxcloud.utils.requests import HEADERS
-        except ImportError as err:  # pragma: no cover - depends on pyworxcloud
-            return {"error": f"pyworxcloud HTTP helpers unavailable: {err}"}
+        product = info.get("product")
+        if not isinstance(product, dict):
+            return
+        version = product.get("version")
+        if version is None:
+            return
 
-        api = getattr(self.cloud, "_api", None)
-        endpoint = getattr(getattr(api, "cloud", None), "ENDPOINT", None)
-        if api is None or not endpoint:
-            return {"error": "pyworxcloud internals unavailable, probe skipped"}
+        head = info.get("head")
+        record = {
+            "product": product,
+            "head": head if isinstance(head, dict) else None,
+            "stored_at": dt_util.utcnow().isoformat(),
+        }
+        versions = self._firmware_notes.setdefault(serial_number, {})
+        if versions.get(str(version)) == record:
+            return
+        versions[str(version)] = record
 
-        try:
-            await api.check_token()
-            session = await api._ensure_session()
-        except Exception as err:  # noqa: BLE001 - diagnostics must not fail
-            return {"error": f"token or session: {type(err).__name__}: {err}"}
+        if len(versions) > MAX_STORED_FIRMWARE_NOTES:
+            oldest = sorted(
+                versions.items(), key=lambda item: str(item[1].get("stored_at") or "")
+            )[: len(versions) - MAX_STORED_FIRMWARE_NOTES]
+            for key, _ in oldest:
+                versions.pop(key, None)
 
-        token = getattr(api, "access_token", None)
-        if not token:
-            return {"error": "no access token after refresh, probe skipped"}
+        self._firmware_notes_store.async_delay_save(
+            lambda: {"notes": self._firmware_notes}, 5
+        )
 
-        results: dict[str, Any] = {"_endpoint": endpoint}
-        for path in FIRMWARE_CATALOG_PROBE_PATHS:
-            url = (
-                f"https://{endpoint}/api/v2/product-items/{serial_number}/{path}"
-            )
-            try:
-                async with session.get(url, headers=HEADERS(token)) as resp:
-                    status = resp.status
-                    body = await resp.text()
-            except Exception as err:  # noqa: BLE001 - record, never raise
-                results[path] = {"error": f"{type(err).__name__}: {err}"}
-                continue
-
-            entry: dict[str, Any] = {"status": status}
-            if status >= 400:
-                entry["body"] = body[:400]
-                results[path] = entry
-                continue
-            try:
-                payload = json.loads(body)
-            except ValueError:
-                entry["body"] = body[:400]
-                results[path] = entry
-                continue
-            entry["type"] = type(payload).__name__
-            if isinstance(payload, (list, dict)):
-                entry["count"] = len(payload)
-            entry["payload"] = payload
-            results[path] = entry
-        return results
+    def firmware_notes(
+        self, serial_number: str, version: str | None
+    ) -> dict[str, Any] | None:
+        """Return the notes recorded for one firmware version, if any."""
+        if version is None:
+            return None
+        return self._firmware_notes.get(serial_number, {}).get(str(version))
 
     async def _async_publish_command(
         self, serial_number: str, topic: str, message: dict[str, Any], protocol: int
@@ -1363,6 +1362,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             firmware_info = self._fallback_firmware_upgrade_info(product_item)
 
         if firmware_info is not None:
+            self._remember_firmware_notes(serial_number, firmware_info)
             self._firmware_upgrade_cache[serial_number] = (now, firmware_info)
             device = (self.data or {}).get(serial_number)
             if device is not None:

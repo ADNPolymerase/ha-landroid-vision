@@ -136,9 +136,6 @@ async def async_get_config_entry_diagnostics(
             getattr(device, "_worx_vision_firmware_upgrade", None)
         )
         sections["rtk_map_zones"] = _rtk_map_zone_summary(device)
-        sections["firmware_catalog_probe"] = _serializable(
-            await coordinator.async_probe_firmware_catalog(serial_number)
-        )
         sections["daily_statistics"] = {
             "area_mowed_today": coordinator.area_mowed_today(serial_number),
             "area_details": coordinator.daily_area_details(serial_number),

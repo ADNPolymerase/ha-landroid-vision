@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.2.1 - 2026-09-02
+
+### Fixed
+
+- **Release notes stay readable after an update is installed.** Worx describes a firmware only while it is still on offer: once the mower runs it, the upgrade route answers 404 and the notes are gone for good. The 2.2.0 dialog was therefore empty again as soon as the update was applied. The notes of an offered firmware are now recorded as they go past, keyed by the version being offered, so that once that version is installed it can be looked up by the version the mower actually runs. Up to ten versions are kept per mower, and they survive a Home Assistant restart.
+  - Known limitation: nothing can be recovered retroactively. The firmware a mower runs today has no notes, because they were not recorded when it was offered. The local history starts at the next update.
+  - This is also why the release summary line is empty while a mower is up to date: it is built from the offered versions, which Worx stops sending.
+
+### Removed
+
+- The firmware catalogue probe shipped in the 2.2.1 pre-releases. It answered its question: the account portal lists the firmware history as server-rendered HTML behind its own login, not through the API the app uses, so there is no route to call. Its own control also showed that the upgrade route returns 404 once a mower is up to date, which is what made the fix above possible.
+
 ## 2.2.0 - 2026-09-01
 
 Everything below comes from watching a real firmware update run end to end on a Vision Cloud400, from 3.46.0+40 to 3.46.0+47.
