@@ -667,10 +667,16 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             "head": head if isinstance(head, dict) else None,
             "stored_at": dt_util.utcnow().isoformat(),
         }
+        self._store_firmware_record(serial_number, str(version), record)
+
+    def _store_firmware_record(
+        self, serial_number: str, version: str, record: dict[str, Any]
+    ) -> None:
+        """Keep one firmware record, trimming the oldest beyond the cap."""
         versions = self._firmware_notes.setdefault(serial_number, {})
-        if versions.get(str(version)) == record:
+        if versions.get(version) == record:
             return
-        versions[str(version)] = record
+        versions[version] = record
 
         if len(versions) > MAX_STORED_FIRMWARE_NOTES:
             oldest = sorted(
@@ -682,6 +688,57 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._firmware_notes_store.async_delay_save(
             lambda: {"notes": self._firmware_notes}, 5
         )
+
+    async def async_set_firmware_notes(
+        self,
+        serial_number: str,
+        version: str | None,
+        mower_notes: str | None,
+        head_version: str | None,
+        head_notes: str | None,
+    ) -> None:
+        """Record release notes for a firmware version by hand.
+
+        Worx publishes notes only while an update is pending and stops serving
+        them once it is installed, and its account portal can withdraw the
+        catalogue entry of a build that already shipped. The notes of a version
+        a mower is running can therefore be unrecoverable, so they can be
+        pasted in here instead.
+        """
+        if not version:
+            cached = self.firmware_upgrade_data(serial_number) or {}
+            version = cached.get("current_version")
+        if not version:
+            raise HomeAssistantError(
+                "No firmware version was given and none could be read from the mower"
+            )
+        if not mower_notes and not head_notes:
+            raise HomeAssistantError(
+                "Nothing to record: provide mower notes, vision head notes, or both"
+            )
+
+        product: dict[str, Any] = {"version": str(version)}
+        if mower_notes:
+            product["changelog_markdown"] = mower_notes
+        head: dict[str, Any] | None = None
+        if head_notes or head_version:
+            head = {}
+            if head_version:
+                head["version"] = str(head_version)
+            if head_notes:
+                head["changelog_markdown"] = head_notes
+
+        self._store_firmware_record(
+            serial_number,
+            str(version),
+            {
+                "product": product,
+                "head": head,
+                "stored_at": dt_util.utcnow().isoformat(),
+                "source": "manual",
+            },
+        )
+        await self._firmware_notes_store.async_save({"notes": self._firmware_notes})
 
     def firmware_notes(
         self, serial_number: str, version: str | None

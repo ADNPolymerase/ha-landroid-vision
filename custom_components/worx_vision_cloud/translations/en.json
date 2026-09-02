@@ -436,6 +436,32 @@
           "description": "A known RTK map id (UUID), for example from the RTK map sensor's history."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Set firmware release notes",
+      "description": "Records release notes for a firmware version so they stay readable in the update dialog. Worx serves notes only while an update is pending and withdraws them once it is installed, so the notes of the firmware a mower already runs can be pasted here from the Worx account portal.",
+      "fields": {
+        "entity_id": {
+          "name": "Mower",
+          "description": "The Worx Landroid Vision PLUS lawn mower entity."
+        },
+        "version": {
+          "name": "Firmware version",
+          "description": "The mower firmware version these notes describe, for example 3.46.0+47. Defaults to the version currently installed."
+        },
+        "mower_notes": {
+          "name": "Mower notes",
+          "description": "Release notes for the mower firmware."
+        },
+        "head_version": {
+          "name": "Vision head version",
+          "description": "The vision head firmware version, for example 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Vision head notes",
+          "description": "Release notes for the vision head firmware."
+        }
+      }
     }
   }
 }

@@ -436,6 +436,32 @@
           "description": "Een bekende RTK-kaart-id (UUID), bijvoorbeeld uit de geschiedenis van de RTK-kaartsensor."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Firmware-release-informatie opslaan",
+      "description": "Slaat de release-informatie van een firmwareversie op zodat die leesbaar blijft in het updatevenster. Worx levert deze informatie alleen zolang een update openstaat en haalt die weg zodra de update is geïnstalleerd. De informatie van de firmware die de maaier al draait kan hier dus vanuit het Worx-accountportaal worden geplakt.",
+      "fields": {
+        "entity_id": {
+          "name": "Maaier",
+          "description": "De grasmaaier-entiteit van de Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Firmwareversie",
+          "description": "De firmwareversie van de maaier die deze informatie beschrijft, bijvoorbeeld 3.46.0+47. Standaard de nu geïnstalleerde versie."
+        },
+        "mower_notes": {
+          "name": "Informatie maaier",
+          "description": "Release-informatie van de maaierfirmware."
+        },
+        "head_version": {
+          "name": "Versie van de Vision-kop",
+          "description": "De firmwareversie van de Vision-kop, bijvoorbeeld 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Informatie Vision-kop",
+          "description": "Release-informatie van de firmware van de Vision-kop."
+        }
+      }
     }
   }
 }

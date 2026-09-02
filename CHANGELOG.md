@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.3.0 - 2026-09-02
+
+### Added
+
+- **A `set_firmware_notes` action**, to attach release notes to a firmware version by hand. Worx publishes notes only while an update is pending, and its account portal can withdraw the catalogue entry of a build that has already shipped, so the notes of the firmware a mower is running can end up unrecoverable. They can now be pasted in from the portal, for the mower firmware, the vision head, or both. Recorded notes appear in the update dialog exactly like the ones captured automatically since 2.2.1.
+
+### Documentation
+
+- **An update that only touches the vision head is invisible to the integration.** Worx ships firmware as a pair, vision head and mower, but the upgrade endpoint reports availability by comparing mower versions alone. A new head build published against an unchanged mower version therefore raises no update at all, and the version the head is currently running is not exposed either. Both follow from the API rather than from this integration, and the Worx app remains the reference for head firmware. Observed live: a head build was republished against the same mower version and no update was reported.
+- Documented why release notes disappear once an update is installed, and how to bring them back.
+
 ## 2.2.1 - 2026-09-02
 
 ### Fixed

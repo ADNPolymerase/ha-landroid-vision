@@ -436,6 +436,32 @@
           "description": "Un id di mappa RTK noto (UUID), ad esempio dalla cronologia del sensore mappa RTK."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Salva le note di rilascio del firmware",
+      "description": "Salva le note di una versione del firmware perché restino leggibili nella finestra di aggiornamento. Worx pubblica queste note solo finché un aggiornamento è in attesa e le rimuove una volta installato, quindi quelle del firmware già in esecuzione sul robot possono essere incollate qui dal portale account Worx.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot rasaerba",
+          "description": "L'entità rasaerba del Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Versione del firmware",
+          "description": "La versione del firmware del robot descritta da queste note, ad esempio 3.46.0+47. Per impostazione predefinita, la versione installata."
+        },
+        "mower_notes": {
+          "name": "Note del robot",
+          "description": "Note di rilascio del firmware del robot."
+        },
+        "head_version": {
+          "name": "Versione della testa Vision",
+          "description": "La versione del firmware della testa Vision, ad esempio 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Note della testa Vision",
+          "description": "Note di rilascio del firmware della testa Vision."
+        }
+      }
     }
   }
 }

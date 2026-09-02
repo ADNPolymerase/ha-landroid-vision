@@ -436,6 +436,32 @@
           "description": "Et kendt RTK-kort-id (UUID), for eksempel fra RTK-kortsensorens historik."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Gem firmwarens udgivelsesnoter",
+      "description": "Gemmer udgivelsesnoterne for en firmwareversion, så de forbliver læsbare i opdateringsdialogen. Worx leverer dem kun, så længe en opdatering afventer, og fjerner dem, når den er installeret, så noterne til den firmware klipperen allerede kører kan indsættes her fra Worx kontoportal.",
+      "fields": {
+        "entity_id": {
+          "name": "Plæneklipper",
+          "description": "Plæneklipperentiteten for Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Firmwareversion",
+          "description": "Klipperens firmwareversion, som disse noter beskriver, for eksempel 3.46.0+47. Som standard den installerede version."
+        },
+        "mower_notes": {
+          "name": "Klipperens noter",
+          "description": "Udgivelsesnoter for klipperens firmware."
+        },
+        "head_version": {
+          "name": "Version til Vision-hovedet",
+          "description": "Firmwareversionen til Vision-hovedet, for eksempel 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Noter til Vision-hovedet",
+          "description": "Udgivelsesnoter for Vision-hovedets firmware."
+        }
+      }
     }
   }
 }

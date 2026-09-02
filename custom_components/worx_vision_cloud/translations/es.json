@@ -436,6 +436,32 @@
           "description": "Un id de mapa RTK conocido (UUID), por ejemplo del historial del sensor de mapa RTK."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Guardar las notas de versión del firmware",
+      "description": "Guarda las notas de una versión de firmware para que sigan siendo legibles en el cuadro de actualización. Worx solo publica estas notas mientras hay una actualización pendiente y las retira una vez instalada, así que las del firmware que el robot ya ejecuta pueden pegarse aquí desde el portal de cuenta de Worx.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot cortacésped",
+          "description": "La entidad de cortacésped del Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Versión del firmware",
+          "description": "La versión del firmware del robot que describen estas notas, por ejemplo 3.46.0+47. Por defecto, la versión instalada actualmente."
+        },
+        "mower_notes": {
+          "name": "Notas del robot",
+          "description": "Notas de versión del firmware del robot."
+        },
+        "head_version": {
+          "name": "Versión del cabezal Vision",
+          "description": "La versión del firmware del cabezal Vision, por ejemplo 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Notas del cabezal Vision",
+          "description": "Notas de versión del firmware del cabezal Vision."
+        }
+      }
     }
   }
 }

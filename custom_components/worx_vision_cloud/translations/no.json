@@ -436,6 +436,32 @@
           "description": "En kjent RTK-kart-id (UUID), for eksempel fra RTK-kartsensorens historikk."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Lagre fastvarens versjonsmerknader",
+      "description": "Lagrer versjonsmerknadene for en fastvareversjon slik at de forblir lesbare i oppdateringsdialogen. Worx leverer dem bare så lenge en oppdatering venter og fjerner dem når den er installert, så merknadene for fastvaren klipperen allerede kjører kan limes inn her fra Worx kontoportal.",
+      "fields": {
+        "entity_id": {
+          "name": "Gressklipper",
+          "description": "Gressklipperentiteten for Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Fastvareversjon",
+          "description": "Klipperens fastvareversjon som disse merknadene beskriver, for eksempel 3.46.0+47. Som standard den installerte versjonen."
+        },
+        "mower_notes": {
+          "name": "Klipperens merknader",
+          "description": "Versjonsmerknader for klipperens fastvare."
+        },
+        "head_version": {
+          "name": "Versjon for Vision-hodet",
+          "description": "Fastvareversjonen for Vision-hodet, for eksempel 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Merknader for Vision-hodet",
+          "description": "Versjonsmerknader for Vision-hodets fastvare."
+        }
+      }
     }
   }
 }

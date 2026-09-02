@@ -54,6 +54,11 @@ BORDER_DISTANCE_OPTIONS_MM = (50, 100, 150, 200)
 
 SERVICE_START_ONE_TIME_MOWING = "start_one_time_mowing"
 SERVICE_SET_RTK_MAP_ID = "set_rtk_map_id"
+SERVICE_SET_FIRMWARE_NOTES = "set_firmware_notes"
+ATTR_VERSION = "version"
+ATTR_MOWER_NOTES = "mower_notes"
+ATTR_HEAD_VERSION = "head_version"
+ATTR_HEAD_NOTES = "head_notes"
 
 ATTR_MAP_ID = "map_id"
 

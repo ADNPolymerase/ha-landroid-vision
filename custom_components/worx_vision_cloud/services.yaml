@@ -39,3 +39,24 @@ set_rtk_map_id:
       required: true
       selector:
         text:
+set_firmware_notes:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          domain: lawn_mower
+    version:
+      selector:
+        text:
+    mower_notes:
+      selector:
+        text:
+          multiline: true
+    head_version:
+      selector:
+        text:
+    head_notes:
+      selector:
+        text:
+          multiline: true

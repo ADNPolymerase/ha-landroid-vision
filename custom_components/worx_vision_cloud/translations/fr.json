@@ -436,6 +436,32 @@
           "description": "Un identifiant de carte RTK connu (UUID), par exemple depuis l'historique du capteur Carte RTK."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Enregistrer les notes de version du firmware",
+      "description": "Enregistre les notes d'une version de firmware pour qu'elles restent lisibles dans la fiche de mise à jour. Worx ne diffuse ces notes que tant qu'une mise à jour est en attente et les retire une fois installée : celles du firmware que la tondeuse exécute déjà peuvent donc être collées ici depuis le portail de compte Worx.",
+      "fields": {
+        "entity_id": {
+          "name": "Tondeuse",
+          "description": "L'entité tondeuse Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Version du firmware",
+          "description": "La version du firmware de la tondeuse décrite par ces notes, par exemple 3.46.0+47. Par défaut, la version actuellement installée."
+        },
+        "mower_notes": {
+          "name": "Notes de la tondeuse",
+          "description": "Notes de version du firmware de la tondeuse."
+        },
+        "head_version": {
+          "name": "Version de la tête Vision",
+          "description": "La version du firmware de la tête Vision, par exemple 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Notes de la tête Vision",
+          "description": "Notes de version du firmware de la tête Vision."
+        }
+      }
     }
   }
 }

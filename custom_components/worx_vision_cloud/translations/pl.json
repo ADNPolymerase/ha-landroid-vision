@@ -436,6 +436,32 @@
           "description": "Znany identyfikator mapy RTK (UUID), np. z historii czujnika mapy RTK."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Zapisz informacje o wersji oprogramowania",
+      "description": "Zapisuje informacje o wersji oprogramowania, aby pozostały czytelne w oknie aktualizacji. Worx udostępnia je tylko wtedy, gdy aktualizacja oczekuje, i usuwa je po instalacji, więc informacje o oprogramowaniu już działającym na kosiarce można wkleić tutaj z portalu konta Worx.",
+      "fields": {
+        "entity_id": {
+          "name": "Kosiarka",
+          "description": "Encja kosiarki Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Wersja oprogramowania",
+          "description": "Wersja oprogramowania kosiarki opisana przez te informacje, na przykład 3.46.0+47. Domyślnie wersja obecnie zainstalowana."
+        },
+        "mower_notes": {
+          "name": "Informacje kosiarki",
+          "description": "Informacje o wersji oprogramowania kosiarki."
+        },
+        "head_version": {
+          "name": "Wersja głowicy Vision",
+          "description": "Wersja oprogramowania głowicy Vision, na przykład 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Informacje głowicy Vision",
+          "description": "Informacje o wersji oprogramowania głowicy Vision."
+        }
+      }
     }
   }
 }

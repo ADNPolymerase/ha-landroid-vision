@@ -436,6 +436,32 @@
           "description": "Eine bekannte RTK-Karten-ID (UUID), z. B. aus dem Verlauf des RTK-Karten-Sensors."
         }
       }
+    },
+    "set_firmware_notes": {
+      "name": "Firmware-Versionshinweise speichern",
+      "description": "Speichert die Versionshinweise einer Firmware, damit sie im Update-Dialog lesbar bleiben. Worx liefert diese Hinweise nur, solange ein Update aussteht, und entfernt sie nach der Installation. Die Hinweise der bereits laufenden Firmware können daher hier aus dem Worx-Konto-Portal eingefügt werden.",
+      "fields": {
+        "entity_id": {
+          "name": "Mäher",
+          "description": "Die Rasenmäher-Entität des Worx Landroid Vision PLUS."
+        },
+        "version": {
+          "name": "Firmware-Version",
+          "description": "Die Mäher-Firmware-Version, die diese Hinweise beschreiben, zum Beispiel 3.46.0+47. Standard ist die aktuell installierte Version."
+        },
+        "mower_notes": {
+          "name": "Mäher-Hinweise",
+          "description": "Versionshinweise der Mäher-Firmware."
+        },
+        "head_version": {
+          "name": "Version des Vision-Kopfes",
+          "description": "Die Firmware-Version des Vision-Kopfes, zum Beispiel 2.5.7+12."
+        },
+        "head_notes": {
+          "name": "Hinweise zum Vision-Kopf",
+          "description": "Versionshinweise der Firmware des Vision-Kopfes."
+        }
+      }
     }
   }
 }

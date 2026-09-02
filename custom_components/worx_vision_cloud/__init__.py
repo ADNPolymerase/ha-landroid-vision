@@ -33,8 +33,12 @@ from pyworxcloud.exceptions import AuthorizationError, TooManyRequestsError
 
 from .const import (
     ATTR_EDGE_CUT,
+    ATTR_HEAD_NOTES,
+    ATTR_HEAD_VERSION,
     ATTR_MAP_ID,
+    ATTR_MOWER_NOTES,
     ATTR_RUNTIME,
+    ATTR_VERSION,
     ATTR_ZONES,
     CONF_CLOUD,
     CONF_EXPOSE_RAW,
@@ -44,6 +48,7 @@ from .const import (
     DEFAULT_VERIFY_SSL,
     DOMAIN,
     PLATFORMS,
+    SERVICE_SET_FIRMWARE_NOTES,
     SERVICE_SET_RTK_MAP_ID,
     SERVICE_START_ONE_TIME_MOWING,
 )
@@ -74,6 +79,21 @@ SET_RTK_MAP_ID_SCHEMA = vol.Schema(
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
         vol.Required(ATTR_MAP_ID): vol.All(cv.string, vol.Match(RTK_MAP_ID_REGEX)),
     }
+)
+
+# Notes are free text pasted from the Worx account portal, so nothing is
+# validated beyond requiring the mower and at least one of the two bodies.
+SET_FIRMWARE_NOTES_SCHEMA = vol.Schema(
+    vol.All(
+        {
+            vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+            vol.Optional(ATTR_VERSION): cv.string,
+            vol.Optional(ATTR_MOWER_NOTES): cv.string,
+            vol.Optional(ATTR_HEAD_VERSION): cv.string,
+            vol.Optional(ATTR_HEAD_NOTES): cv.string,
+        },
+        cv.has_at_least_one_key(ATTR_MOWER_NOTES, ATTR_HEAD_NOTES),
+    )
 )
 
 
@@ -261,7 +281,19 @@ def _async_setup_services(hass: HomeAssistant) -> None:
             serial_number, call.data[ATTR_MAP_ID]
         )
 
-    # Admin-only: one starts the blades, the other rewrites persisted state.
+    async def async_set_firmware_notes(call) -> None:
+        serial_number, runtime_data = _resolve_mower_runtime(
+            hass, call.data[ATTR_ENTITY_ID]
+        )
+        await runtime_data.coordinator.async_set_firmware_notes(
+            serial_number,
+            call.data.get(ATTR_VERSION),
+            call.data.get(ATTR_MOWER_NOTES),
+            call.data.get(ATTR_HEAD_VERSION),
+            call.data.get(ATTR_HEAD_NOTES),
+        )
+
+    # Admin-only: one starts the blades, the others rewrite persisted state.
     async_register_admin_service(
         hass,
         DOMAIN,
@@ -275,6 +307,13 @@ def _async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_SET_RTK_MAP_ID,
         async_set_rtk_map_id,
         schema=SET_RTK_MAP_ID_SCHEMA,
+    )
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_SET_FIRMWARE_NOTES,
+        async_set_firmware_notes,
+        schema=SET_FIRMWARE_NOTES_SCHEMA,
     )
 
 
