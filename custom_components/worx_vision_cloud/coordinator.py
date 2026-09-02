@@ -629,46 +629,67 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         The Worx account portal lists every firmware release for a mower as a
         pair of versions, vision head and mower, with its changelog and its
         release date. pyworxcloud only calls the firmware-upgrade route, which
-        describes what is being offered right now and goes silent once the
-        mower is up to date, and which never reports the version the head is
-        running. This records what each candidate route answers so the working
-        one can be wired in properly.
+        describes what is being offered right now, goes silent once the mower
+        is up to date, and never reports the version the head is running.
 
-        It only ever runs from a diagnostics dump, and it never raises: a probe
-        that fails is recorded as a result, not propagated.
+        The request is made through the session directly rather than through
+        pyworxcloud's AGET helper, because that helper turns every failure into
+        a typed exception and the actual HTTP status is what tells a missing
+        route apart from a rejected one. Refreshing the token first matters for
+        the same reason: pyworxcloud does it before every call, and a stale
+        token can be answered with 404 rather than 401.
+
+        Runs only from a diagnostics dump, and never raises.
         """
         try:
-            from pyworxcloud.utils.requests import AGET, HEADERS
+            from pyworxcloud.utils.requests import HEADERS
         except ImportError as err:  # pragma: no cover - depends on pyworxcloud
             return {"error": f"pyworxcloud HTTP helpers unavailable: {err}"}
 
         api = getattr(self.cloud, "_api", None)
-        token = getattr(api, "access_token", None)
         endpoint = getattr(getattr(api, "cloud", None), "ENDPOINT", None)
-        if api is None or not token or not endpoint:
+        if api is None or not endpoint:
             return {"error": "pyworxcloud internals unavailable, probe skipped"}
 
         try:
+            await api.check_token()
             session = await api._ensure_session()
         except Exception as err:  # noqa: BLE001 - diagnostics must not fail
-            return {"error": f"no HTTP session: {type(err).__name__}: {err}"}
+            return {"error": f"token or session: {type(err).__name__}: {err}"}
 
-        results: dict[str, Any] = {}
+        token = getattr(api, "access_token", None)
+        if not token:
+            return {"error": "no access token after refresh, probe skipped"}
+
+        results: dict[str, Any] = {"_endpoint": endpoint}
         for path in FIRMWARE_CATALOG_PROBE_PATHS:
             url = (
                 f"https://{endpoint}/api/v2/product-items/{serial_number}/{path}"
             )
             try:
-                payload = await AGET(url, HEADERS(token), session=session)
+                async with session.get(url, headers=HEADERS(token)) as resp:
+                    status = resp.status
+                    body = await resp.text()
             except Exception as err:  # noqa: BLE001 - record, never raise
-                results[path] = {"outcome": type(err).__name__, "detail": str(err)}
+                results[path] = {"error": f"{type(err).__name__}: {err}"}
                 continue
-            results[path] = {
-                "outcome": "ok",
-                "type": type(payload).__name__,
-                "count": len(payload) if isinstance(payload, (list, dict)) else None,
-                "payload": payload,
-            }
+
+            entry: dict[str, Any] = {"status": status}
+            if status >= 400:
+                entry["body"] = body[:400]
+                results[path] = entry
+                continue
+            try:
+                payload = json.loads(body)
+            except ValueError:
+                entry["body"] = body[:400]
+                results[path] = entry
+                continue
+            entry["type"] = type(payload).__name__
+            if isinstance(payload, (list, dict)):
+                entry["count"] = len(payload)
+            entry["payload"] = payload
+            results[path] = entry
         return results
 
     async def _async_publish_command(
