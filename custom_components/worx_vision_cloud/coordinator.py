@@ -68,6 +68,15 @@ RTK_ADDRESS_USER_AGENT = (
 PRODUCT_ITEM_CACHE_TTL = timedelta(minutes=5)
 LIVE_REFRESH_INTERVAL = timedelta(minutes=5)
 FIRMWARE_UPGRADE_CACHE_TTL = timedelta(minutes=30)
+# Candidate routes for the firmware catalogue behind the Worx account portal
+# page at account.worxlandroid.com/product-items/<serial>/firmwares. Probed
+# from diagnostics only, to find which one the portal actually uses.
+FIRMWARE_CATALOG_PROBE_PATHS = (
+    "firmwares",
+    "firmware",
+    "firmware-versions",
+    "firmware-upgrade",
+)
 STATISTICS_STORAGE_VERSION = 1
 STATISTICS_SAVE_DELAY = 60
 LOCAL_OPTIONS_STORAGE_VERSION = 1
@@ -611,6 +620,56 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 "charging station and be left alone until that finishes, so no "
                 "command was sent."
             )
+
+    async def async_probe_firmware_catalog(
+        self, serial_number: str
+    ) -> dict[str, Any]:
+        """Probe candidate firmware catalogue routes. Diagnostics only.
+
+        The Worx account portal lists every firmware release for a mower as a
+        pair of versions, vision head and mower, with its changelog and its
+        release date. pyworxcloud only calls the firmware-upgrade route, which
+        describes what is being offered right now and goes silent once the
+        mower is up to date, and which never reports the version the head is
+        running. This records what each candidate route answers so the working
+        one can be wired in properly.
+
+        It only ever runs from a diagnostics dump, and it never raises: a probe
+        that fails is recorded as a result, not propagated.
+        """
+        try:
+            from pyworxcloud.utils.requests import AGET, HEADERS
+        except ImportError as err:  # pragma: no cover - depends on pyworxcloud
+            return {"error": f"pyworxcloud HTTP helpers unavailable: {err}"}
+
+        api = getattr(self.cloud, "_api", None)
+        token = getattr(api, "access_token", None)
+        endpoint = getattr(getattr(api, "cloud", None), "ENDPOINT", None)
+        if api is None or not token or not endpoint:
+            return {"error": "pyworxcloud internals unavailable, probe skipped"}
+
+        try:
+            session = await api._ensure_session()
+        except Exception as err:  # noqa: BLE001 - diagnostics must not fail
+            return {"error": f"no HTTP session: {type(err).__name__}: {err}"}
+
+        results: dict[str, Any] = {}
+        for path in FIRMWARE_CATALOG_PROBE_PATHS:
+            url = (
+                f"https://{endpoint}/api/v2/product-items/{serial_number}/{path}"
+            )
+            try:
+                payload = await AGET(url, HEADERS(token), session=session)
+            except Exception as err:  # noqa: BLE001 - record, never raise
+                results[path] = {"outcome": type(err).__name__, "detail": str(err)}
+                continue
+            results[path] = {
+                "outcome": "ok",
+                "type": type(payload).__name__,
+                "count": len(payload) if isinstance(payload, (list, dict)) else None,
+                "payload": payload,
+            }
+        return results
 
     async def _async_publish_command(
         self, serial_number: str, topic: str, message: dict[str, Any], protocol: int
