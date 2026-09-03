@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.3.1 - 2026-09-03
+
+### Fixed
+
+- **Stopped calling the deprecated `device_registry.async_get_device`.** Home Assistant deprecated it because device identifiers are no longer unique across config entries, and it was warning about both call sites on every start, with a deadline of Home Assistant 2027.8. The non-deprecated `async_get_device_by_identifier` is now used when available, keeping the old call as a fallback for the older Home Assistant versions still supported.
+- Zone picker labels ("All zones", "Zone", "Zones") were translated into only four of the eleven languages the integration supports everywhere else. All eleven are now covered.
+
+### Documentation
+
+- Added a Cards section covering [landroid-card](https://github.com/Barma-lej/landroid-card) and the RTK map card bundled in this repository, which was not documented anywhere, and shortened the README.
+
 ## 2.3.0 - 2026-09-02
 
 ### Added

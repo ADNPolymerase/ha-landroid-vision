@@ -26,6 +26,22 @@ ERROR_STATUS_IDS = {9, 10, 13}
 UPDATING_STATUS_IDS = {102}
 
 
+def device_entry_by_identifier(
+    device_registry: Any, identifier: tuple[str, str], config_entry_id: str
+) -> Any:
+    """Look up a device by identifier, preferring the non-deprecated API.
+
+    Home Assistant deprecated async_get_device(identifiers=...) because device
+    identifiers are no longer unique across config entries, and it stops
+    working in 2027.8. The older call stays as a fallback so the integration
+    keeps running on the Home Assistant versions it still supports.
+    """
+    lookup = getattr(device_registry, "async_get_device_by_identifier", None)
+    if lookup is not None:
+        return lookup(identifier, config_entry_id)
+    return device_registry.async_get_device(identifiers={identifier})
+
+
 def is_firmware_updating(device: Any) -> bool:
     """Return whether the mower is busy applying a firmware update.
 

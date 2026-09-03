@@ -74,49 +74,45 @@ The exact entity list depends on what your mower reports. Typical entities inclu
 
 See [docs/entities.md](docs/entities.md) for a more detailed list.
 
+## Cards
+
+Any standard Home Assistant card works with these entities. Two are worth knowing:
+
+- **[landroid-card](https://github.com/Barma-lej/landroid-card)** by Barma-lej: a full mower dashboard card. Point its `camera:` option at the RTK map camera to show the map inside it.
+- **`lovelace/worx-map-rtk-card.js`** in this repository: a standalone RTK map card, with a companion info card. Copy it to `config/www/`, register it as a Lovelace resource, then use `type: custom:worx-map-rtk-card` with your map camera entity.
+
+The `lawn_mower` entity deliberately has no name of its own, so it displays exactly the device name, and it stays available through connectivity blips rather than going unavailable. Both are for cards like landroid-card, which use it as the label prefix for every other entity and blank their body when it is unavailable. Only commands are blocked while genuinely offline, with a clear error.
+
 ## RTK Map & Address
 
-For compatible Vision Cloud / RTK mowers, a camera entity renders the mowing boundary, excluded areas, station and the current day's mowing trail as SVG from the private Worx map endpoint. It is not a video stream: it updates when new data arrives. The trail covers the full local day (like the Worx app) rather than a fixed time window: it resets at local midnight, is persisted so a Home Assistant restart mid-day doesn't lose it, and keeps showing the last known map if a fetch briefly fails.
+For Vision Cloud / RTK mowers, a camera entity renders the boundary, excluded areas, station and the day's mowing trail as SVG from the private Worx map endpoint. It is not a video stream: it updates when new data arrives. The trail covers the full local day like the Worx app, resets at local midnight, survives a restart, and keeps the last known map if a fetch briefly fails.
+
+An `RTK address` sensor (disabled by default) reverse-geocodes the mower's rounded position with OpenStreetMap Nominatim, cached 24h. It is opt-in because RTK coordinates can reveal a home location. Maps and coordinates are precise, so don't publish debug dumps, storage files, tokens or screenshots showing them. See [SECURITY.md](SECURITY.md).
 
 ### Recovering the map after upgrading from an older version
 
-*Versions before 1.6.3 didn't cache the RTK map id, so if Worx stops sending it for a while (observed on some accounts, even during active mowing with a good GPS fix) the map camera and the lawn-area/progress sensors could go blank until it came back on its own. Since 1.6.3 the last known id is cached and persisted automatically, but on your very first restart after upgrading that cache starts empty. If the map camera or those sensors are unavailable right after upgrading:*
-
-1. *Open the **RTK map** sensor's history (its state is the map id, a UUID) and find the last value it held before it went `unknown`.*
-2. *Call the `worx_vision_cloud.set_rtk_map_id` service, picking your mower's `lawn_mower` entity and pasting that value as `map_id`.*
-
-*The camera and the dependent sensors (lawn area, daily/remaining/estimated progress) update immediately, and from then on the coordinator keeps that cache fresh and persisted on its own.*
-
-An `RTK address` sensor (disabled by default) can reverse-geocode the mower's rounded position with OpenStreetMap Nominatim, cached 24h. It's opt-in because RTK coordinates can reveal a home or garden location.
-
-RTK maps and address lookups can contain precise garden geometry and coordinates, so don't publish debug dumps, storage files, tokens or screenshots showing exact locations. See [SECURITY.md](SECURITY.md).
+*Before 1.6.3 the RTK map id was not cached, so the map camera and the lawn-area and progress sensors could go blank whenever Worx stopped sending it. It has been cached and persisted since, but that cache is empty on the first restart after upgrading. If those entities are unavailable then, open the **RTK map** sensor's history, take the last UUID it held, and pass it to the `worx_vision_cloud.set_rtk_map_id` action with your `lawn_mower` entity. Everything updates immediately and stays fresh on its own afterwards.*
 
 ## Mowed area
 
-Mowing figures are covered area (surface the blades pass over), not unique lawn area: overlapping passes mean Today/Total mowed area can legitimately exceed your lawn size, and Daily progress reaches 100% once covered area matches it. The daily baseline is kept in Home Assistant storage per mower, so it survives restarts and entity renames, and correctly handles cloud counter resets and multi-day gaps.
+Mowing figures are covered area, not unique lawn area: overlapping passes mean Today and Total mowed area can legitimately exceed your lawn size, and Daily progress reaches 100% once covered area matches it. The daily baseline is stored per mower, so it survives restarts and entity renames and handles cloud counter resets and multi-day gaps.
 
-Lawn area is read from the account's `lawn_size` when Worx provides one, and otherwise summed from the mowed zones of the RTK map. Zones the mower only drives through, such as a corridor linking two mowing areas, carry no cutting metadata and are excluded, so the figure matches what the Worx app reports rather than the raw map total.
+Lawn area comes from the account's `lawn_size` when Worx provides one, otherwise from the sum of the RTK map's mowed zones. Zones the mower only drives through, such as a corridor linking two mowing areas, carry no cutting metadata and are excluded, so the figure matches the Worx app rather than the raw map total.
 
 ### A caveat on daily attribution
 
-Today mowed area and Daily progress derive from the cloud's cumulative counter, so they follow the moment Worx **publishes** a session, not the moment the mower actually mowed. That publication can lag by hours: on one observed day the mower worked from 14:02 to 17:54, the counter stayed flat all evening, and the resulting 310 m² only appeared at 03:26 the next morning, after the local midnight rollover. Those square meters were therefore credited to the following day, leaving the first day understated and the second starting well above zero before the mower had moved.
+Today mowed area and Daily progress come from the cloud's cumulative counter, so they follow when Worx **publishes** a session, not when the mower actually mowed. Publication can lag by hours: one observed session ran from 14:02 to 17:54 and its 310 m² only appeared at 03:26 the next morning, crediting them to the following day.
 
-Nothing is lost: Total mowed area stays correct, and the sum across days is right. If you need a figure that tracks the current day as it happens, use the locally computed Estimated mowed area today and Estimated daily progress sensors, which are derived from observed mowing time rather than the cloud counter.
-
-## Entity naming
-
-The `lawn_mower` entity has no name of its own: it displays exactly the device name (e.g. "Vision Cloud" rather than "Vision Cloud Mower"), for readability and for compatibility with third-party cards such as [landroid-card](https://github.com/Barma-lej/landroid-card) that strip the device name from every other entity's label using this one as the prefix.
-
-As the device's primary entity, its availability doesn't depend on the mower's own online status: a wifi/cloud connectivity blip keeps showing the last known status and attributes instead of going unavailable (which would otherwise blank cards like landroid-card that hide their body when their main entity is unavailable). Only commands (start/pause/dock) are blocked while genuinely offline, with a clear error.
+Nothing is lost, Total mowed area stays correct. For a figure that tracks the current day as it happens, use the locally computed Estimated mowed area today and Estimated daily progress sensors, derived from observed mowing time rather than the cloud counter.
 
 ## Limitations
 
 The Worx / Positec cloud API is not officially public. Some endpoints used here are reverse-engineered and can change without notice. This is a best-effort custom integration, not official Worx software.
 
-- Off limits and ACS entities can show up as `unavailable` even on a mower model that supports the feature. Availability is based on pyworxcloud detecting the matching module (`DF` for off limits, `US` for ACS) in the mower's live data, and for off limits specifically that module only appears once at least one off-limit zone has been configured in the Worx app at least once. This is a limitation of the underlying API data (the same behavior exists in the community `landroid_cloud` integration), not a bug in this integration.
-- Firmware release notes are only published by Worx while an update is pending. Once it is installed, the upgrade endpoint answers 404 and the notes are gone, which is why the update dialog would otherwise be empty for the firmware a mower is actually running. The integration records the notes as they go past, so they stay readable afterwards, but nothing can be recovered for a version that was installed before this was in place. Use the `worx_vision_cloud.set_firmware_notes` action to paste those in from the Worx account portal.
-- An update that only touches the vision head is invisible to the integration. Worx ships firmware as a pair, vision head and mower, but the upgrade endpoint reports availability by comparing mower versions alone, so a new head build published against an unchanged mower version raises no update. The version the head is currently running is not exposed either. Both follow from the API, not from this integration, and the Worx app remains the reference for head firmware.
-- Mower home time and charging time can permanently read `0` for some accounts even though mower work time updates normally, because the Worx API itself doesn't populate those two fields for every model. That's why both sensors are disabled by default; enable them if your account happens to report real values.
+- Off limits and ACS entities can read `unavailable` on a mower that supports them. Availability depends on pyworxcloud seeing the matching module (`DF`, `US`) in live data, and the off limits module only appears once a zone has been configured in the Worx app at least once. A limitation of the API data, shared with the community `landroid_cloud` integration.
+- Worx publishes firmware release notes only while an update is pending; once installed the endpoint answers 404 and they are gone. The integration records them as they go past, but nothing can be recovered for a version installed before that existed. Use the `worx_vision_cloud.set_firmware_notes` action to paste those in from the Worx account portal.
+- An update touching only the vision head is invisible here. Firmware ships as a head and mower pair, but availability is computed by comparing mower versions alone, and the head's running version is not exposed at all. Both follow from the API; the Worx app remains the reference for head firmware.
+- Mower home time and charging time can read `0` permanently for some accounts, because the API does not populate them for every model. Both sensors are disabled by default; enable them if your account reports real values.
 
 ## Credits
 

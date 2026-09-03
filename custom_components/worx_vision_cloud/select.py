@@ -26,18 +26,39 @@ ALL_ZONES_LABELS = {
     "fr": "Toutes les zones",
     "de": "Alle Zonen",
     "pl": "Wszystkie strefy",
+    "nl": "Alle zones",
+    "es": "Todas las zonas",
+    "it": "Tutte le zone",
+    "sv": "Alla zoner",
+    "no": "Alle soner",
+    "da": "Alle zoner",
+    "ru": "Все зоны",
 }
 ZONE_SINGULAR_LABELS = {
     "en": "Zone",
     "fr": "Zone",
     "de": "Zone",
     "pl": "Strefa",
+    "nl": "Zone",
+    "es": "Zona",
+    "it": "Zona",
+    "sv": "Zon",
+    "no": "Sone",
+    "da": "Zone",
+    "ru": "Зона",
 }
 ZONE_PLURAL_LABELS = {
     "en": "Zones",
     "fr": "Zones",
     "de": "Zonen",
     "pl": "Strefy",
+    "nl": "Zones",
+    "es": "Zonas",
+    "it": "Zone",
+    "sv": "Zoner",
+    "no": "Soner",
+    "da": "Zoner",
+    "ru": "Зоны",
 }
 
 

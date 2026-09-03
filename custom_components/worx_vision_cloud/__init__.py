@@ -53,6 +53,7 @@ from .const import (
     SERVICE_START_ONE_TIME_MOWING,
 )
 from .coordinator import WorxVisionCoordinator
+from .helpers import device_entry_by_identifier
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -384,8 +385,8 @@ def _async_migrate_entity_registry(
                         new_entity_id=new_entity_id,
                     )
 
-        device_entry = device_registry.async_get_device(
-            identifiers={(DOMAIN, str(serial_number))}
+        device_entry = device_entry_by_identifier(
+            device_registry, (DOMAIN, str(serial_number)), entry.entry_id
         )
         if device_entry is not None and device_entry.area_id is not None:
             area_entry = area_registry.async_get_area(device_entry.area_id)

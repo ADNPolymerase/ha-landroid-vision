@@ -44,6 +44,7 @@ from .const import (
 )
 from .helpers import (
     DOCKED_STATUS_IDS,
+    device_entry_by_identifier,
     MOWING_STATUS_IDS,
     STARTING_STATUS_IDS,
     device_display_name,
@@ -325,8 +326,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     def _is_registry_disabled(self, serial_number: str) -> bool:
         """Return whether the mower's device registry entry is disabled."""
-        device_entry = dr.async_get(self.hass).async_get_device(
-            identifiers={(DOMAIN, serial_number)}
+        device_entry = device_entry_by_identifier(
+            dr.async_get(self.hass),
+            (DOMAIN, serial_number),
+            self.config_entry.entry_id,
         )
         return device_entry is not None and bool(device_entry.disabled)
 
