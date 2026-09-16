@@ -34,6 +34,8 @@ TO_REDACT = {
     "mac_address",
     "mqtt_endpoint",
     "mqtt_topics",
+    "pin",
+    "pin_code",
     "position",
     "postcode",
     "road",

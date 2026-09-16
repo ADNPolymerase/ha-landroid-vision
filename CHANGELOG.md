@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.4.0 - 2026-09-16
+
+### Added
+
+- **A repair issue when the mower is left stopped away from its base.** A Vision mower whose STOP button is pressed in the field, for example by an obstacle holding it down, reports a plain idle status with no error. It then sits there until the battery runs flat, with nothing in Home Assistant pointing at it. After 10 minutes stopped, not charging and more than 1 m from the station, a Repairs issue now says so, and it clears itself once the mower moves or charges again. Observed live: a mower wedged under a shelter next to its station drained from 51 % to 7 % in 80 minutes without a single alert.
+
+### Fixed
+
+- **The mower PIN code appeared in clear in downloaded diagnostics.** Anyone attaching a diagnostics file to an issue was publishing it. It is now redacted like the other personal fields. If you have shared a diagnostics file before, consider changing the PIN in the Worx app.
+- The status sensor read `unknown` while the mower drives to a zone picked in the Worx app. That phase, status 33, now shows as its own state, "Heading to zone".
+- A mower stopped by its STOP button made the `lawn_mower` entity read `unknown`. It now reads paused.
+- The connectivity sensors granted a fresh grace period after every Home Assistant restart, so a mower that had been offline for hours showed as connected again for 30 minutes. The start of an ongoing disconnection now survives a restart.
+- The current zone sensor showed the name of a corridor, such as "1", while the mower crossed from one mowing area to another. Corridors carry no cutting settings and are now skipped.
+
+### Documentation
+
+- **Zone selection for one-time mowing is ignored by current Vision firmware.** Tested on 3.46.0+47: with a zone selected, the command is accepted but the mower mows its usual area. The same mowing started from the Worx app does go to the chosen zone, yet it changes nothing in the data this integration reads, so the app goes through a separate cloud route. The selection is now marked experimental in the README and in the action description.
+
 ## 2.3.1 - 2026-09-03
 
 ### Fixed

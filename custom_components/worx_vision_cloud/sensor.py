@@ -79,6 +79,9 @@ STATUS_STATE_KEYS = {
     "home": "home",
     "leaving home": "leaving_home",
     "going home": "going_home",
+    # Status 33, seen when a one-time mowing started from the Worx app
+    # drives the mower to the zone picked there.
+    "searching area": "searching_area",
     "mowing": "mowing",
     "cutting edge": "edge_cutting",
     "edge cutting": "edge_cutting",
@@ -101,6 +104,7 @@ STATUS_STATE_OPTIONS = [
     "home",
     "leaving_home",
     "going_home",
+    "searching_area",
     "mowing",
     "edge_cutting",
     "charging",

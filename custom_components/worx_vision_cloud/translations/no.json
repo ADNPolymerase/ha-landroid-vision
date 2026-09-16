@@ -43,6 +43,7 @@
           "home": "Ved basestasjonen",
           "leaving_home": "Forlater basestasjonen",
           "going_home": "På vei til basestasjonen",
+          "searching_area": "Søker sone",
           "mowing": "Klipper",
           "edge_cutting": "Kantklipping",
           "charging": "Lader",
@@ -62,6 +63,7 @@
           "home": "Ved basestasjonen",
           "leaving_home": "Forlater basestasjonen",
           "going_home": "På vei til basestasjonen",
+          "searching_area": "Søker sone",
           "mowing": "Klipper",
           "edge_cutting": "Kantklipping",
           "charging": "Lader",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Batteriservice anbefales ({mower_name})",
       "description": "{mower_name} har fullført {cycles} ladesykluser siden forrige nullstilling (grense: {threshold_cycles}). Sjekk batteriet, og trykk deretter på knappen for å nullstille syklustelleren på enhetssiden."
+    },
+    "stopped_away_from_base": {
+      "title": "Robotklipperen har stoppet utenfor ladestasjonen ({mower_name})",
+      "description": "{mower_name} har stått stille i {minutes} minutter utenfor ladestasjonen og lader ikke. STOP-knappen kan være trykket inn, for eksempel av en hindring, eller klipperen har kjørt seg fast. Den kjører ikke tilbake for å lade av seg selv, så sjekk den før batteriet går tomt."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Soner",
-          "description": "Valgfri liste med RTK-sone-id-er, for eksempel [1, 2]. La stå tomt for standardklipping uten sonebegrensning."
+          "description": "Valgfri liste med RTK-sone-id-er, for eksempel [1, 2]. La stå tomt for standardklipping uten sonebegrensning. Eksperimentelt: nåværende Vision-fastvare (verifisert på 3.46.x) ignorerer listen og klipper som vanlig. Bare Worx-appen kan velge en sone."
         }
       }
     },

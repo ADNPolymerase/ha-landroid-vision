@@ -43,6 +43,7 @@
           "home": "In base",
           "leaving_home": "Uscita dalla base",
           "going_home": "Rientro alla base",
+          "searching_area": "Ricerca zona",
           "mowing": "In taglio",
           "edge_cutting": "Taglio bordi",
           "charging": "In carica",
@@ -62,6 +63,7 @@
           "home": "In base",
           "leaving_home": "Uscita dalla base",
           "going_home": "Rientro alla base",
+          "searching_area": "Ricerca zona",
           "mowing": "In taglio",
           "edge_cutting": "Taglio bordi",
           "charging": "In carica",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Manutenzione batteria consigliata ({mower_name})",
       "description": "{mower_name} ha completato {cycles} cicli di ricarica dall'ultimo azzeramento (soglia: {threshold_cycles}). Controlla la batteria, poi premi il pulsante di azzeramento del contatore cicli nella pagina del dispositivo."
+    },
+    "stopped_away_from_base": {
+      "title": "Robot fermo fuori dalla base ({mower_name})",
+      "description": "{mower_name} è fermo da {minutes} minuti fuori dalla base e non è in carica. Il pulsante STOP potrebbe essere premuto, ad esempio da un ostacolo, oppure il robot è bloccato. Non tornerà da solo a ricaricarsi, quindi controllalo prima che la batteria si scarichi."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zone",
-          "description": "Elenco opzionale di id delle zone RTK, ad esempio [1, 2]. Lasciare vuoto per il taglio predefinito senza restrizioni di zona."
+          "description": "Elenco opzionale di id delle zone RTK, ad esempio [1, 2]. Lasciare vuoto per il taglio predefinito senza restrizioni di zona. Sperimentale: il firmware Vision attuale (verificato su 3.46.x) ignora questo elenco e taglia normalmente. Solo l'app Worx può scegliere una zona."
         }
       }
     },

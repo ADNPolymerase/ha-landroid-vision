@@ -43,6 +43,7 @@
           "home": "Docked",
           "leaving_home": "Leaving base",
           "going_home": "Returning to base",
+          "searching_area": "Heading to zone",
           "mowing": "Mowing",
           "edge_cutting": "Edge cutting",
           "charging": "Charging",
@@ -62,6 +63,7 @@
           "home": "Docked",
           "leaving_home": "Leaving base",
           "going_home": "Returning to base",
+          "searching_area": "Heading to zone",
           "mowing": "Mowing",
           "edge_cutting": "Edge cutting",
           "charging": "Charging",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Battery service recommended ({mower_name})",
       "description": "{mower_name} has completed {cycles} charge cycles since the last reset (threshold: {threshold_cycles}). Check the battery condition, then press the Reset battery cycle counter button on the mower's device page."
+    },
+    "stopped_away_from_base": {
+      "title": "Mower stopped away from its base ({mower_name})",
+      "description": "{mower_name} has been stopped for {minutes} minutes, away from its base and not charging. The STOP button may be held down, for example by an obstacle, or the mower may be stuck. It will not go back to charge on its own, so check it before the battery runs flat."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optional list of RTK zone ids, for example [1, 2]. Leave empty for default mowing without zone restriction."
+          "description": "Optional list of RTK zone ids, for example [1, 2]. Leave empty for default mowing without zone restriction. Experimental: current Vision firmware (verified on 3.46.x) ignores this list and mows as usual. Only the Worx app can target a zone."
         }
       }
     },

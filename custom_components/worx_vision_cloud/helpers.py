@@ -16,7 +16,10 @@ from homeassistant.util import slugify
 MOWING_STATUS_IDS = {7, 8, 12, 32, 110, 111}
 RETURNING_STATUS_IDS = {4, 5, 6, 30, 104}
 STARTING_STATUS_IDS = {2, 3, 33, 103}
-PAUSED_STATUS_IDS = {34}
+# Status 0 ("idle") is what a Vision mower reports when its STOP button is
+# pressed in the field, including by an obstacle holding it down. It is a
+# stop, not an unknown state, so it counts as paused.
+PAUSED_STATUS_IDS = {0, 34}
 DOCKED_STATUS_IDS = {1}
 ERROR_STATUS_IDS = {9, 10, 13}
 # Observed live on a Vision Cloud400 during a firmware update started from the
@@ -24,6 +27,15 @@ ERROR_STATUS_IDS = {9, 10, 13}
 # until it had rebooted on the new firmware, then went back to 1. pyworxcloud
 # has no description for it, so every status readout showed "unknown".
 UPDATING_STATUS_IDS = {102}
+# A mower stopped this long away from its base, without charging, raises a
+# repair issue: it will not go back to charge on its own and eventually runs
+# flat where it stands.
+STOPPED_STATUS_IDS = {0}
+STOPPED_ALERT_MINUTES = 10
+# Docked positions read about 0.5 m from the station marker. The looser
+# rtk_at_station threshold (2.5 m) also matched a mower stuck under a shelter
+# 2.1 m away, so the alert uses a tighter radius of its own.
+STOPPED_DOCK_RADIUS_M = 1.0
 
 
 def device_entry_by_identifier(
@@ -498,12 +510,50 @@ def rtk_current_zone(device: Any) -> dict[str, Any] | None:
 
     for boundary in boundaries:
         for zone in get_dict_value(boundary, "zones", []) or []:
-            if not isinstance(zone, dict):
+            if not isinstance(zone, dict) or is_transit_zone(zone):
                 continue
             for contour in get_dict_value(zone, "contours", []) or []:
                 if _point_in_contour(position, contour):
                     return zone
     return None
+
+
+def is_transit_zone(zone: Any) -> bool:
+    """Return true for a map zone the mower only drives through.
+
+    Corridors linking two mowing areas come with an empty metadata block,
+    while mowing zones carry their cutting settings. Zones without any
+    metadata key at all are not treated as corridors, so older or partial
+    map payloads keep resolving as before.
+    """
+    if not isinstance(zone, dict) or "metadata" not in zone:
+        return False
+    metadata = zone.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    return not any(key in metadata for key in ("cut_type", "cut_direction"))
+
+
+def is_stopped_away_from_base(device: Any) -> bool:
+    """Return whether the mower is stopped in the field and not charging."""
+    status_id = get_dict_value(getattr(device, "status", {}), "id")
+    try:
+        if int(status_id) not in STOPPED_STATUS_IDS:
+            return False
+    except (TypeError, ValueError):
+        return False
+
+    if get_dict_value(getattr(device, "battery", {}), "charging") is True:
+        return False
+
+    error_description = str(
+        get_dict_value(getattr(device, "error", {}), "description") or ""
+    ).strip().lower().replace("_", " ")
+    if error_description == "rain delay":
+        return False
+
+    distance = rtk_distance_to_station_m(device)
+    return distance is None or distance > STOPPED_DOCK_RADIUS_M
 
 
 def rtk_current_zone_name(device: Any) -> str | None:

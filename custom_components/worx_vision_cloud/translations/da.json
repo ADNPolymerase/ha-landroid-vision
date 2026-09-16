@@ -43,6 +43,7 @@
           "home": "Ved basestation",
           "leaving_home": "Forlader basestation",
           "going_home": "På vej til basestation",
+          "searching_area": "Søger zone",
           "mowing": "Slår græs",
           "edge_cutting": "Kantklipning",
           "charging": "Oplader",
@@ -62,6 +63,7 @@
           "home": "Ved basestation",
           "leaving_home": "Forlader basestation",
           "going_home": "På vej til basestation",
+          "searching_area": "Søger zone",
           "mowing": "Slår græs",
           "edge_cutting": "Kantklipning",
           "charging": "Oplader",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Batteriservice anbefales ({mower_name})",
       "description": "{mower_name} har gennemført {cycles} opladningscyklusser siden sidste nulstilling (grænse: {threshold_cycles}). Tjek batteriet, og tryk derefter på knappen til nulstilling af cyklustælleren på enhedssiden."
+    },
+    "stopped_away_from_base": {
+      "title": "Robotplæneklipperen er stoppet uden for ladestationen ({mower_name})",
+      "description": "{mower_name} har holdt stille i {minutes} minutter uden for ladestationen og oplader ikke. STOP-knappen kan være trykket ned, for eksempel af en forhindring, eller plæneklipperen sidder fast. Den kører ikke selv tilbage for at lade, så tjek den, før batteriet løber tør."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valgfri liste med RTK-zone-id'er, for eksempel [1, 2]. Lad stå tomt for standardklipning uden zonebegrænsning."
+          "description": "Valgfri liste med RTK-zone-id'er, for eksempel [1, 2]. Lad stå tomt for standardklipning uden zonebegrænsning. Eksperimentelt: den nuværende Vision-firmware (verificeret på 3.46.x) ignorerer listen og klipper som normalt. Kun Worx-appen kan vælge en zone."
         }
       }
     },

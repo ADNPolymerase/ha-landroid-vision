@@ -43,6 +43,7 @@
           "home": "In der Station",
           "leaving_home": "Verlässt die Station",
           "going_home": "Rückkehr zur Station",
+          "searching_area": "Fährt zur Zone",
           "mowing": "Mäht",
           "edge_cutting": "Kantenschnitt",
           "charging": "Lädt",
@@ -62,6 +63,7 @@
           "home": "In der Station",
           "leaving_home": "Verlässt die Station",
           "going_home": "Rückkehr zur Station",
+          "searching_area": "Fährt zur Zone",
           "mowing": "Mäht",
           "edge_cutting": "Kantenschnitt",
           "charging": "Lädt",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Akkuwartung empfohlen ({mower_name})",
       "description": "{mower_name} hat seit dem letzten Zurücksetzen {cycles} Ladezyklen absolviert (Schwelle: {threshold_cycles}). Akkuzustand prüfen und anschließend auf der Geräteseite den Zyklenzähler zurücksetzen."
+    },
+    "stopped_away_from_base": {
+      "title": "Mäher außerhalb der Ladestation angehalten ({mower_name})",
+      "description": "{mower_name} steht seit {minutes} Minuten außerhalb der Ladestation und lädt nicht. Möglicherweise wird die STOP-Taste gedrückt gehalten, zum Beispiel durch ein Hindernis, oder der Mäher steckt fest. Er fährt nicht von selbst zum Laden zurück. Prüfen Sie ihn, bevor der Akku leer ist."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zonen",
-          "description": "Optionale Liste von RTK-Zonen-IDs, z. B. [1, 2]. Leer lassen für Standardmähen ohne Zonenbeschränkung."
+          "description": "Optionale Liste von RTK-Zonen-IDs, z. B. [1, 2]. Leer lassen für Standardmähen ohne Zonenbeschränkung. Experimentell: Die aktuelle Vision-Firmware (geprüft mit 3.46.x) ignoriert diese Liste und mäht wie gewohnt. Nur die Worx-App kann eine Zone gezielt ansteuern."
         }
       }
     },

@@ -20,11 +20,11 @@ This integration is built on top of the community `pyworxcloud` library and adds
 
 ## Features
 
-- Native `lawn_mower` entity: start, pause, dock, one-time mowing (runtime, edge cutting, RTK zones) and on-demand edge cutting.
+- Native `lawn_mower` entity: start, pause, dock, one-time mowing (runtime, edge cutting, experimental zone selection) and on-demand edge cutting.
 - Mower controls: firmware auto-update, lock, native schedule, smart edge cutting, save the hedgehogs, party mode, and (when your mower reports the matching hardware module) ACS, off limits, cutting height, torque and border distance.
 - Daily area/progress tracking persisted per mower in Home Assistant storage, immune to cloud counter resets and multi-day gaps, plus a locally computed estimate that keeps moving even when Worx's own stats go stale.
 - Schedule sensor and calendar, next mowing time, RTK map camera with mowed-area trail, RTK robot position and reverse-geocoded address (opt-in).
-- Battery, status, error, connectivity, maintenance and mowing-readiness sensors, with Home Assistant Repairs alerts for blade/battery service and a restart button.
+- Battery, status, error, connectivity, maintenance and mowing-readiness sensors, with Home Assistant Repairs alerts for blade/battery service and for a mower left stopped away from its base, and a restart button.
 - Download diagnostics with automatic redaction of coordinates, addresses and identifiers.
 - Translated into 11 languages (English, Polish, French, German, Dutch, Spanish, Italian, Swedish, Norwegian, Danish, Russian), including entity states, schedule and calendar.
 
@@ -112,6 +112,7 @@ The Worx / Positec cloud API is not officially public. Some endpoints used here 
 - Off limits and ACS entities can read `unavailable` on a mower that supports them. Availability depends on pyworxcloud seeing the matching module (`DF`, `US`) in live data, and the off limits module only appears once a zone has been configured in the Worx app at least once. A limitation of the API data, shared with the community `landroid_cloud` integration.
 - Worx publishes firmware release notes only while an update is pending; once installed the endpoint answers 404 and they are gone. The integration records them as they go past, but nothing can be recovered for a version installed before that existed. Use the `worx_vision_cloud.set_firmware_notes` action to paste those in from the Worx account portal.
 - An update touching only the vision head is invisible here. Firmware ships as a head and mower pair, but availability is computed by comparing mower versions alone, and the head's running version is not exposed at all. Both follow from the API; the Worx app remains the reference for head firmware.
+- Zone selection for one-time mowing is ignored by current Vision firmware (verified on 3.46.0+47): the command is accepted and the mower mows as usual. The Worx app targets a zone through a separate cloud route that leaves no trace in the data this integration can read, so leave the selection empty and pick zones from the app.
 - Mower home time and charging time can read `0` permanently for some accounts, because the API does not populate them for every model. Both sensors are disabled by default; enable them if your account reports real values.
 
 ## Credits

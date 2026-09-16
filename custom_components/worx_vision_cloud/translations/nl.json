@@ -43,6 +43,7 @@
           "home": "In het laadstation",
           "leaving_home": "Verlaat basisstation",
           "going_home": "Terugkeer naar basisstation",
+          "searching_area": "Zoekt zone",
           "mowing": "Maait",
           "edge_cutting": "Randmaaien",
           "charging": "Opladen",
@@ -62,6 +63,7 @@
           "home": "In het laadstation",
           "leaving_home": "Verlaat basisstation",
           "going_home": "Terugkeer naar basisstation",
+          "searching_area": "Zoekt zone",
           "mowing": "Maait",
           "edge_cutting": "Randmaaien",
           "charging": "Opladen",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Accuonderhoud aanbevolen ({mower_name})",
       "description": "{mower_name} heeft {cycles} laadcycli sinds de laatste reset (drempel: {threshold_cycles}). Controleer de accu en druk daarna op de resetknop voor de cyclusteller op de apparaatpagina."
+    },
+    "stopped_away_from_base": {
+      "title": "Maaier gestopt buiten het laadstation ({mower_name})",
+      "description": "{mower_name} staat al {minutes} minuten stil buiten het laadstation en laadt niet op. Mogelijk wordt de STOP-knop ingedrukt, bijvoorbeeld door een obstakel, of zit de maaier vast. Hij keert niet uit zichzelf terug om te laden. Controleer hem voordat de accu leeg is."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optionele lijst met RTK-zone-id's, bijvoorbeeld [1, 2]. Leeg laten voor standaard maaien zonder zonebeperking."
+          "description": "Optionele lijst met RTK-zone-id's, bijvoorbeeld [1, 2]. Leeg laten voor standaard maaien zonder zonebeperking. Experimenteel: de huidige Vision-firmware (getest op 3.46.x) negeert deze lijst en maait zoals gewoonlijk. Alleen de Worx-app kan een zone kiezen."
         }
       }
     },

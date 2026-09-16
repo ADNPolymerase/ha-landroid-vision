@@ -43,6 +43,7 @@
           "home": "Vid basstationen",
           "leaving_home": "Lämnar basstationen",
           "going_home": "Återvänder till basstationen",
+          "searching_area": "Söker zon",
           "mowing": "Klipper",
           "edge_cutting": "Kantklippning",
           "charging": "Laddar",
@@ -62,6 +63,7 @@
           "home": "Vid basstationen",
           "leaving_home": "Lämnar basstationen",
           "going_home": "Återvänder till basstationen",
+          "searching_area": "Söker zon",
           "mowing": "Klipper",
           "edge_cutting": "Kantklippning",
           "charging": "Laddar",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Batteriservice rekommenderas ({mower_name})",
       "description": "{mower_name} har genomfört {cycles} laddcykler sedan senaste återställningen (gräns: {threshold_cycles}). Kontrollera batteriet och tryck sedan på knappen för att nollställa cykelräknaren på enhetssidan."
+    },
+    "stopped_away_from_base": {
+      "title": "Robotgräsklipparen har stannat utanför laddstationen ({mower_name})",
+      "description": "{mower_name} har stått stilla i {minutes} minuter utanför laddstationen och laddar inte. STOP-knappen kan vara intryckt, till exempel av ett hinder, eller så har klipparen fastnat. Den åker inte tillbaka och laddar av sig själv, så kontrollera den innan batteriet tar slut."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valfri lista med RTK-zon-id, till exempel [1, 2]. Lämna tomt för standardklippning utan zonbegränsning."
+          "description": "Valfri lista med RTK-zon-id, till exempel [1, 2]. Lämna tomt för standardklippning utan zonbegränsning. Experimentellt: nuvarande Vision-firmware (verifierad på 3.46.x) ignorerar listan och klipper som vanligt. Bara Worx-appen kan välja en zon."
         }
       }
     },

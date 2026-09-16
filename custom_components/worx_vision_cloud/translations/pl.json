@@ -43,6 +43,7 @@
           "home": "w bazie",
           "leaving_home": "wyjazd z bazy",
           "going_home": "powrót do bazy",
+          "searching_area": "Szukanie strefy",
           "mowing": "koszenie",
           "edge_cutting": "przycinanie krawędzi",
           "charging": "ładowanie",
@@ -62,6 +63,7 @@
           "home": "w bazie",
           "leaving_home": "wyjazd z bazy",
           "going_home": "powrót do bazy",
+          "searching_area": "Szukanie strefy",
           "mowing": "koszenie",
           "edge_cutting": "przycinanie krawędzi",
           "charging": "ładowanie",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Zalecany serwis akumulatora ({mower_name})",
       "description": "Kosiarka {mower_name} wykonała {cycles} cykli ładowania od ostatniego resetu (próg: {threshold_cycles}). Sprawdź stan akumulatora, a następnie naciśnij przycisk resetu licznika cykli na stronie urządzenia."
+    },
+    "stopped_away_from_base": {
+      "title": "Kosiarka zatrzymana poza stacją ({mower_name})",
+      "description": "{mower_name} stoi od {minutes} min poza stacją i się nie ładuje. Przycisk STOP może być wciśnięty, na przykład przez przeszkodę, albo kosiarka utknęła. Nie wróci sama do ładowania, więc sprawdź ją, zanim bateria się rozładuje."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Strefy",
-          "description": "Opcjonalna lista identyfikatorów stref RTK, np. [1, 2]. Puste pole oznacza domyślne koszenie bez ograniczenia stref."
+          "description": "Opcjonalna lista identyfikatorów stref RTK, np. [1, 2]. Puste pole oznacza domyślne koszenie bez ograniczenia stref. Eksperymentalne: obecne oprogramowanie Vision (sprawdzone na 3.46.x) ignoruje tę listę i kosi normalnie. Tylko aplikacja Worx potrafi wskazać strefę."
         }
       }
     },

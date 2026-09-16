@@ -43,6 +43,7 @@
           "home": "En la base",
           "leaving_home": "Saliendo de la base",
           "going_home": "Regresando a la base",
+          "searching_area": "Buscando zona",
           "mowing": "Cortando",
           "edge_cutting": "Corte de bordes",
           "charging": "Cargando",
@@ -62,6 +63,7 @@
           "home": "En la base",
           "leaving_home": "Saliendo de la base",
           "going_home": "Regresando a la base",
+          "searching_area": "Buscando zona",
           "mowing": "Cortando",
           "edge_cutting": "Corte de bordes",
           "charging": "Cargando",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Mantenimiento de batería recomendado ({mower_name})",
       "description": "{mower_name} ha completado {cycles} ciclos de carga desde el último restablecimiento (umbral: {threshold_cycles}). Comprueba la batería y pulsa el botón de restablecer el contador de ciclos en la página del dispositivo."
+    },
+    "stopped_away_from_base": {
+      "title": "Robot detenido fuera de su base ({mower_name})",
+      "description": "{mower_name} lleva {minutes} minutos detenido fuera de su base y sin cargar. Puede que el botón STOP esté pulsado, por ejemplo por un obstáculo, o que el robot esté atascado. No volverá solo a cargar, así que revísalo antes de que se agote la batería."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zonas",
-          "description": "Lista opcional de identificadores de zonas RTK, por ejemplo [1, 2]. Dejar vacío para el corte por defecto sin restricción de zonas."
+          "description": "Lista opcional de identificadores de zonas RTK, por ejemplo [1, 2]. Dejar vacío para el corte por defecto sin restricción de zonas. Experimental: el firmware Vision actual (verificado en 3.46.x) ignora esta lista y corta como siempre. Solo la app de Worx puede elegir una zona."
         }
       }
     },

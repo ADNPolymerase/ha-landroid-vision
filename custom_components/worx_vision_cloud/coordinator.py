@@ -47,12 +47,14 @@ from .helpers import (
     device_entry_by_identifier,
     MOWING_STATUS_IDS,
     STARTING_STATUS_IDS,
+    STOPPED_ALERT_MINUTES,
     device_display_name,
     get_dict_value,
     masked_connectivity,
     rtk_map_id,
     rtk_position,
     is_firmware_updating,
+    is_stopped_away_from_base,
 )
 from .statistics import DailyStatisticsTracker
 
@@ -187,17 +189,22 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         # First observed moment of an ongoing disconnection, per
         # (serial_number, kind) with kind in ("online", "mqtt"). Used to hide
         # short drops from the connectivity binary sensors (see
-        # masked_connectivity); in-memory only, so after an HA restart an
-        # already-offline mower gets one fresh grace period before showing
-        # as disconnected.
+        # masked_connectivity). Persisted with the state timers below: a
+        # Home Assistant restart is not a reconnection, so a mower that was
+        # already offline must not get a fresh grace period and show as
+        # connected again.
         self._disconnected_since: dict[tuple[str, str], datetime] = {}
         # Start of the mower's current docked / error stretch, per mower.
         # Both reset the moment the mower leaves that state, so these are
         # "how long has it been like this right now" timers, not totals.
-        # In-memory only: they restart from zero after a Home Assistant
-        # restart, like the connectivity timestamps above.
+        # Persisted, so a Home Assistant restart does not reset them (see
+        # _load_state_durations).
         self._docked_since: dict[str, datetime] = {}
         self._error_since: dict[str, datetime] = {}
+        # Start of the current "stopped away from its base" stretch, backing
+        # the stopped_away_from_base repair issue.
+        self._stopped_since: dict[str, datetime] = {}
+        self._stopped_recheck_unsubs: dict[str, Callable[[], None]] = {}
         self._state_duration_store = Store[dict[str, Any]](
             hass,
             STATE_DURATION_STORAGE_VERSION,
@@ -278,6 +285,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         for unsub in self._connectivity_recheck_unsubs.values():
             unsub()
         self._connectivity_recheck_unsubs.clear()
+        for unsub in self._stopped_recheck_unsubs.values():
+            unsub()
+        self._stopped_recheck_unsubs.clear()
         self._statistics_save_pending = False
         self._rtk_trail_save_pending = False
         try:
@@ -381,16 +391,25 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
     def _note_connectivity(self, serial_number: str, device: DeviceHandler) -> None:
         """Track when a disconnection started, per connectivity kind."""
         now = datetime.now(UTC)
+        changed = False
         for kind in ("online", "mqtt"):
             key = (serial_number, kind)
             if self._live_connectivity(device, kind) is False:
-                self._disconnected_since.setdefault(key, now)
+                if key not in self._disconnected_since:
+                    self._disconnected_since[key] = now
+                    changed = True
                 self._schedule_connectivity_recheck(key)
             else:
-                self._disconnected_since.pop(key, None)
+                if self._disconnected_since.pop(key, None) is not None:
+                    changed = True
                 unsub = self._connectivity_recheck_unsubs.pop(key, None)
                 if unsub is not None:
                     unsub()
+
+        if changed:
+            self.hass.async_create_task(
+                self._state_duration_store.async_save(self._state_duration_data())
+            )
 
     @staticmethod
     def _is_docked(device: DeviceHandler) -> bool:
@@ -422,6 +441,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         for tracker, active in (
             (self._docked_since, self._is_docked(device)),
             (self._error_since, self._is_in_error(device)),
+            (self._stopped_since, is_stopped_away_from_base(device)),
         ):
             if active:
                 if serial_number not in tracker:
@@ -437,6 +457,59 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 self._state_duration_store.async_save(self._state_duration_data())
             )
 
+        self._sync_stopped_issue(serial_number, device)
+
+    def _sync_stopped_issue(self, serial_number: str, device: DeviceHandler) -> None:
+        """Raise or clear the "stopped away from its base" repair issue.
+
+        Status 0 away from the base, without charging, is what a mower left
+        with its STOP button pressed looks like. It stays there until the
+        battery runs flat, with no error reported, so a repair issue is the
+        only way to notice it in time.
+        """
+        issue_id = f"stopped_away_from_base_{serial_number}"
+        since = self._stopped_since.get(serial_number)
+
+        if since is None or self._is_registry_disabled(serial_number):
+            unsub = self._stopped_recheck_unsubs.pop(serial_number, None)
+            if unsub is not None:
+                unsub()
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+            return
+
+        elapsed = (datetime.now(UTC) - since).total_seconds()
+        remaining = STOPPED_ALERT_MINUTES * 60 - elapsed
+        if remaining > 0:
+            # Pushes stop once the mower is idle or its battery dies, so do
+            # not wait for the next update to raise the issue.
+            if serial_number not in self._stopped_recheck_unsubs:
+
+                @callback
+                def _recheck(_now: datetime) -> None:
+                    self._stopped_recheck_unsubs.pop(serial_number, None)
+                    current = (self.data or {}).get(serial_number)
+                    if current is not None:
+                        self._sync_stopped_issue(serial_number, current)
+
+                self._stopped_recheck_unsubs[serial_number] = async_call_later(
+                    self.hass, remaining + 1, _recheck
+                )
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+            return
+
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="stopped_away_from_base",
+            translation_placeholders={
+                "mower_name": device_display_name(device),
+                "minutes": str(int(elapsed // 60)),
+            },
+        )
+
     def _state_duration_data(self) -> dict[str, Any]:
         """Return the state timers in a JSON-serializable shape."""
         return {
@@ -447,6 +520,14 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             "error_since": {
                 serial: value.isoformat()
                 for serial, value in self._error_since.items()
+            },
+            "stopped_since": {
+                serial: value.isoformat()
+                for serial, value in self._stopped_since.items()
+            },
+            "disconnected_since": {
+                f"{serial}|{kind}": value.isoformat()
+                for (serial, kind), value in self._disconnected_since.items()
             },
         }
 
@@ -468,6 +549,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         for key, tracker in (
             ("docked_since", self._docked_since),
             ("error_since", self._error_since),
+            ("stopped_since", self._stopped_since),
         ):
             entries = stored.get(key)
             if not isinstance(entries, dict):
@@ -475,6 +557,19 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             for serial, value in entries.items():
                 try:
                     tracker[str(serial)] = datetime.fromisoformat(str(value))
+                except (TypeError, ValueError):
+                    continue
+
+        disconnected = stored.get("disconnected_since")
+        if isinstance(disconnected, dict):
+            for compound, value in disconnected.items():
+                serial, _, kind = str(compound).rpartition("|")
+                if not serial or kind not in ("online", "mqtt"):
+                    continue
+                try:
+                    self._disconnected_since[(serial, kind)] = (
+                        datetime.fromisoformat(str(value))
+                    )
                 except (TypeError, ValueError):
                     continue
 
@@ -496,9 +591,11 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         """Return diagnostics for the computed state timers."""
         docked = self._docked_since.get(serial_number)
         errored = self._error_since.get(serial_number)
+        stopped = self._stopped_since.get(serial_number)
         return {
             "docked_since": docked.isoformat() if docked else None,
             "error_since": errored.isoformat() if errored else None,
+            "stopped_since": stopped.isoformat() if stopped else None,
         }
 
     def _schedule_connectivity_recheck(self, key: tuple[str, str]) -> None:

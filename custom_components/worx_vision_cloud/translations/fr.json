@@ -43,6 +43,7 @@
           "home": "En station",
           "leaving_home": "Sortie de la base",
           "going_home": "Retour à la base",
+          "searching_area": "Recherche de la zone",
           "mowing": "En train de tondre",
           "edge_cutting": "Coupe de bordure",
           "charging": "En charge",
@@ -62,6 +63,7 @@
           "home": "En station",
           "leaving_home": "Sortie de la base",
           "going_home": "Retour à la base",
+          "searching_area": "Recherche de la zone",
           "mowing": "En train de tondre",
           "edge_cutting": "Coupe de bordure",
           "charging": "En charge",
@@ -381,6 +383,10 @@
     "battery_service_due": {
       "title": "Entretien de la batterie recommandé ({mower_name})",
       "description": "{mower_name} a effectué {cycles} cycles de charge depuis la dernière réinitialisation (seuil : {threshold_cycles}). Vérifiez l'état de la batterie, puis appuyez sur le bouton de réinitialisation du compteur de cycles sur la page de l'appareil."
+    },
+    "stopped_away_from_base": {
+      "title": "Tondeuse arrêtée hors de sa base ({mower_name})",
+      "description": "{mower_name} est arrêtée depuis {minutes} min, hors de sa base et sans charger. Le bouton STOP est peut-être enfoncé, par exemple par un obstacle, ou la tondeuse est bloquée. Elle ne retournera pas se charger seule : vérifiez-la avant que la batterie soit vide."
     }
   },
   "options": {
@@ -419,7 +425,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Liste optionnelle d'identifiants de zones RTK, par exemple [1, 2]. Laisser vide pour une tonte par défaut sans restriction de zone."
+          "description": "Liste optionnelle d'identifiants de zones RTK, par exemple [1, 2]. Laisser vide pour une tonte par défaut sans restriction de zone. Expérimental : le firmware Vision actuel (vérifié en 3.46.x) ignore cette liste et tond normalement. Seule l'app Worx sait cibler une zone."
         }
       }
     },
