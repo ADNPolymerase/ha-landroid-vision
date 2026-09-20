@@ -16,7 +16,7 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .helpers import get_dict_value, get_nested_value
+from .helpers import get_dict_value, get_nested_value, raw_schedule_config
 
 TO_REDACT = {
     CONF_EMAIL,
@@ -138,6 +138,10 @@ async def async_get_config_entry_diagnostics(
             getattr(device, "_worx_vision_firmware_upgrade", None)
         )
         sections["rtk_map_zones"] = _rtk_map_zone_summary(device)
+        # The parsed "schedules" section above cannot show which zones a
+        # weekly slot targets, nor the one-time job block: pyworxcloud
+        # drops both while normalizing. Keep the raw block alongside it.
+        sections["schedule_raw"] = _serializable(raw_schedule_config(device))
         sections["daily_statistics"] = {
             "area_mowed_today": coordinator.area_mowed_today(serial_number),
             "area_details": coordinator.daily_area_details(serial_number),

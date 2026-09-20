@@ -336,6 +336,19 @@ def _raw_dat(device: Any) -> Any:
     return getattr(device, "raw_dat", {}) or {}
 
 
+def raw_schedule_config(device: Any) -> dict[str, Any]:
+    """Return the raw `cfg.sc` schedule block exactly as the mower publishes it.
+
+    pyworxcloud normalizes schedules down to day, start, duration and border
+    cut, and drops every field it does not model. On RTK mowers that includes
+    the zone list each weekly slot carries, and the one-time job block, so
+    neither is reachable from the parsed schedule. The raw block is the only
+    place they survive, which is why diagnostics expose it verbatim.
+    """
+    schedule = get_dict_value(_raw_cfg(device), "sc", {})
+    return schedule if isinstance(schedule, dict) else {}
+
+
 def rtk_map_id(device: Any) -> Any:
     """Return RTK map identifier when the mower reports one."""
     return get_nested_value(_raw_cfg(device), "rtk", "map")

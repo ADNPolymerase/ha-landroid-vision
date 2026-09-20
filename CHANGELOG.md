@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.0 - 2026-09-20
+
+### Added
+
+- **Diagnostics now carry the raw `cfg.sc` schedule block.** The parsed schedule this integration reads keeps only day, start, duration and border cut: pyworxcloud normalizes slots and drops every field it does not model, which on RTK mowers means the zone list attached to each weekly slot and the whole one-time job block. Neither was reachable anywhere, not in the schedule sensor, not in the calendar, not even in a downloaded diagnostics file, so a zone set per slot in the Worx app was invisible here. The raw block is now included next to the parsed one, verbatim.
+
+### Documentation
+
+- **Zones attached to a weekly schedule slot are honoured by Vision firmware, only the one-time selection is ignored.** Verified on 3.46.0+47: a mower whose weekly slots carry a zone list mows the zone of the running slot, while the same zone passed to a one-time job is ignored. The 2.4.0 notes concluded from unchanged diagnostics that the Worx app must reach a one-time zone through a separate cloud route. That conclusion does not hold: the diagnostics compared could not show zones at all, so the comparison proved nothing either way. How the app runs a one-time job in a chosen zone is open again.
+
 ## 2.4.0 - 2026-09-16
 
 ### Added

@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Zonen",
-          "description": "Optionale Liste von RTK-Zonen-IDs, z. B. [1, 2]. Leer lassen für Standardmähen ohne Zonenbeschränkung. Experimentell: Die aktuelle Vision-Firmware (geprüft mit 3.46.x) ignoriert diese Liste und mäht wie gewohnt. Nur die Worx-App kann eine Zone gezielt ansteuern."
+          "description": "Optionale Liste von RTK-Zonen-IDs, z. B. [1, 2]. Leer lassen für Standardmähen ohne Zonenbeschränkung. Experimentell: Die aktuelle Vision-Firmware (geprüft mit 3.46.x) ignoriert diese Liste und mäht wie gewohnt. Weisen Sie Zonen stattdessen einem Zeitfenster des Wochenplans in der Worx-App zu: diese werden beachtet."
         }
       }
     },

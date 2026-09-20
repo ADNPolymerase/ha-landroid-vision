@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optionele lijst met RTK-zone-id's, bijvoorbeeld [1, 2]. Leeg laten voor standaard maaien zonder zonebeperking. Experimenteel: de huidige Vision-firmware (getest op 3.46.x) negeert deze lijst en maait zoals gewoonlijk. Alleen de Worx-app kan een zone kiezen."
+          "description": "Optionele lijst met RTK-zone-id's, bijvoorbeeld [1, 2]. Leeg laten voor standaard maaien zonder zonebeperking. Experimenteel: de huidige Vision-firmware (getest op 3.46.x) negeert deze lijst en maait zoals gewoonlijk. Wijs zones in plaats daarvan toe aan een tijdvak van het weekschema in de Worx-app: die worden wel gevolgd."
         }
       }
     },

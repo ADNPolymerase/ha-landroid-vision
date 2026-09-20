@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optional list of RTK zone ids, for example [1, 2]. Leave empty for default mowing without zone restriction. Experimental: current Vision firmware (verified on 3.46.x) ignores this list and mows as usual. Only the Worx app can target a zone."
+          "description": "Optional list of RTK zone ids, for example [1, 2]. Leave empty for default mowing without zone restriction. Experimental: current Vision firmware (verified on 3.46.x) ignores this list and mows as usual. Set zones on a weekly schedule slot in the Worx app instead: those are honoured."
         }
       }
     },

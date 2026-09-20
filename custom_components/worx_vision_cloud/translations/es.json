@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Zonas",
-          "description": "Lista opcional de identificadores de zonas RTK, por ejemplo [1, 2]. Dejar vacío para el corte por defecto sin restricción de zonas. Experimental: el firmware Vision actual (verificado en 3.46.x) ignora esta lista y corta como siempre. Solo la app de Worx puede elegir una zona."
+          "description": "Lista opcional de identificadores de zonas RTK, por ejemplo [1, 2]. Dejar vacío para el corte por defecto sin restricción de zonas. Experimental: el firmware Vision actual (verificado en 3.46.x) ignora esta lista y corta como siempre. Asigne las zonas a un tramo del programa semanal en la app de Worx: esas sí se respetan."
         }
       }
     },
