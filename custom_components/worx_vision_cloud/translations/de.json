@@ -44,6 +44,11 @@
           "leaving_home": "Verlässt die Station",
           "going_home": "Rückkehr zur Station",
           "searching_area": "Fährt zur Zone",
+          "searching_zone": "Fahrt zur Zone",
+          "searching_home": "Suche nach der Station",
+          "zoning": "Zoneneinteilung",
+          "border_crossing": "Grenzüberquerung",
+          "exploring_lawn": "Rasen wird erkundet",
           "mowing": "Mäht",
           "edge_cutting": "Kantenschnitt",
           "charging": "Lädt",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Zonen",
-          "description": "Optionale Liste von RTK-Zonen-IDs, z. B. [1, 2]. Leer lassen für Standardmähen ohne Zonenbeschränkung. Experimentell: Die aktuelle Vision-Firmware (geprüft mit 3.46.x) ignoriert diese Liste und mäht wie gewohnt. Zonen lassen sich auch je Zeitfenster im Wochenplan der Worx-App festlegen."
+          "description": "Optionale Liste von RTK-Zonen-IDs in der Mähreihenfolge, z. B. [2, 1]. Leer lassen, um alle Zonen zu mähen. Experimentell: auf der aktuellen Vision-Firmware noch nicht bestätigt."
         }
       }
     },

@@ -44,6 +44,11 @@
           "leaving_home": "Saliendo de la base",
           "going_home": "Regresando a la base",
           "searching_area": "Buscando zona",
+          "searching_zone": "Desplazándose a la zona",
+          "searching_home": "Buscando la base",
+          "zoning": "Zonificación",
+          "border_crossing": "Cruzando el borde",
+          "exploring_lawn": "Explorando el césped",
           "mowing": "Cortando",
           "edge_cutting": "Corte de bordes",
           "charging": "Cargando",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Zonas",
-          "description": "Lista opcional de identificadores de zonas RTK, por ejemplo [1, 2]. Dejar vacío para el corte por defecto sin restricción de zonas. Experimental: el firmware Vision actual (verificado en 3.46.x) ignora esta lista y corta como siempre. Las zonas también pueden definirse por tramo en el programa semanal de la app de Worx."
+          "description": "Lista opcional de identificadores de zonas RTK, en orden de corte, por ejemplo [2, 1]. Dejar vacío para cortar todas las zonas. Experimental: aún no confirmado en el firmware Vision actual."
         }
       }
     },

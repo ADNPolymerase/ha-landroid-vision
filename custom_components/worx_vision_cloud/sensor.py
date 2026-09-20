@@ -82,6 +82,15 @@ STATUS_STATE_KEYS = {
     # Status 33, seen when a one-time mowing started from the Worx app
     # drives the mower to the zone picked there.
     "searching area": "searching_area",
+    # Statuses a Vision / RTK mower reports that had no mapping at all, so the
+    # sensor read unknown while the mower was doing something perfectly normal.
+    # Status 103 is the drive to a zone without cutting, and shows up on any
+    # zone targeted job.
+    "searching zone": "searching_zone",
+    "searching home": "searching_home",
+    "zoning": "zoning",
+    "border crossing": "border_crossing",
+    "exploring lawn": "exploring_lawn",
     "mowing": "mowing",
     "cutting edge": "edge_cutting",
     "edge cutting": "edge_cutting",
@@ -105,6 +114,11 @@ STATUS_STATE_OPTIONS = [
     "leaving_home",
     "going_home",
     "searching_area",
+    "searching_zone",
+    "searching_home",
+    "zoning",
+    "border_crossing",
+    "exploring_lawn",
     "mowing",
     "edge_cutting",
     "charging",

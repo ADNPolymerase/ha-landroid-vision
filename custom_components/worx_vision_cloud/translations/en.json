@@ -44,6 +44,11 @@
           "leaving_home": "Leaving base",
           "going_home": "Returning to base",
           "searching_area": "Heading to zone",
+          "searching_zone": "Moving to zone",
+          "searching_home": "Searching for base",
+          "zoning": "Zoning",
+          "border_crossing": "Crossing border",
+          "exploring_lawn": "Exploring lawn",
           "mowing": "Mowing",
           "edge_cutting": "Edge cutting",
           "charging": "Charging",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optional list of RTK zone ids, for example [1, 2]. Leave empty for default mowing without zone restriction. Experimental: current Vision firmware (verified on 3.46.x) ignores this list and mows as usual. Zones can also be set per slot in the weekly schedule of the Worx app."
+          "description": "Optional list of RTK zone ids, in mowing order, for example [2, 1]. Leave empty to mow every zone. Experimental: not yet confirmed to work on current Vision firmware."
         }
       }
     },

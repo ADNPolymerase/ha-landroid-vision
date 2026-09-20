@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.6.0 - 2026-09-21
+
+### Added
+
+- **Five mower statuses that used to read `unknown`.** A Vision or RTK mower reports `searching zone` while it drives to a zone without cutting, `searching home`, `zoning`, `border crossing` and `exploring lawn`, and none of them had a mapping, so the status sensor went blank during perfectly normal operation. `searching zone` is the one seen on any zone targeted job, which made a zone run unreadable from start to finish. All five are now states of their own, in the eleven supported languages. Same class of gap as status 33 in 2.4.0, and wider than it looked.
+
+### Changed
+
+- **One-time mowing now sends the zone selection the way the Worx app writes it.** Reading the raw weekly schedule of a Vision Cloud mower showed that the app never sends a zone list on its own: it pairs it with a second field that says whether the list is a deliberate ordered selection or simply means the whole lawn. A slot left on the app's automatic setting still carries every zone in the list, so the list alone decides nothing and the firmware reads the flag to know. Earlier releases sent the list without it, which reads as "mow everything" and is the most likely reason a selected zone looked ignored while the same job started from the app reached its zone. The flag is now sent, set from whether a selection was made.
+- **The zone list is ordered.** The first id is mowed first, matching the order the app lets you set. The `zones` field of the `worx_vision_cloud.start_one_time_mowing` action takes the order as given; the zone picker entity keeps offering combinations in id order.
+
+### Documentation
+
+- Zone selection stays marked experimental. Sending that flag is a hypothesis built on what the app writes to the weekly schedule, tested against nothing yet. The README says so rather than claiming a fix.
+
 ## 2.5.1 - 2026-09-20
 
 ### Fixed

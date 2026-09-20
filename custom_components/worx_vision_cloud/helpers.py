@@ -336,6 +336,21 @@ def _raw_dat(device: Any) -> Any:
     return getattr(device, "raw_dat", {}) or {}
 
 
+def one_time_cut_config(edge_cut: Any, zone_ids: Any) -> dict[str, Any]:
+    """Return the `cut` block of a one-time mowing job, the way the app writes it.
+
+    The Worx app pairs the zone list with `zo`: 1 for its "Special" mode, a
+    deliberate selection mowed in the order given, and 0 for "Auto", which
+    means the whole lawn. A weekly slot left on Auto still carries the full
+    list, so the list alone says nothing and the firmware reads `zo` to know
+    whether it is a restriction. Sending `z` without `zo` therefore reads as
+    Auto, which is the most likely reason earlier zone selections looked
+    ignored while the same job started from the app reached its zone.
+    """
+    zones = [zone for zone in (zone_ids or [])]
+    return {"b": int(bool(edge_cut)), "z": zones, "zo": 1 if zones else 0}
+
+
 def raw_schedule_config(device: Any) -> dict[str, Any]:
     """Return the raw `cfg.sc` schedule block exactly as the mower publishes it.
 

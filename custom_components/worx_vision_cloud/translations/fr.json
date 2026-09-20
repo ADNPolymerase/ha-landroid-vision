@@ -44,6 +44,11 @@
           "leaving_home": "Sortie de la base",
           "going_home": "Retour à la base",
           "searching_area": "Recherche de la zone",
+          "searching_zone": "Déplacement vers la zone",
+          "searching_home": "Recherche de la base",
+          "zoning": "Zonage",
+          "border_crossing": "Franchissement de bordure",
+          "exploring_lawn": "Exploration de la pelouse",
           "mowing": "En train de tondre",
           "edge_cutting": "Coupe de bordure",
           "charging": "En charge",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Liste optionnelle d'identifiants de zones RTK, par exemple [1, 2]. Laisser vide pour une tonte par défaut sans restriction de zone. Expérimental : le firmware Vision actuel (vérifié en 3.46.x) ignore cette liste et tond normalement. Les zones peuvent aussi être réglées créneau par créneau dans le planning hebdomadaire de l'app Worx."
+          "description": "Liste optionnelle d'identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. Laisser vide pour tondre toutes les zones. Expérimental : non confirmé sur le firmware Vision actuel."
         }
       }
     },

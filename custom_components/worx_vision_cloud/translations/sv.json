@@ -44,6 +44,11 @@
           "leaving_home": "Lämnar basstationen",
           "going_home": "Återvänder till basstationen",
           "searching_area": "Söker zon",
+          "searching_zone": "På väg till zonen",
+          "searching_home": "Söker efter basen",
+          "zoning": "Zonindelning",
+          "border_crossing": "Korsar kanten",
+          "exploring_lawn": "Utforskar gräsmattan",
           "mowing": "Klipper",
           "edge_cutting": "Kantklippning",
           "charging": "Laddar",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valfri lista med RTK-zon-id, till exempel [1, 2]. Lämna tomt för standardklippning utan zonbegränsning. Experimentellt: nuvarande Vision-firmware (verifierad på 3.46.x) ignorerar listan och klipper som vanligt. Zoner kan också anges per tidsfönster i veckoschemat i Worx-appen."
+          "description": "Valfri lista med RTK-zon-id i klippordning, till exempel [2, 1]. Lämna tomt för att klippa alla zoner. Experimentellt: ännu inte bekräftat på nuvarande Vision-firmware."
         }
       }
     },

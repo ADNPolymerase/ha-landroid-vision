@@ -44,6 +44,11 @@
           "leaving_home": "Forlater basestasjonen",
           "going_home": "På vei til basestasjonen",
           "searching_area": "Søker sone",
+          "searching_zone": "På vei til sonen",
+          "searching_home": "Søker etter basen",
+          "zoning": "Soneinndeling",
+          "border_crossing": "Krysser kanten",
+          "exploring_lawn": "Utforsker plenen",
           "mowing": "Klipper",
           "edge_cutting": "Kantklipping",
           "charging": "Lader",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Soner",
-          "description": "Valgfri liste med RTK-sone-id-er, for eksempel [1, 2]. La stå tomt for standardklipping uten sonebegrensning. Eksperimentelt: nåværende Vision-fastvare (verifisert på 3.46.x) ignorerer listen og klipper som vanlig. Soner kan også angis per tidsrom i ukeplanen i Worx-appen."
+          "description": "Valgfri liste med RTK-sone-id-er i klipperekkefølge, for eksempel [2, 1]. La stå tomt for å klippe alle soner. Eksperimentelt: ennå ikke bekreftet på nåværende Vision-fastvare."
         }
       }
     },

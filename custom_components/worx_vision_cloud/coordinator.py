@@ -51,6 +51,7 @@ from .helpers import (
     device_display_name,
     get_dict_value,
     masked_connectivity,
+    one_time_cut_config,
     rtk_map_id,
     rtk_position,
     is_firmware_updating,
@@ -980,7 +981,11 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                         "sc": {
                             "once": {
                                 "time": runtime,
-                                "cfg": {"cut": {"b": int(edge_cut), "z": zone_ids}},
+                                "cfg": {
+                                    "cut": one_time_cut_config(
+                                        edge_cut, zone_ids
+                                    )
+                                },
                             }
                         },
                     },

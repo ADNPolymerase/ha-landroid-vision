@@ -44,6 +44,11 @@
           "leaving_home": "wyjazd z bazy",
           "going_home": "powrót do bazy",
           "searching_area": "Szukanie strefy",
+          "searching_zone": "Przejazd do strefy",
+          "searching_home": "Szukanie bazy",
+          "zoning": "Podział na strefy",
+          "border_crossing": "Przekraczanie granicy",
+          "exploring_lawn": "Eksplorowanie trawnika",
           "mowing": "koszenie",
           "edge_cutting": "przycinanie krawędzi",
           "charging": "ładowanie",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Strefy",
-          "description": "Opcjonalna lista identyfikatorów stref RTK, np. [1, 2]. Puste pole oznacza domyślne koszenie bez ograniczenia stref. Eksperymentalne: obecne oprogramowanie Vision (sprawdzone na 3.46.x) ignoruje tę listę i kosi normalnie. Strefy można też ustawić dla każdego przedziału w harmonogramie tygodniowym aplikacji Worx."
+          "description": "Opcjonalna lista identyfikatorów stref RTK w kolejności koszenia, np. [2, 1]. Puste pole oznacza koszenie wszystkich stref. Eksperymentalne: jeszcze niepotwierdzone na obecnym oprogramowaniu Vision."
         }
       }
     },

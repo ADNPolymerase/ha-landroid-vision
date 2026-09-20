@@ -44,6 +44,11 @@
           "leaving_home": "Uscita dalla base",
           "going_home": "Rientro alla base",
           "searching_area": "Ricerca zona",
+          "searching_zone": "Spostamento verso la zona",
+          "searching_home": "Ricerca della base",
+          "zoning": "Zonizzazione",
+          "border_crossing": "Attraversamento del bordo",
+          "exploring_lawn": "Esplorazione del prato",
           "mowing": "In taglio",
           "edge_cutting": "Taglio bordi",
           "charging": "In carica",
@@ -425,7 +430,7 @@
         },
         "zones": {
           "name": "Zone",
-          "description": "Elenco opzionale di id delle zone RTK, ad esempio [1, 2]. Lasciare vuoto per il taglio predefinito senza restrizioni di zona. Sperimentale: il firmware Vision attuale (verificato su 3.46.x) ignora questo elenco e taglia normalmente. Le zone possono anche essere impostate per fascia nel programma settimanale dell'app Worx."
+          "description": "Elenco opzionale di id delle zone RTK, nell'ordine di taglio, ad esempio [2, 1]. Lasciare vuoto per tagliare tutte le zone. Sperimentale: non ancora confermato sul firmware Vision attuale."
         }
       }
     },
