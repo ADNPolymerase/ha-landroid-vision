@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Soner",
-          "description": "Valgfri liste med RTK-sone-id-er, for eksempel [1, 2]. La stå tomt for standardklipping uten sonebegrensning. Eksperimentelt: nåværende Vision-fastvare (verifisert på 3.46.x) ignorerer listen og klipper som vanlig. Tildel heller soner til et tidsrom i ukeplanen i Worx-appen: dem følger klipperen."
+          "description": "Valgfri liste med RTK-sone-id-er, for eksempel [1, 2]. La stå tomt for standardklipping uten sonebegrensning. Eksperimentelt: nåværende Vision-fastvare (verifisert på 3.46.x) ignorerer listen og klipper som vanlig. Soner kan også angis per tidsrom i ukeplanen i Worx-appen."
         }
       }
     },

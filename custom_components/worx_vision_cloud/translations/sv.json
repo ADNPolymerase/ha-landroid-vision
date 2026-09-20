@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valfri lista med RTK-zon-id, till exempel [1, 2]. Lämna tomt för standardklippning utan zonbegränsning. Experimentellt: nuvarande Vision-firmware (verifierad på 3.46.x) ignorerar listan och klipper som vanligt. Tilldela i stället zoner till ett tidsfönster i veckoschemat i Worx-appen: dem följer klipparen."
+          "description": "Valfri lista med RTK-zon-id, till exempel [1, 2]. Lämna tomt för standardklippning utan zonbegränsning. Experimentellt: nuvarande Vision-firmware (verifierad på 3.46.x) ignorerar listan och klipper som vanligt. Zoner kan också anges per tidsfönster i veckoschemat i Worx-appen."
         }
       }
     },

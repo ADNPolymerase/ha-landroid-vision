@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Liste optionnelle d'identifiants de zones RTK, par exemple [1, 2]. Laisser vide pour une tonte par défaut sans restriction de zone. Expérimental : le firmware Vision actuel (vérifié en 3.46.x) ignore cette liste et tond normalement. Affectez plutôt les zones à un créneau du planning hebdomadaire dans l'app Worx : celles-là sont respectées."
+          "description": "Liste optionnelle d'identifiants de zones RTK, par exemple [1, 2]. Laisser vide pour une tonte par défaut sans restriction de zone. Expérimental : le firmware Vision actuel (vérifié en 3.46.x) ignore cette liste et tond normalement. Les zones peuvent aussi être réglées créneau par créneau dans le planning hebdomadaire de l'app Worx."
         }
       }
     },

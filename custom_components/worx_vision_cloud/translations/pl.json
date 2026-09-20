@@ -425,7 +425,7 @@
         },
         "zones": {
           "name": "Strefy",
-          "description": "Opcjonalna lista identyfikatorów stref RTK, np. [1, 2]. Puste pole oznacza domyślne koszenie bez ograniczenia stref. Eksperymentalne: obecne oprogramowanie Vision (sprawdzone na 3.46.x) ignoruje tę listę i kosi normalnie. Zamiast tego przypisz strefy do przedziału w harmonogramie tygodniowym w aplikacji Worx: te są respektowane."
+          "description": "Opcjonalna lista identyfikatorów stref RTK, np. [1, 2]. Puste pole oznacza domyślne koszenie bez ograniczenia stref. Eksperymentalne: obecne oprogramowanie Vision (sprawdzone na 3.46.x) ignoruje tę listę i kosi normalnie. Strefy można też ustawić dla każdego przedziału w harmonogramie tygodniowym aplikacji Worx."
         }
       }
     },

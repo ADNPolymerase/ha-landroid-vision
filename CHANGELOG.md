@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.5.1 - 2026-09-20
+
+### Fixed
+
+- **The SIM card ICCID and IMSI appeared in clear in downloaded diagnostics.** A mower with a 4G module reports both inside `module_status`, and the redaction list matches key names, so the account level `sim` entry never reached them. Anyone attaching a diagnostics file to an issue was publishing the identifiers of their SIM. Both are now redacted, in either spelling. Same class of leak as the PIN code fixed in 2.4.0: if you have shared a diagnostics file from a 4G mower, those identifiers are out.
+
+### Documentation
+
+- **Withdrawn: the 2.5.0 claim that zones attached to a weekly schedule slot are honoured by the firmware.** The mower it rested on carried every zone on every slot, so nothing was ever restricted and nothing was proven. A slot limited to a single zone is now under observation. Until there is a result, the README, this changelog and the zones field description in all eleven languages state only what has actually been seen: that the one-time selection is ignored, and that zones can also be set per slot in the Worx app.
+
 ## 2.5.0 - 2026-09-20
 
 ### Added

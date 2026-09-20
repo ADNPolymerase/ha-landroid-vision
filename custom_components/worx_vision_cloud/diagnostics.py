@@ -18,9 +18,14 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 from .helpers import get_dict_value, get_nested_value, raw_schedule_config
 
+# async_redact_data matches key names, so every spelling a payload can use
+# has to be listed. The 4G module reports its SIM identifiers as "ICCID" and
+# "IMSI" inside module_status, which "sim" on the account level never covered.
 TO_REDACT = {
     CONF_EMAIL,
     CONF_PASSWORD,
+    "ICCID",
+    "IMSI",
     "access_token",
     "address",
     "city",
@@ -41,6 +46,8 @@ TO_REDACT = {
     "road",
     "serial",
     "serial_number",
+    "iccid",
+    "imsi",
     "sim",
     "sn",
     "token",
