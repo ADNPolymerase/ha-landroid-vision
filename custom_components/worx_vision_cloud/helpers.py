@@ -339,16 +339,29 @@ def _raw_dat(device: Any) -> Any:
 def one_time_cut_config(edge_cut: Any, zone_ids: Any) -> dict[str, Any]:
     """Return the `cut` block of a one-time mowing job, the way the app writes it.
 
-    The Worx app pairs the zone list with `zo`: 1 for its "Special" mode, a
-    deliberate selection mowed in the order given, and 0 for "Auto", which
-    means the whole lawn. A weekly slot left on Auto still carries the full
-    list, so the list alone says nothing and the firmware reads `zo` to know
-    whether it is a restriction. Sending `z` without `zo` therefore reads as
-    Auto, which is the most likely reason earlier zone selections looked
-    ignored while the same job started from the app reached its zone.
+    Rebuilt from the raw weekly slots of a Vision Cloud mower, where every
+    block the firmware accepts follows two rules this integration used to
+    break.
+
+    `zo` says whether an order was imposed on the zone list: 1 for the app's
+    "Special" mode, where the zones are mowed in the order given, 0 for
+    "Auto", where the mower picks. Both modes carry a real selection in `z`,
+    so `zo` is about order, not about whether the list counts.
+
+    `ob` only ever appears next to an edge cut turned off. Across three
+    dumps, `b: 1` came without it and `b: 0` came with `ob: 0`, every time.
+    A block with `b: 0` and no `ob` is a shape the app never writes, and it
+    is exactly what earlier releases sent, so it is the most likely reason a
+    selected zone looked ignored while the same job started from the app
+    reached its zone.
     """
     zones = [zone for zone in (zone_ids or [])]
-    return {"b": int(bool(edge_cut)), "z": zones, "zo": 1 if zones else 0}
+    cut: dict[str, Any] = {"b": int(bool(edge_cut))}
+    if not cut["b"]:
+        cut["ob"] = 0
+    cut["z"] = zones
+    cut["zo"] = 1 if zones else 0
+    return cut
 
 
 def raw_schedule_config(device: Any) -> dict[str, Any]:

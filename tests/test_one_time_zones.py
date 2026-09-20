@@ -34,19 +34,37 @@ class OneTimeCutConfigTests(unittest.TestCase):
         # job as "Auto" and mows the whole lawn whatever z says.
         self.assertEqual(
             HELPERS.one_time_cut_config(False, [2]),
-            {"b": 0, "z": [2], "zo": 1},
+            {"b": 0, "ob": 0, "z": [2], "zo": 1},
         )
 
     def test_no_zone_selection_is_marked_as_auto(self) -> None:
         self.assertEqual(
             HELPERS.one_time_cut_config(False, []),
-            {"b": 0, "z": [], "zo": 0},
+            {"b": 0, "ob": 0, "z": [], "zo": 0},
         )
 
     def test_missing_zone_list_is_marked_as_auto(self) -> None:
         self.assertEqual(
             HELPERS.one_time_cut_config(False, None),
-            {"b": 0, "z": [], "zo": 0},
+            {"b": 0, "ob": 0, "z": [], "zo": 0},
+        )
+
+    def test_the_over_border_field_follows_the_edge_cut_flag(self) -> None:
+        # Observed on three dumps of the same mower: a slot with b=1 never
+        # carries ob, a slot with b=0 always carries ob=0. A block with b=0
+        # and no ob is a shape the Worx app never writes.
+        self.assertEqual(HELPERS.one_time_cut_config(False, [2])["ob"], 0)
+        self.assertNotIn("ob", HELPERS.one_time_cut_config(True, [2]))
+
+    def test_the_block_matches_the_shape_the_app_writes(self) -> None:
+        # Key order included, so a diff against a captured slot reads clean.
+        self.assertEqual(
+            list(HELPERS.one_time_cut_config(False, [2]).items()),
+            [("b", 0), ("ob", 0), ("z", [2]), ("zo", 1)],
+        )
+        self.assertEqual(
+            list(HELPERS.one_time_cut_config(True, [1, 2]).items()),
+            [("b", 1), ("z", [1, 2]), ("zo", 1)],
         )
 
     def test_edge_cut_is_an_integer_flag(self) -> None:

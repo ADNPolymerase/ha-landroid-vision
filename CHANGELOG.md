@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.6.1 - 2026-09-21
+
+### Changed
+
+- **The one-time cut block now carries the over border field, like every block the mower accepts.** Three dumps of the same Vision Cloud mower, taken either side of a change made in the Worx app, show one rule without exception: a slot with the edge cut on carries no `ob` at all, a slot with it off always carries `ob: 0`. What this integration sent was an edge cut turned off and no `ob`, a shape the app never writes, and the default for a one-time job is exactly that. It is now the most likely reason a selected zone looked ignored. The block sent for a one-time job is now identical in shape to a weekly slot the firmware already accepts.
+
+### Documentation
+
+- **Corrected the reasoning published in 2.6.0 about the zone order flag.** It claimed the flag is what tells the firmware the zone list is a restriction rather than the whole lawn. That is wrong: the app's automatic mode carries a restricted list too, seen live on a slot holding a single zone with the flag at 0. The flag only says whether an order was imposed. Sending it is still correct, and it is what makes the list order meaningful, but it does not explain an ignored selection. Zone selection remains experimental and unconfirmed.
+
 ## 2.6.0 - 2026-09-21
 
 ### Added
