@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.7.0 - 2026-09-21
+
+### Added
+
+- **The zones of each weekly slot are now visible.** The Worx app lets a slot be limited to some zones, in an imposed order or not, and Vision firmware honours it. None of that reached Home Assistant: pyworxcloud drops the cut block of a slot, so the schedule sensor and the calendar only knew day, time, duration and edge cut. Each slot is now matched to its raw twin on day and start time, and carries:
+  - `zones`: the zone ids, in the order set in the app;
+  - `zone_names`: the same zones by the names given in the app;
+  - `zone_order`: `ordered` when the order was imposed (the app's Special mode), `auto` when the mower picks it.
+
+  They are in the `slots` attribute of the schedule sensor, for cards and templates. Calendar events name the zones in their title, "Mowing: Back lawn, Front lawn", and state the order in their description, so the Home Assistant calendar shows the week as the app does. Protocol 1 mowers only; other mowers read `None`.
+
+### Fixed
+
+- **The schedule sensor and the calendar were only in English, German, French and Polish**, while the README announced eleven languages for both. Dutch, Spanish, Italian, Swedish, Norwegian, Danish and Russian users got English day names and event text. All eleven languages are now covered, zone labels included.
+
 ## 2.6.2 - 2026-09-21
 
 First stable release since 2.5.1. It carries everything from the 2.6.0 and 2.6.1 pre-releases: the five mower statuses that used to read `unknown`, and the full cut block sent for a one-time job.

@@ -13,7 +13,12 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import BORDER_DISTANCE_OPTIONS_MM, DOMAIN
 from .entity import WorxVisionEntity
-from .helpers import get_dict_value, get_nested_value, rtk_map_attributes
+from .helpers import (
+    get_dict_value,
+    get_nested_value,
+    rtk_map_attributes,
+    rtk_zone_names as _zone_names,
+)
 
 DEFAULT_LANGUAGE = "en"
 MAX_COMBINATION_ZONES = 5
@@ -98,83 +103,6 @@ def _zone_ids(device: Any) -> list[int]:
         if zone_id > 0 and zone_id not in zone_ids:
             zone_ids.append(zone_id)
     return sorted(zone_ids)
-
-
-def _zone_names(device: Any) -> dict[int, str]:
-    """Map RTK zone ids to the names configured in the Worx app.
-
-    The schedule config (cfg.rtk.zs) carries the zone ids the mower accepts
-    for one-time mowing but no names, while the map holds the names without
-    those ids. Both sides expose the cutting direction, so zones are paired
-    on it when every direction is distinct, and by order otherwise. Transit
-    zones are skipped: they have no cutting metadata and no schedule entry.
-    """
-    cfg_zones = rtk_map_attributes(device).get("zones", []) or []
-    pairs: list[tuple[int, Any]] = []
-    for zone in cfg_zones:
-        try:
-            zone_id = int(get_dict_value(zone, "id"))
-        except (TypeError, ValueError):
-            continue
-        if zone_id > 0:
-            pairs.append(
-                (zone_id, get_nested_value(zone, "cutting", "d", default=None))
-            )
-
-    map_data = getattr(device, "_worx_vision_rtk_map", None)
-    map_zones: list[tuple[str, Any]] = []
-    if isinstance(map_data, dict):
-        boundaries = (
-            get_nested_value(map_data, "layers", "boundaries", default=[]) or []
-        )
-        for boundary in boundaries:
-            for zone in get_dict_value(boundary, "zones", []) or []:
-                if not isinstance(zone, dict):
-                    continue
-                metadata = get_dict_value(zone, "metadata", {}) or {}
-                if not isinstance(metadata, dict) or not any(
-                    key in metadata for key in ("cut_type", "cut_direction")
-                ):
-                    continue
-                name = get_dict_value(zone, "name")
-                if name in (None, ""):
-                    continue
-                map_zones.append(
-                    (str(name), get_dict_value(metadata, "cut_direction"))
-                )
-
-    if not pairs or not map_zones:
-        return {}
-
-    names: dict[int, str] = {}
-    cfg_dirs = [d for _, d in pairs if d is not None]
-    map_dirs = [d for _, d in map_zones if d is not None]
-    if (
-        len(cfg_dirs) == len(pairs)
-        and len(map_dirs) == len(map_zones)
-        and len(set(cfg_dirs)) == len(cfg_dirs)
-        and len(set(map_dirs)) == len(map_dirs)
-    ):
-        by_direction = {direction: name for name, direction in map_zones}
-        for zone_id, direction in pairs:
-            name = by_direction.get(direction)
-            if name is not None:
-                names[zone_id] = name
-
-    if len(names) != len(pairs):
-        # Directions were ambiguous or missing: fall back to map order.
-        names = {}
-        for (zone_id, _), (name, _) in zip(sorted(pairs), map_zones):
-            names[zone_id] = name
-
-    # Keep labels unambiguous if the app reuses a name across zones.
-    seen: dict[str, int] = {}
-    for zone_id, name in list(names.items()):
-        seen[name] = seen.get(name, 0) + 1
-    for zone_id, name in list(names.items()):
-        if seen[name] > 1:
-            names[zone_id] = f"{name} ({zone_id})"
-    return names
 
 
 def _option_label(

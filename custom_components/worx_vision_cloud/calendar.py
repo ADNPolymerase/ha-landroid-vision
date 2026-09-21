@@ -17,6 +17,7 @@ from .helpers import (
     schedule_day_index,
     schedule_day_label,
     schedule_language,
+    schedule_slot_zones,
     schedule_slots,
 )
 
@@ -27,13 +28,40 @@ EVENT_SUMMARY = {
     "de": "Mähen",
     "fr": "Tonte",
     "pl": "Koszenie trawnika",
+    "nl": "Maaien",
+    "es": "Corte",
+    "it": "Taglio",
+    "sv": "Klippning",
+    "no": "Klipping",
+    "da": "Klipning",
+    "ru": "Стрижка",
 }
 EVENT_LABELS = {
-    "en": {"day": "Day", "duration": "Duration", "edge": "Edge cutting", "source": "Source", "yes": "yes"},
-    "de": {"day": "Tag", "duration": "Dauer", "edge": "Kantenschnitt", "source": "Quelle", "yes": "ja"},
-    "fr": {"day": "Jour", "duration": "Durée", "edge": "Coupe de bordure", "source": "Source", "yes": "oui"},
-    "pl": {"day": "Dzień", "duration": "Czas trwania", "edge": "Koszenie krawędzi", "source": "Źródło", "yes": "tak"},
+    "en": {"day": "Day", "duration": "Duration", "edge": "Edge cutting", "source": "Source", "yes": "yes",
+           "zones": "Zones", "ordered": "in this order", "auto": "order chosen by the mower"},
+    "de": {"day": "Tag", "duration": "Dauer", "edge": "Kantenschnitt", "source": "Quelle", "yes": "ja",
+           "zones": "Zonen", "ordered": "in dieser Reihenfolge", "auto": "Reihenfolge wählt der Mäher"},
+    "fr": {"day": "Jour", "duration": "Durée", "edge": "Coupe de bordure", "source": "Source", "yes": "oui",
+           "zones": "Zones", "ordered": "dans cet ordre", "auto": "ordre choisi par la tondeuse"},
+    "pl": {"day": "Dzień", "duration": "Czas trwania", "edge": "Koszenie krawędzi", "source": "Źródło", "yes": "tak",
+           "zones": "Strefy", "ordered": "w tej kolejności", "auto": "kolejność wybiera kosiarka"},
+    "nl": {"day": "Dag", "duration": "Duur", "edge": "Randmaaien", "source": "Bron", "yes": "ja",
+           "zones": "Zones", "ordered": "in deze volgorde", "auto": "volgorde kiest de maaier"},
+    "es": {"day": "Día", "duration": "Duración", "edge": "Corte de borde", "source": "Origen", "yes": "sí",
+           "zones": "Zonas", "ordered": "en este orden", "auto": "orden elegido por el robot"},
+    "it": {"day": "Giorno", "duration": "Durata", "edge": "Taglio del bordo", "source": "Origine", "yes": "sì",
+           "zones": "Zone", "ordered": "in quest'ordine", "auto": "ordine scelto dal robot"},
+    "sv": {"day": "Dag", "duration": "Varaktighet", "edge": "Kantklippning", "source": "Källa", "yes": "ja",
+           "zones": "Zoner", "ordered": "i denna ordning", "auto": "ordningen väljs av klipparen"},
+    "no": {"day": "Dag", "duration": "Varighet", "edge": "Kantklipping", "source": "Kilde", "yes": "ja",
+           "zones": "Soner", "ordered": "i denne rekkefølgen", "auto": "rekkefølgen velges av klipperen"},
+    "da": {"day": "Dag", "duration": "Varighed", "edge": "Kantklipning", "source": "Kilde", "yes": "ja",
+           "zones": "Zoner", "ordered": "i denne rækkefølge", "auto": "rækkefølgen vælges af klipperen"},
+    "ru": {"day": "День", "duration": "Длительность", "edge": "Стрижка кромки", "source": "Источник", "yes": "да",
+           "zones": "Зоны", "ordered": "в этом порядке", "auto": "порядок выбирает косилка"},
 }
+# French puts a space before the colon.
+SUMMARY_SEPARATOR = {"fr": " : "}
 
 
 async def async_setup_entry(
@@ -108,7 +136,13 @@ class WorxVisionScheduleCalendar(WorxVisionEntity, CalendarEntity):
                 if schedule_day_index(get_dict_value(slot, "day")) != current_day.weekday():
                     continue
 
-                event = _slot_to_event(slot, current_day, tzinfo, language)
+                event = _slot_to_event(
+                    slot,
+                    current_day,
+                    tzinfo,
+                    language,
+                    schedule_slot_zones(self.device, slot),
+                )
                 if event is None:
                     continue
                 if event.end <= start_date or event.start >= end_date:
@@ -123,6 +157,7 @@ def _slot_to_event(
     event_date: dt.date,
     tzinfo: dt.tzinfo,
     language: str = "en",
+    zones: dict[str, Any] | None = None,
 ) -> CalendarEvent | None:
     """Convert one schedule slot to a localized calendar event occurrence."""
     start_time = _parse_time(get_dict_value(slot, "start"))
@@ -150,6 +185,14 @@ def _slot_to_event(
         description_parts.append(f"{labels['duration']}: {duration} min")
     if get_dict_value(slot, "boundary"):
         description_parts.append(f"{labels['edge']}: {labels['yes']}")
+    summary = EVENT_SUMMARY[lang]
+    zone_names = (zones or {}).get("zone_names")
+    if zone_names:
+        ordered = (zones or {}).get("zone_order") == "ordered"
+        joined = ", ".join(zone_names)
+        order = labels["ordered"] if ordered else labels["auto"]
+        description_parts.append(f"{labels['zones']}: {joined} ({order})")
+        summary = f"{summary}{SUMMARY_SEPARATOR.get(lang, ': ')}{joined}"
     source = get_dict_value(slot, "source")
     if source is not None:
         description_parts.append(f"{labels['source']}: {source}")
@@ -157,7 +200,7 @@ def _slot_to_event(
     return CalendarEvent(
         start=start,
         end=end,
-        summary=EVENT_SUMMARY[lang],
+        summary=summary,
         description="\n".join(description_parts),
     )
 

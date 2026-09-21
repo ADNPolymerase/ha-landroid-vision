@@ -127,6 +127,34 @@ SCHEDULE_DAY_LABELS = {
         "monday": "pon", "tuesday": "wt", "wednesday": "śr", "thursday": "czw",
         "friday": "pt", "saturday": "sob", "sunday": "niedz",
     },
+    "nl": {
+        "monday": "ma", "tuesday": "di", "wednesday": "wo", "thursday": "do",
+        "friday": "vr", "saturday": "za", "sunday": "zo",
+    },
+    "es": {
+        "monday": "lun", "tuesday": "mar", "wednesday": "mié", "thursday": "jue",
+        "friday": "vie", "saturday": "sáb", "sunday": "dom",
+    },
+    "it": {
+        "monday": "lun", "tuesday": "mar", "wednesday": "mer", "thursday": "gio",
+        "friday": "ven", "saturday": "sab", "sunday": "dom",
+    },
+    "sv": {
+        "monday": "mån", "tuesday": "tis", "wednesday": "ons", "thursday": "tor",
+        "friday": "fre", "saturday": "lör", "sunday": "sön",
+    },
+    "no": {
+        "monday": "man", "tuesday": "tir", "wednesday": "ons", "thursday": "tor",
+        "friday": "fre", "saturday": "lør", "sunday": "søn",
+    },
+    "da": {
+        "monday": "man", "tuesday": "tir", "wednesday": "ons", "thursday": "tor",
+        "friday": "fre", "saturday": "lør", "sunday": "søn",
+    },
+    "ru": {
+        "monday": "пн", "tuesday": "вт", "wednesday": "ср", "thursday": "чт",
+        "friday": "пт", "saturday": "сб", "sunday": "вс",
+    },
 }
 
 SCHEDULE_TEXT_LABELS = {
@@ -134,6 +162,13 @@ SCHEDULE_TEXT_LABELS = {
     "de": {"none": "keine aktiven Zeitfenster", "count": "{count} aktive Zeitfenster", "edge": "+ Kante"},
     "fr": {"none": "aucun créneau actif", "count": "{count} créneaux actifs", "edge": "+ bordure"},
     "pl": {"none": "brak aktywnych slotów", "count": "{count} aktywnych slotów", "edge": "+ krawędź"},
+    "nl": {"none": "geen actieve tijdvakken", "count": "{count} actieve tijdvakken", "edge": "+ rand"},
+    "es": {"none": "ninguna franja activa", "count": "{count} franjas activas", "edge": "+ borde"},
+    "it": {"none": "nessuna fascia attiva", "count": "{count} fasce attive", "edge": "+ bordo"},
+    "sv": {"none": "inga aktiva tidsfönster", "count": "{count} aktiva tidsfönster", "edge": "+ kant"},
+    "no": {"none": "ingen aktive tidsrom", "count": "{count} aktive tidsrom", "edge": "+ kant"},
+    "da": {"none": "ingen aktive tidsrum", "count": "{count} aktive tidsrum", "edge": "+ kant"},
+    "ru": {"none": "нет активных интервалов", "count": "активных интервалов: {count}", "edge": "+ кромка"},
 }
 
 
@@ -743,6 +778,147 @@ def next_schedule_start(device: Any, now: datetime) -> datetime | None:
     return min(candidates) if candidates else None
 
 
+def rtk_zone_names(device: Any) -> dict[int, str]:
+    """Map RTK zone ids to the names configured in the Worx app.
+
+    The schedule config (cfg.rtk.zs) carries the zone ids the mower accepts
+    for one-time mowing but no names, while the map holds the names without
+    those ids. Both sides expose the cutting direction, so zones are paired
+    on it when every direction is distinct, and by order otherwise. Transit
+    zones are skipped: they have no cutting metadata and no schedule entry.
+    """
+    cfg_zones = rtk_map_attributes(device).get("zones", []) or []
+    pairs: list[tuple[int, Any]] = []
+    for zone in cfg_zones:
+        try:
+            zone_id = int(get_dict_value(zone, "id"))
+        except (TypeError, ValueError):
+            continue
+        if zone_id > 0:
+            pairs.append(
+                (zone_id, get_nested_value(zone, "cutting", "d", default=None))
+            )
+
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    map_zones: list[tuple[str, Any]] = []
+    if isinstance(map_data, dict):
+        boundaries = (
+            get_nested_value(map_data, "layers", "boundaries", default=[]) or []
+        )
+        for boundary in boundaries:
+            for zone in get_dict_value(boundary, "zones", []) or []:
+                if not isinstance(zone, dict):
+                    continue
+                metadata = get_dict_value(zone, "metadata", {}) or {}
+                if not isinstance(metadata, dict) or not any(
+                    key in metadata for key in ("cut_type", "cut_direction")
+                ):
+                    continue
+                name = get_dict_value(zone, "name")
+                if name in (None, ""):
+                    continue
+                map_zones.append(
+                    (str(name), get_dict_value(metadata, "cut_direction"))
+                )
+
+    if not pairs or not map_zones:
+        return {}
+
+    names: dict[int, str] = {}
+    cfg_dirs = [d for _, d in pairs if d is not None]
+    map_dirs = [d for _, d in map_zones if d is not None]
+    if (
+        len(cfg_dirs) == len(pairs)
+        and len(map_dirs) == len(map_zones)
+        and len(set(cfg_dirs)) == len(cfg_dirs)
+        and len(set(map_dirs)) == len(map_dirs)
+    ):
+        by_direction = {direction: name for name, direction in map_zones}
+        for zone_id, direction in pairs:
+            name = by_direction.get(direction)
+            if name is not None:
+                names[zone_id] = name
+
+    if len(names) != len(pairs):
+        # Directions were ambiguous or missing: fall back to map order.
+        names = {}
+        for (zone_id, _), (name, _) in zip(sorted(pairs), map_zones):
+            names[zone_id] = name
+
+    # Keep labels unambiguous if the app reuses a name across zones.
+    seen: dict[str, int] = {}
+    for zone_id, name in list(names.items()):
+        seen[name] = seen.get(name, 0) + 1
+    for zone_id, name in list(names.items()):
+        if seen[name] > 1:
+            names[zone_id] = f"{name} ({zone_id})"
+    return names
+
+
+# Raw protocol 1 slots number the week from Sunday (0) while pyworxcloud names
+# the days, so a parsed slot is matched to its raw twin on day and start.
+RAW_SCHEDULE_DAY = {name: (index + 1) % 7 for name, index in SCHEDULE_DAY_INDEX.items()}
+
+
+def _schedule_minutes(value: Any) -> int | None:
+    """Return minutes since midnight for an HH:MM schedule time."""
+    parsed = parse_schedule_time(value)
+    if parsed is None:
+        return None
+    return parsed.hour * 60 + parsed.minute
+
+
+def raw_schedule_slot_cut(device: Any, slot: Any) -> dict[str, Any] | None:
+    """Return the raw cut block of the weekly slot matching a parsed slot.
+
+    pyworxcloud keeps day, start and duration but drops the cut block, which
+    on protocol 1 carries the zones the slot is limited to (`z`) and whether
+    their order was imposed in the Worx app (`zo`). Only protocol 1 slots
+    carry it; None when the slot has no raw twin.
+    """
+    raw_slots = raw_schedule_config(device).get("slots")
+    if not isinstance(raw_slots, list):
+        return None
+    day = RAW_SCHEDULE_DAY.get(str(get_dict_value(slot, "day") or "").lower())
+    start = _schedule_minutes(get_dict_value(slot, "start"))
+    if day is None or start is None:
+        return None
+    for raw in raw_slots:
+        if not isinstance(raw, dict):
+            continue
+        if raw.get("d") != day or raw.get("s") != start:
+            continue
+        cut = get_nested_value(raw, "cfg", "cut", default=None)
+        return cut if isinstance(cut, dict) else None
+    return None
+
+
+def schedule_slot_zones(device: Any, slot: Any) -> dict[str, Any]:
+    """Return the zones a weekly slot mows, as set in the Worx app.
+
+    Verified on Vision firmware 3.46.0+47: the mower honours these zones,
+    in order when `zone_order` is "ordered" (the app's Special mode). In
+    "auto" mode it picks the order itself among the listed zones. All
+    values are None when the slot carries no zone information.
+    """
+    cut = raw_schedule_slot_cut(device, slot)
+    zones = cut.get("z") if cut else None
+    if not isinstance(zones, list):
+        return {"zones": None, "zone_names": None, "zone_order": None}
+    names = rtk_zone_names(device)
+    zone_ids: list[Any] = []
+    for zone in zones:
+        try:
+            zone_ids.append(int(zone))
+        except (TypeError, ValueError):
+            zone_ids.append(zone)
+    return {
+        "zones": zone_ids,
+        "zone_names": [names.get(zone, f"Zone {zone}") for zone in zone_ids],
+        "zone_order": "ordered" if cut.get("zo") else "auto",
+    }
+
+
 def schedule_day_label(day: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> str:
     """Return a short, localized human label for a schedule day."""
     if day is None:
@@ -806,6 +982,7 @@ def schedule_attributes(
                 "duration_extended": get_dict_value(slot, "duration_extended"),
                 "boundary": get_dict_value(slot, "boundary"),
                 "source": get_dict_value(slot, "source"),
+                **schedule_slot_zones(device, slot),
             }
             for slot in slots
         ],

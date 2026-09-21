@@ -24,6 +24,7 @@ This integration is built on top of the community `pyworxcloud` library and adds
 - Mower controls: firmware auto-update, lock, native schedule, smart edge cutting, save the hedgehogs, party mode, and (when your mower reports the matching hardware module) ACS, off limits, cutting height, torque and border distance.
 - Daily area/progress tracking persisted per mower in Home Assistant storage, immune to cloud counter resets and multi-day gaps, plus a locally computed estimate that keeps moving even when Worx's own stats go stale.
 - Schedule sensor and calendar, next mowing time, RTK map camera with mowed-area trail, RTK robot position and reverse-geocoded address (opt-in).
+- On RTK mowers, each weekly slot shows the zones set for it in the Worx app, by name, and whether their order was imposed. They appear in the calendar events and in the `slots` attribute of the schedule sensor (`zones`, `zone_names`, `zone_order`), ready for a card or a template.
 - Battery, status, error, connectivity, maintenance and mowing-readiness sensors, with Home Assistant Repairs alerts for blade/battery service and for a mower left stopped away from its base, and a restart button.
 - Download diagnostics with automatic redaction of coordinates, addresses and identifiers.
 - Translated into 11 languages (English, Polish, French, German, Dutch, Spanish, Italian, Swedish, Norwegian, Danish, Russian), including entity states, schedule and calendar.
