@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zonas",
-          "description": "Lista opcional de identificadores de zonas RTK, en orden de corte, por ejemplo [2, 1]. Dejar vacío para cortar todas las zonas. Experimental: aún no confirmado en el firmware Vision actual."
+          "description": "Lista opcional de identificadores de zonas RTK, en orden de corte, por ejemplo [2, 1]. Dejar vacío para cortar todas las zonas. El firmware Vision 3.46.0+47 la ignora en un corte puntual. Para cortar una zona concreta, asígnela a una franja del horario semanal en la app Worx: esas zonas se respetan, orden incluido."
         }
       }
     },

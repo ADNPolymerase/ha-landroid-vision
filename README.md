@@ -20,7 +20,7 @@ This integration is built on top of the community `pyworxcloud` library and adds
 
 ## Features
 
-- Native `lawn_mower` entity: start, pause, dock, one-time mowing (runtime, edge cutting, experimental zone selection) and on-demand edge cutting.
+- Native `lawn_mower` entity: start, pause, dock, one-time mowing (runtime, edge cutting, zone selection ignored by current Vision firmware) and on-demand edge cutting.
 - Mower controls: firmware auto-update, lock, native schedule, smart edge cutting, save the hedgehogs, party mode, and (when your mower reports the matching hardware module) ACS, off limits, cutting height, torque and border distance.
 - Daily area/progress tracking persisted per mower in Home Assistant storage, immune to cloud counter resets and multi-day gaps, plus a locally computed estimate that keeps moving even when Worx's own stats go stale.
 - Schedule sensor and calendar, next mowing time, RTK map camera with mowed-area trail, RTK robot position and reverse-geocoded address (opt-in).
@@ -112,7 +112,7 @@ The Worx / Positec cloud API is not officially public. Some endpoints used here 
 - Off limits and ACS entities can read `unavailable` on a mower that supports them. Availability depends on pyworxcloud seeing the matching module (`DF`, `US`) in live data, and the off limits module only appears once a zone has been configured in the Worx app at least once. A limitation of the API data, shared with the community `landroid_cloud` integration.
 - Worx publishes firmware release notes only while an update is pending; once installed the endpoint answers 404 and they are gone. The integration records them as they go past, but nothing can be recovered for a version installed before that existed. Use the `worx_vision_cloud.set_firmware_notes` action to paste those in from the Worx account portal.
 - An update touching only the vision head is invisible here. Firmware ships as a head and mower pair, but availability is computed by comparing mower versions alone, and the head's running version is not exposed at all. Both follow from the API; the Worx app remains the reference for head firmware.
-- Zone selection for one-time mowing is experimental. Firmware 3.46.0+47 ignored it and mowed the usual area. The whole cut block is now sent the way the Worx app writes one to a weekly slot, including the two fields earlier releases left out: the zone order flag, and the over border flag the app always pairs with an edge cut turned off. Whether that is enough is not confirmed, so treat a zone run as something to watch rather than to rely on. The list is ordered: the first id is mowed first.
+- Zone selection for one-time mowing is ignored by Vision firmware 3.46.0+47: the mower mows its usual area, even with a cut block identical to the one the Worx app writes. Zones set on a weekly schedule slot in the Worx app are honoured, order included: a slot limited to zone 2 then 1 made the mower cross zone 1 without cutting and start mowing once it reached zone 2. To mow a given zone, use a schedule slot. The one-time zone list is still sent, in case a later firmware reads it.
 - Mower home time and charging time can read `0` permanently for some accounts, because the API does not populate them for every model. Both sensors are disabled by default; enable them if your account reports real values.
 
 ## Credits

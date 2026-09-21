@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zonen",
-          "description": "Optionale Liste von RTK-Zonen-IDs in der Mähreihenfolge, z. B. [2, 1]. Leer lassen, um alle Zonen zu mähen. Experimentell: auf der aktuellen Vision-Firmware noch nicht bestätigt."
+          "description": "Optionale Liste von RTK-Zonen-IDs in der Mähreihenfolge, z. B. [2, 1]. Leer lassen, um alle Zonen zu mähen. Die Vision-Firmware 3.46.0+47 ignoriert sie bei einem einmaligen Mähauftrag. Um eine bestimmte Zone zu mähen, sie in der Worx-App einem Wochenplan-Zeitfenster zuweisen: Diese werden beachtet, samt Reihenfolge."
         }
       }
     },

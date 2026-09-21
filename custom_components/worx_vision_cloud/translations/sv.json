@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valfri lista med RTK-zon-id i klippordning, till exempel [2, 1]. Lämna tomt för att klippa alla zoner. Experimentellt: ännu inte bekräftat på nuvarande Vision-firmware."
+          "description": "Valfri lista med RTK-zon-id i klippordning, till exempel [2, 1]. Lämna tomt för att klippa alla zoner. Vision-firmware 3.46.0+47 ignorerar den vid en engångsklippning. För att klippa en viss zon, ange den på ett tidsfönster i veckoschemat i Worx-appen: de zonerna respekteras, ordning inräknad."
         }
       }
     },

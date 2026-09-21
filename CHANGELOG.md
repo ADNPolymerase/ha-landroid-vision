@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.6.2 - 2026-09-21
+
+First stable release since 2.5.1. It carries everything from the 2.6.0 and 2.6.1 pre-releases: the five mower statuses that used to read `unknown`, and the full cut block sent for a one-time job.
+
+### Documentation
+
+- **Zones now have a verified answer.** Tested on a Vision Cloud mower, firmware 3.46.0+47:
+  - **A weekly schedule slot honours its zones, order included.** A slot set in the Worx app to zone 2 then zone 1 left the base, reported "searching zone" while it crossed zone 1 without cutting, went through the corridor, and only started mowing once in zone 2.
+  - **A one-time job ignores them.** The same mower, sent the exact cut block the app writes to that slot, mowed its usual area. Status "searching zone" never appeared. Nothing in the shape of the request is left to change, so the selection is dropped by the firmware for this kind of job.
+  - The 2.5.0 claim that slot zones are honoured was right, but the evidence given at the time proved nothing and it was withdrawn in 2.5.1. It is restored here, with a real test behind it.
+- To mow a given zone today, set it on a weekly schedule slot in the Worx app. The README and the zones field description, in the eleven supported languages, now say so. The one-time zone list is still sent, in case a later firmware reads it.
+
 ## 2.6.1 - 2026-09-21
 
 ### Changed

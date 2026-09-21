@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valgfri liste med RTK-zone-id'er i klipperækkefølge, for eksempel [2, 1]. Lad stå tomt for at klippe alle zoner. Eksperimentelt: endnu ikke bekræftet på den nuværende Vision-firmware."
+          "description": "Valgfri liste med RTK-zone-id'er i klipperækkefølge, for eksempel [2, 1]. Lad stå tomt for at klippe alle zoner. Vision-firmware 3.46.0+47 ignorerer den ved en engangsklipning. For at klippe en bestemt zone, angiv den på et tidsrum i ugeplanen i Worx-appen: de zoner respekteres, rækkefølge inkluderet."
         }
       }
     },

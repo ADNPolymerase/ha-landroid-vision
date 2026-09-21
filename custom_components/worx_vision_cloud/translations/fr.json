@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Liste optionnelle d'identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. Laisser vide pour tondre toutes les zones. Expérimental : non confirmé sur le firmware Vision actuel."
+          "description": "Liste optionnelle d'identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. Laisser vide pour tondre toutes les zones. Le firmware Vision 3.46.0+47 l'ignore pour une coupe unique. Pour tondre une zone précise, la définir sur un créneau du planning hebdomadaire dans l'app Worx : ces zones sont respectées, ordre compris."
         }
       }
     },

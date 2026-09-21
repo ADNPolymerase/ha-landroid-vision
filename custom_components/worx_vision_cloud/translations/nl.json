@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optionele lijst met RTK-zone-id's, in maaivolgorde, bijvoorbeeld [2, 1]. Leeg laten om alle zones te maaien. Experimenteel: nog niet bevestigd op de huidige Vision-firmware."
+          "description": "Optionele lijst met RTK-zone-id's, in maaivolgorde, bijvoorbeeld [2, 1]. Leeg laten om alle zones te maaien. Vision-firmware 3.46.0+47 negeert deze bij een eenmalige maaibeurt. Om een bepaalde zone te maaien, stel die in op een tijdvak van het weekschema in de Worx-app: die zones worden gerespecteerd, inclusief volgorde."
         }
       }
     },

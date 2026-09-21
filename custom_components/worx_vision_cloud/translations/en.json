@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optional list of RTK zone ids, in mowing order, for example [2, 1]. Leave empty to mow every zone. Experimental: not yet confirmed to work on current Vision firmware."
+          "description": "Optional list of RTK zone ids, in mowing order, for example [2, 1]. Leave empty to mow every zone. Vision firmware 3.46.0+47 ignores it for a one-time job. To mow a given zone, set it on a weekly schedule slot in the Worx app: those are honoured, order included."
         }
       }
     },

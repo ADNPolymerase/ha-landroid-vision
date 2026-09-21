@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Zone",
-          "description": "Elenco opzionale di id delle zone RTK, nell'ordine di taglio, ad esempio [2, 1]. Lasciare vuoto per tagliare tutte le zone. Sperimentale: non ancora confermato sul firmware Vision attuale."
+          "description": "Elenco opzionale di id delle zone RTK, nell'ordine di taglio, ad esempio [2, 1]. Lasciare vuoto per tagliare tutte le zone. Il firmware Vision 3.46.0+47 lo ignora per un taglio singolo. Per tagliare una zona precisa, assegnarla a una fascia della programmazione settimanale nell'app Worx: quelle zone vengono rispettate, ordine compreso."
         }
       }
     },

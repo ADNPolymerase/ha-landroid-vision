@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Soner",
-          "description": "Valgfri liste med RTK-sone-id-er i klipperekkefølge, for eksempel [2, 1]. La stå tomt for å klippe alle soner. Eksperimentelt: ennå ikke bekreftet på nåværende Vision-fastvare."
+          "description": "Valgfri liste med RTK-sone-id-er i klipperekkefølge, for eksempel [2, 1]. La stå tomt for å klippe alle soner. Vision-fastvare 3.46.0+47 ignorerer den ved en engangsklipping. For å klippe en bestemt sone, angi den på et tidsrom i ukeplanen i Worx-appen: de sonene respekteres, rekkefølge inkludert."
         }
       }
     },

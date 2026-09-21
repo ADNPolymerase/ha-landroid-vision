@@ -430,7 +430,7 @@
         },
         "zones": {
           "name": "Strefy",
-          "description": "Opcjonalna lista identyfikatorów stref RTK w kolejności koszenia, np. [2, 1]. Puste pole oznacza koszenie wszystkich stref. Eksperymentalne: jeszcze niepotwierdzone na obecnym oprogramowaniu Vision."
+          "description": "Opcjonalna lista identyfikatorów stref RTK w kolejności koszenia, np. [2, 1]. Puste pole oznacza koszenie wszystkich stref. Oprogramowanie Vision 3.46.0+47 ignoruje ją przy koszeniu jednorazowym. Aby skosić konkretną strefę, przypisz ją do przedziału harmonogramu tygodniowego w aplikacji Worx: te strefy są respektowane, łącznie z kolejnością."
         }
       }
     },
