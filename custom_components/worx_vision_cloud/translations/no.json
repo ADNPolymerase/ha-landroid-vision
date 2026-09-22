@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Start gressklipperen på nytt"
+      },
+      "start_zone_mowing": {
+        "name": "Start soneklipping"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Merknader for Vision-hodet",
           "description": "Versjonsmerknader for Vision-hodets fastvare."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Start soneklipping",
+      "description": "Klipper de valgte RTK-sonene nå, i rekkefølge, ved å legge til et midlertidig tidsrom i ukeplanen. Vision-fastvaren ignorerer sonene i en engangsklipping, men respekterer dem i et tidsrom. Ukeplanen gjenopprettes når klipperen er tilbake.",
+      "fields": {
+        "entity_id": {
+          "name": "Klipper",
+          "description": "Enheten for Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Soner",
+          "description": "RTK-sone-id-er i klipperekkefølge, for eksempel [2, 1]. Den første klippes først."
+        },
+        "runtime": {
+          "name": "Klippetid",
+          "description": "Hvor lenge jobben varer, i minutter."
+        },
+        "edge_cut": {
+          "name": "Kantklipping",
+          "description": "Om jobben starter med kantklipping."
+        },
+        "start_at": {
+          "name": "Starttidspunkt",
+          "description": "Når jobben starter. La stå tomt for å starte om to minutter. Innen de neste seks dagene, fordi ukeplanen gjentar seg."
         }
       }
     }

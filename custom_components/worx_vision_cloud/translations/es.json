@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Reiniciar el cortacésped"
+      },
+      "start_zone_mowing": {
+        "name": "Iniciar corte por zonas"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Notas del cabezal Vision",
           "description": "Notas de versión del firmware del cabezal Vision."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Iniciar corte por zonas",
+      "description": "Corta ahora las zonas RTK elegidas, en orden, añadiendo una franja temporal al horario semanal. El firmware Vision ignora las zonas de un corte puntual pero respeta las de una franja del horario. El horario se restaura cuando el robot vuelve a la base.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot",
+          "description": "La entidad del robot Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zonas",
+          "description": "Identificadores de zonas RTK, en orden de corte, por ejemplo [2, 1]. La primera se corta primero."
+        },
+        "runtime": {
+          "name": "Duración",
+          "description": "Duración del trabajo, en minutos."
+        },
+        "edge_cut": {
+          "name": "Corte de borde",
+          "description": "Si el trabajo empieza con un corte de borde."
+        },
+        "start_at": {
+          "name": "Hora de inicio",
+          "description": "Cuándo empieza el trabajo. Dejar vacío para empezar en dos minutos. Dentro de los próximos seis días, porque el horario semanal se repite."
         }
       }
     }

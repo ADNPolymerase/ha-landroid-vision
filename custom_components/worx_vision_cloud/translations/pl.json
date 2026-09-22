@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Uruchom ponownie kosiarkę"
+      },
+      "start_zone_mowing": {
+        "name": "Uruchom koszenie strefy"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Informacje głowicy Vision",
           "description": "Informacje o wersji oprogramowania głowicy Vision."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Uruchom koszenie strefy",
+      "description": "Kosi wybrane strefy RTK teraz, w podanej kolejności, dodając tymczasowy przedział do harmonogramu tygodniowego. Oprogramowanie Vision ignoruje strefy koszenia jednorazowego, ale respektuje strefy przedziału. Harmonogram wraca do pierwotnej postaci po powrocie kosiarki do stacji.",
+      "fields": {
+        "entity_id": {
+          "name": "Kosiarka",
+          "description": "Encja kosiarki Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Strefy",
+          "description": "Identyfikatory stref RTK w kolejności koszenia, np. [2, 1]. Pierwsza jest koszona najpierw."
+        },
+        "runtime": {
+          "name": "Czas koszenia",
+          "description": "Czas trwania zadania w minutach."
+        },
+        "edge_cut": {
+          "name": "Koszenie krawędzi",
+          "description": "Czy zadanie zaczyna się od koszenia krawędzi."
+        },
+        "start_at": {
+          "name": "Godzina startu",
+          "description": "Kiedy zadanie się zaczyna. Puste pole oznacza start za dwie minuty. W ciągu najbliższych sześciu dni, ponieważ harmonogram tygodniowy się powtarza."
         }
       }
     }

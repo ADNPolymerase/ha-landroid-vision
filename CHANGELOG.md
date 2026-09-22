@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.8.0 - 2026-09-22
+
+### Added
+
+- **Mow the zones you pick, right now.** Vision firmware ignores the zones of a one-time job but honours the ones carried by a weekly slot, so a zone job is run as a slot starting two minutes from now, added to the week the mower already has. The new `worx_vision_cloud.start_zone_mowing` action takes the zones in mowing order, a runtime, an optional edge cut and an optional start time, so a job can also be booked for later in the week; a Start zone mowing button does the same with the zone picker, runtime and edge cut already used by one-time mowing.
+  - The weekly schedule is saved in Home Assistant before anything is sent, and written back once the mower is home again. A safety deadline, the runtime plus 30 minutes, puts it back even if the mower never makes it home, and a pending job survives a Home Assistant restart. A job booked for later is not ended by the mowing the mower does in the meantime.
+  - The job is refused, with the reason, when the mower is offline or not on protocol 1, when the Worx automatic schedule is on (it rewrites the week by itself), when party mode suspends the schedule, when no zone is given, when the job would run past midnight, when the start time is in the past or more than six days away (the weekly schedule repeats), or when it would overlap a slot the mower already has. Two slots running at once is a shape the Worx app never writes, and nothing says which one the firmware would follow.
+
 ## 2.7.2 - 2026-09-22
 
 ### Fixed

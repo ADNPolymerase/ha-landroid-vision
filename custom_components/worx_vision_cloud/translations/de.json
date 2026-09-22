@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Mäher neu starten"
+      },
+      "start_zone_mowing": {
+        "name": "Zonenmähen starten"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Hinweise zum Vision-Kopf",
           "description": "Versionshinweise der Firmware des Vision-Kopfes."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Zonenmähen starten",
+      "description": "Mäht die gewählten RTK-Zonen jetzt, in dieser Reihenfolge, über ein temporäres Zeitfenster im Wochenplan. Die Vision-Firmware ignoriert die Zonen eines einmaligen Auftrags, beachtet aber die eines Zeitfensters. Der Wochenplan wird nach der Rückkehr zur Station wiederhergestellt.",
+      "fields": {
+        "entity_id": {
+          "name": "Mäher",
+          "description": "Die Entität des Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zonen",
+          "description": "RTK-Zonen-IDs in der Mähreihenfolge, z. B. [2, 1]. Die erste wird zuerst gemäht."
+        },
+        "runtime": {
+          "name": "Mähdauer",
+          "description": "Dauer des Auftrags in Minuten."
+        },
+        "edge_cut": {
+          "name": "Kantenschnitt",
+          "description": "Ob der Auftrag mit einem Kantenschnitt beginnt."
+        },
+        "start_at": {
+          "name": "Startzeit",
+          "description": "Wann der Auftrag beginnt. Leer lassen, um in zwei Minuten zu starten. Innerhalb der nächsten sechs Tage, da sich der Wochenplan wiederholt."
         }
       }
     }

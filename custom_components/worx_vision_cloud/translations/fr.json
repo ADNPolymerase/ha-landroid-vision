@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Redémarrer la tondeuse"
+      },
+      "start_zone_mowing": {
+        "name": "Démarrer une tonte de zone"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Notes de la tête Vision",
           "description": "Notes de version du firmware de la tête Vision."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Démarrer une tonte de zone",
+      "description": "Tond maintenant les zones RTK choisies, dans l'ordre, en ajoutant un créneau temporaire au planning hebdomadaire. Le firmware Vision ignore les zones d'une coupe unique mais respecte celles d'un créneau. Le planning est restauré dès le retour à la base.",
+      "fields": {
+        "entity_id": {
+          "name": "Tondeuse",
+          "description": "L'entité tondeuse Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zones",
+          "description": "Identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. La première est tondue en premier."
+        },
+        "runtime": {
+          "name": "Durée de tonte",
+          "description": "Durée du travail, en minutes."
+        },
+        "edge_cut": {
+          "name": "Coupe de bordure",
+          "description": "Si le travail commence par une coupe de bordure."
+        },
+        "start_at": {
+          "name": "Heure de départ",
+          "description": "Quand le travail démarre. Laisser vide pour partir dans deux minutes. Dans les six prochains jours, parce que le planning hebdomadaire se répète."
         }
       }
     }

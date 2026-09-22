@@ -38,6 +38,7 @@ from .const import (
     ATTR_MAP_ID,
     ATTR_MOWER_NOTES,
     ATTR_RUNTIME,
+    ATTR_START_AT,
     ATTR_VERSION,
     ATTR_ZONES,
     CONF_CLOUD,
@@ -51,6 +52,7 @@ from .const import (
     SERVICE_SET_FIRMWARE_NOTES,
     SERVICE_SET_RTK_MAP_ID,
     SERVICE_START_ONE_TIME_MOWING,
+    SERVICE_START_ZONE_MOWING,
 )
 from .coordinator import WorxVisionCoordinator
 from .helpers import device_entry_by_identifier
@@ -65,6 +67,20 @@ START_ONE_TIME_MOWING_SCHEMA = vol.Schema(
         ),
         vol.Optional(ATTR_EDGE_CUT, default=False): cv.boolean,
         vol.Optional(ATTR_ZONES, default=[]): lambda value: _service_zone_ids(value),
+    }
+)
+
+# A zone job runs as a temporary weekly slot, so it always needs a runtime
+# and at least one zone: without them it would be a plain one-time job.
+START_ZONE_MOWING_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required(ATTR_ZONES): lambda value: _service_zone_ids(value),
+        vol.Optional(ATTR_RUNTIME, default=60): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=360)
+        ),
+        vol.Optional(ATTR_EDGE_CUT, default=False): cv.boolean,
+        vol.Optional(ATTR_START_AT): cv.datetime,
     }
 )
 
@@ -196,6 +212,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hass.data.get(DOMAIN):
         if hass.services.has_service(DOMAIN, SERVICE_START_ONE_TIME_MOWING):
             hass.services.async_remove(DOMAIN, SERVICE_START_ONE_TIME_MOWING)
+        if hass.services.has_service(DOMAIN, SERVICE_START_ZONE_MOWING):
+            hass.services.async_remove(DOMAIN, SERVICE_START_ZONE_MOWING)
         if hass.services.has_service(DOMAIN, SERVICE_SET_RTK_MAP_ID):
             hass.services.async_remove(DOMAIN, SERVICE_SET_RTK_MAP_ID)
         hass.data.pop(DOMAIN, None)
@@ -274,6 +292,18 @@ def _async_setup_services(hass: HomeAssistant) -> None:
             call.data[ATTR_ZONES],
         )
 
+    async def async_start_zone_mowing(call) -> None:
+        serial_number, runtime_data = _resolve_mower_runtime(
+            hass, call.data[ATTR_ENTITY_ID]
+        )
+        await runtime_data.coordinator.async_start_zone_mowing(
+            serial_number,
+            call.data[ATTR_ZONES],
+            call.data[ATTR_RUNTIME],
+            call.data[ATTR_EDGE_CUT],
+            call.data.get(ATTR_START_AT),
+        )
+
     async def async_set_rtk_map_id(call) -> None:
         serial_number, runtime_data = _resolve_mower_runtime(
             hass, call.data[ATTR_ENTITY_ID]
@@ -301,6 +331,13 @@ def _async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_START_ONE_TIME_MOWING,
         async_start_one_time_mowing,
         schema=START_ONE_TIME_MOWING_SCHEMA,
+    )
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_START_ZONE_MOWING,
+        async_start_zone_mowing,
+        schema=START_ZONE_MOWING_SCHEMA,
     )
     async_register_admin_service(
         hass,

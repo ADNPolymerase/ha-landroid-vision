@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Maaier herstarten"
+      },
+      "start_zone_mowing": {
+        "name": "Zone maaien starten"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Informatie Vision-kop",
           "description": "Release-informatie van de firmware van de Vision-kop."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Zone maaien starten",
+      "description": "Maait de gekozen RTK-zones nu, in volgorde, door een tijdelijk tijdvak aan het weekschema toe te voegen. De Vision-firmware negeert de zones van een eenmalige beurt maar respecteert die van een tijdvak. Het schema wordt hersteld zodra de maaier terug is.",
+      "fields": {
+        "entity_id": {
+          "name": "Maaier",
+          "description": "De entiteit van de Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zones",
+          "description": "RTK-zone-id's in maaivolgorde, bijvoorbeeld [2, 1]. De eerste wordt als eerste gemaaid."
+        },
+        "runtime": {
+          "name": "Maaiduur",
+          "description": "Hoe lang de beurt duurt, in minuten."
+        },
+        "edge_cut": {
+          "name": "Randmaaien",
+          "description": "Of de beurt begint met randmaaien."
+        },
+        "start_at": {
+          "name": "Starttijd",
+          "description": "Wanneer de beurt begint. Leeg laten om over twee minuten te starten. Binnen de komende zes dagen, omdat het weekschema zich herhaalt."
         }
       }
     }

@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Genstart plæneklipperen"
+      },
+      "start_zone_mowing": {
+        "name": "Start zoneklipning"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Noter til Vision-hovedet",
           "description": "Udgivelsesnoter for Vision-hovedets firmware."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Start zoneklipning",
+      "description": "Klipper de valgte RTK-zoner nu, i rækkefølge, ved at tilføje et midlertidigt tidsrum til ugeplanen. Vision-firmwaren ignorerer zonerne i en engangsklipning, men respekterer dem i et tidsrum. Ugeplanen gendannes, når robotten er tilbage.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot",
+          "description": "Enheden for Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zoner",
+          "description": "RTK-zone-id'er i klipperækkefølge, for eksempel [2, 1]. Den første klippes først."
+        },
+        "runtime": {
+          "name": "Klippetid",
+          "description": "Hvor længe opgaven varer, i minutter."
+        },
+        "edge_cut": {
+          "name": "Kantklipning",
+          "description": "Om opgaven starter med kantklipning."
+        },
+        "start_at": {
+          "name": "Starttidspunkt",
+          "description": "Hvornår opgaven starter. Lad stå tomt for at starte om to minutter. Inden for de næste seks dage, fordi ugeplanen gentager sig."
         }
       }
     }

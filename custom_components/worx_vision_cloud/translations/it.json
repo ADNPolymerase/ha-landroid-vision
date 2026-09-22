@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Riavvia il tagliaerba"
+      },
+      "start_zone_mowing": {
+        "name": "Avvia il taglio per zone"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Note della testa Vision",
           "description": "Note di rilascio del firmware della testa Vision."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Avvia il taglio per zone",
+      "description": "Taglia subito le zone RTK scelte, nell'ordine indicato, aggiungendo una fascia temporanea alla programmazione settimanale. Il firmware Vision ignora le zone di un taglio singolo ma rispetta quelle di una fascia. La programmazione viene ripristinata al rientro alla base.",
+      "fields": {
+        "entity_id": {
+          "name": "Robot",
+          "description": "L'entità del robot Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zone",
+          "description": "Id delle zone RTK, nell'ordine di taglio, ad esempio [2, 1]. La prima viene tagliata per prima."
+        },
+        "runtime": {
+          "name": "Durata",
+          "description": "Durata del lavoro, in minuti."
+        },
+        "edge_cut": {
+          "name": "Taglio del bordo",
+          "description": "Se il lavoro inizia con un taglio del bordo."
+        },
+        "start_at": {
+          "name": "Ora di avvio",
+          "description": "Quando inizia il lavoro. Lasciare vuoto per partire tra due minuti. Entro i prossimi sei giorni, perché la programmazione settimanale si ripete."
         }
       }
     }

@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Restart mower"
+      },
+      "start_zone_mowing": {
+        "name": "Start zone mowing"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Vision head notes",
           "description": "Release notes for the vision head firmware."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Start zone mowing",
+      "description": "Mows the selected RTK zones now, in order, by adding a temporary slot to the weekly schedule. Vision firmware ignores the zones of a one-time job but honours the ones of a schedule slot. The schedule is put back once the mower is home.",
+      "fields": {
+        "entity_id": {
+          "name": "Mower",
+          "description": "The Worx Landroid Vision PLUS mower entity."
+        },
+        "zones": {
+          "name": "Zones",
+          "description": "RTK zone ids, in mowing order, for example [2, 1]. The first id is mowed first."
+        },
+        "runtime": {
+          "name": "Runtime",
+          "description": "How long the job runs, in minutes."
+        },
+        "edge_cut": {
+          "name": "Edge cutting",
+          "description": "Whether the job starts with an edge cut."
+        },
+        "start_at": {
+          "name": "Start time",
+          "description": "When the job starts. Leave empty to start in two minutes. Within the next six days, because the weekly schedule repeats."
         }
       }
     }

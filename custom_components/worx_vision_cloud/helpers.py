@@ -412,6 +412,124 @@ def raw_schedule_config(device: Any) -> dict[str, Any]:
     return schedule if isinstance(schedule, dict) else {}
 
 
+# A zone mowing job is run as a weekly slot starting in a couple of minutes,
+# because Vision firmware 3.46.0+47 ignores the zones of a one-time job while
+# honouring the ones attached to a schedule slot. The slot is added to the
+# week the mower already has, and removed once the job is over.
+TEMPORARY_SLOT_LEAD_MINUTES = 2
+MINUTES_PER_DAY = 24 * 60
+
+
+def raw_schedule_slots(device: Any) -> list[dict[str, Any]]:
+    """Return the raw weekly slots exactly as the mower publishes them."""
+    slots = raw_schedule_config(device).get("slots")
+    if not isinstance(slots, list):
+        return []
+    return [slot for slot in slots if isinstance(slot, dict)]
+
+
+def temporary_schedule_slot(
+    start: datetime, runtime_minutes: int, zone_ids: Any, edge_cut: bool = False
+) -> dict[str, Any]:
+    """Return a one-off weekly slot mowing the given zones, in order.
+
+    Shaped exactly like the slots the Worx app writes: the raw week starts on
+    Sunday, `s` counts minutes since midnight and `t` is the runtime.
+    """
+    zones = [int(zone) for zone in (zone_ids or [])]
+    return {
+        "e": 1,
+        "d": (start.weekday() + 1) % 7,
+        "s": start.hour * 60 + start.minute,
+        "t": int(runtime_minutes),
+        "cfg": {"cut": one_time_cut_config(edge_cut, zones)},
+    }
+
+
+def _slot_window(slot: Any) -> tuple[int, int] | None:
+    """Return the (start, end) minutes of a raw slot, or None when unusable."""
+    start = get_dict_value(slot, "s")
+    runtime = get_dict_value(slot, "t")
+    if not isinstance(start, int) or not isinstance(runtime, int) or runtime <= 0:
+        return None
+    return start, start + runtime
+
+
+def conflicting_schedule_slot(
+    slots: Any, candidate: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Return the enabled slot a candidate slot would overlap, if any.
+
+    Two slots running at once on the same day is a shape the Worx app never
+    writes, and nothing says which one the firmware would follow. The caller
+    refuses rather than guessing.
+    """
+    window = _slot_window(candidate)
+    if window is None:
+        return None
+    start, end = window
+    for slot in slots or []:
+        if not isinstance(slot, dict) or slot is candidate:
+            continue
+        if get_dict_value(slot, "e") == 0:
+            continue
+        if get_dict_value(slot, "d") != candidate.get("d"):
+            continue
+        other = _slot_window(slot)
+        if other is None:
+            continue
+        if start < other[1] and other[0] < end:
+            return slot
+    return None
+
+
+def slot_crosses_midnight(slot: dict[str, Any]) -> bool:
+    """Return whether a slot would run past midnight."""
+    window = _slot_window(slot)
+    return window is not None and window[1] > MINUTES_PER_DAY
+
+
+def zone_mowing_restore_reason(
+    job: dict[str, Any], docked: bool, now: datetime
+) -> str | None:
+    """Return why a temporary zone slot should be removed now, or None.
+
+    "docked" once the mower has left and come back, which is the normal end
+    of a job. "deadline" is the safety net for a mower that never makes it
+    home: the schedule is given back anyway. Nothing counts before the slot
+    has started, so a job booked for later is not ended by the mowing the
+    mower does in the meantime.
+    """
+    start = job.get("start")
+    if isinstance(start, str) and start:
+        try:
+            starts_at = datetime.fromisoformat(start)
+        except ValueError:
+            starts_at = None
+        if starts_at is not None and now < starts_at:
+            # A job booked for later must survive the mowing that happens in
+            # the meantime, so nothing it does before its own start counts.
+            return None
+
+    deadline = job.get("deadline")
+    if isinstance(deadline, str) and deadline:
+        try:
+            parsed = datetime.fromisoformat(deadline)
+        except ValueError:
+            parsed = None
+        if parsed is not None and now >= parsed:
+            return "deadline"
+    if docked and job.get("left"):
+        return "docked"
+    return None
+
+
+def schedule_slots_payload(slots: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return the MQTT payload writing a whole week of slots."""
+    return {"sc": {"slots": slots}}
+
+
+
 def rtk_map_id(device: Any) -> Any:
     """Return RTK map identifier when the mower reports one."""
     return get_nested_value(_raw_cfg(device), "rtk", "map")

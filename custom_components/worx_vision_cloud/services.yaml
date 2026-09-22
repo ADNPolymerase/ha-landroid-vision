@@ -28,6 +28,40 @@ start_one_time_mowing:
       selector:
         object:
 
+start_zone_mowing:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          domain: lawn_mower
+    zones:
+      required: true
+      example:
+        - 2
+        - 1
+      selector:
+        object:
+    runtime:
+      required: false
+      default: 60
+      selector:
+        number:
+          min: 5
+          max: 360
+          step: 5
+          unit_of_measurement: min
+          mode: slider
+    edge_cut:
+      required: false
+      default: false
+      selector:
+        boolean:
+    start_at:
+      required: false
+      selector:
+        datetime:
+
 set_rtk_map_id:
   fields:
     entity_id:

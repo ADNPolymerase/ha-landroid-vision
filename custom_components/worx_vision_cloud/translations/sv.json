@@ -348,6 +348,9 @@
       },
       "restart": {
         "name": "Starta om gräsklipparen"
+      },
+      "start_zone_mowing": {
+        "name": "Starta zonklippning"
       }
     },
     "number": {
@@ -501,6 +504,32 @@
         "head_notes": {
           "name": "Anteckningar för Vision-huvudet",
           "description": "Versionsanteckningar för Vision-huvudets firmware."
+        }
+      }
+    },
+    "start_zone_mowing": {
+      "name": "Starta zonklippning",
+      "description": "Klipper de valda RTK-zonerna nu, i ordning, genom att lägga till ett tillfälligt tidsfönster i veckoschemat. Vision-firmware ignorerar zonerna i en engångsklippning men respekterar dem i ett tidsfönster. Schemat återställs när klipparen är tillbaka.",
+      "fields": {
+        "entity_id": {
+          "name": "Klippare",
+          "description": "Entiteten för Worx Landroid Vision PLUS."
+        },
+        "zones": {
+          "name": "Zoner",
+          "description": "RTK-zon-id i klippordning, till exempel [2, 1]. Den första klipps först."
+        },
+        "runtime": {
+          "name": "Klipptid",
+          "description": "Hur länge jobbet pågår, i minuter."
+        },
+        "edge_cut": {
+          "name": "Kantklippning",
+          "description": "Om jobbet börjar med kantklippning."
+        },
+        "start_at": {
+          "name": "Starttid",
+          "description": "När jobbet börjar. Lämna tomt för att starta om två minuter. Inom de närmaste sex dagarna, eftersom veckoschemat upprepas."
         }
       }
     }
