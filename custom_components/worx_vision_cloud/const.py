@@ -48,6 +48,8 @@ CONF_BLADE_SERVICE_HOURS = "blade_service_hours"
 CONF_BATTERY_SERVICE_CYCLES = "battery_service_cycles"
 DEFAULT_BLADE_SERVICE_HOURS = 100
 DEFAULT_BATTERY_SERVICE_CYCLES = 800
+CONF_CALENDAR_DAYS = "calendar_window_days"
+DEFAULT_CALENDAR_DAYS = 7
 
 # Vision border distances accepted by the Worx API (millimeters).
 BORDER_DISTANCE_OPTIONS_MM = (50, 100, 150, 200)

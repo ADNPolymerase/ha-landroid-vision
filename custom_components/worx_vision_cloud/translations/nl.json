@@ -401,12 +401,14 @@
         "data": {
           "disconnect_grace_minutes": "Vertraging voordat een verbroken verbinding wordt gemeld (minuten, 0 = direct)",
           "blade_service_hours": "Onderhoudsinterval messen (maaiuren)",
-          "battery_service_cycles": "Onderhoudsdrempel accu (laadcycli)"
+          "battery_service_cycles": "Onderhoudsdrempel accu (laadcycli)",
+          "calendar_window_days": "Kalenderperiode (dagen voor en na vandaag)"
         },
         "data_description": {
           "disconnect_grace_minutes": "Korte cloud-/MQTT-onderbrekingen zijn normaal (herverbindingen, wifi-dips, slaapstand van de maaier). Een verbroken verbinding verschijnt pas op de sensoren Online en MQTT verbonden wanneer deze langer duurt dan deze vertraging; herverbinding wordt altijd direct gemeld. De ruwe live-status blijft beschikbaar in de sensorattributen.",
           "blade_service_hours": "De onderhoudssensor en de Reparaties-melding markeren mesonderhoud zodra de maaitijd sinds de laatste reset deze waarde overschrijdt. Typische pendelmessen gaan 60-120 uur mee.",
-          "battery_service_cycles": "Markeert accu-onderhoud zodra de laadcycli sinds de laatste reset deze waarde overschrijden. Worx Li-Ion-accu's zijn berekend op ongeveer 500-800 cycli."
+          "battery_service_cycles": "Markeert accu-onderhoud zodra de laadcycli sinds de laatste reset deze waarde overschrijden. Worx Li-Ion-accu's zijn berekend op ongeveer 500-800 cycli.",
+          "calendar_window_days": "De maaikalender herhaalt het weekschema. Hij toont alleen tijdvakken van dit aantal dagen voor vandaag tot dit aantal dagen erna."
         }
       }
     }

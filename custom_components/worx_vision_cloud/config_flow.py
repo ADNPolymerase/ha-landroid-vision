@@ -17,12 +17,14 @@ from .const import (
     CLOUDS,
     CONF_BATTERY_SERVICE_CYCLES,
     CONF_BLADE_SERVICE_HOURS,
+    CONF_CALENDAR_DAYS,
     CONF_CLOUD,
     CONF_DISCONNECT_GRACE,
     CONF_EXPOSE_RAW,
     CONF_VERIFY_SSL,
     DEFAULT_BATTERY_SERVICE_CYCLES,
     DEFAULT_BLADE_SERVICE_HOURS,
+    DEFAULT_CALENDAR_DAYS,
     DEFAULT_CLOUD,
     DEFAULT_DISCONNECT_GRACE,
     DEFAULT_EXPOSE_RAW,
@@ -101,6 +103,12 @@ class WorxVisionOptionsFlow(config_entries.OptionsFlow):
                             DEFAULT_BATTERY_SERVICE_CYCLES,
                         ),
                     ): vol.All(vol.Coerce(int), vol.Range(min=50, max=5000)),
+                    vol.Optional(
+                        CONF_CALENDAR_DAYS,
+                        default=self.config_entry.options.get(
+                            CONF_CALENDAR_DAYS, DEFAULT_CALENDAR_DAYS
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=90)),
                 }
             ),
         )

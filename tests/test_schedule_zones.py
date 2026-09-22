@@ -26,6 +26,8 @@ if not hasattr(HOMEASSISTANT_UTIL, "slugify"):
 _stub("homeassistant").util = HOMEASSISTANT_UTIL
 DT_UTIL = _stub("homeassistant.util.dt")
 DT_UTIL.DEFAULT_TIME_ZONE = dt.UTC
+NOW = dt.datetime(2026, 9, 22, 15, 30, tzinfo=dt.UTC)
+DT_UTIL.now = lambda: NOW
 HOMEASSISTANT_UTIL.dt = DT_UTIL
 
 
@@ -51,7 +53,10 @@ PACKAGE = "worx_schedule_zones_pkg"
 _package = ModuleType(PACKAGE)
 _package.__path__ = [str(PACKAGE_DIR)]
 sys.modules[PACKAGE] = _package
-_stub(f"{PACKAGE}.const").DOMAIN = "worx_vision_cloud"
+CONST = _stub(f"{PACKAGE}.const")
+CONST.DOMAIN = "worx_vision_cloud"
+CONST.CONF_CALENDAR_DAYS = "calendar_window_days"
+CONST.DEFAULT_CALENDAR_DAYS = 7
 _stub(f"{PACKAGE}.entity").WorxVisionEntity = type("WorxVisionEntity", (), {})
 
 
@@ -206,6 +211,56 @@ class ScheduleLanguageCoverageTests(unittest.TestCase):
                 {"zones": [1], "zone_names": ["Front lawn"], "zone_order": "ordered"},
             )
             self.assertTrue(event.summary.endswith("Front lawn"), language)
+
+
+class CalendarWindowTests(unittest.TestCase):
+    """The calendar only publishes occurrences around today."""
+
+    def _calendar(self, options: dict[str, Any]) -> Any:
+        calendar = CALENDAR_MODULE.WorxVisionScheduleCalendar.__new__(
+            CALENDAR_MODULE.WorxVisionScheduleCalendar
+        )
+        calendar._entry = SimpleNamespace(options=options)
+        calendar.requested = []
+        calendar._events_between = lambda start, end: calendar.requested.append((start, end)) or ["event"]
+        return calendar
+
+    def _get(self, calendar: Any, start: dt.datetime, end: dt.datetime) -> list[Any]:
+        import asyncio
+
+        return asyncio.run(calendar.async_get_events(None, start, end))
+
+    def test_window_is_whole_days_around_today(self) -> None:
+        first, last = CALENDAR_MODULE.calendar_window(NOW, 7)
+        self.assertEqual(first, dt.datetime(2026, 9, 15, tzinfo=dt.UTC))
+        self.assertEqual(last, dt.datetime(2026, 9, 30, tzinfo=dt.UTC))
+
+    def test_default_clamps_a_wide_request_to_one_week_each_side(self) -> None:
+        calendar = self._calendar({})
+        self._get(calendar, dt.datetime(2025, 1, 1, tzinfo=dt.UTC), dt.datetime(2027, 1, 1, tzinfo=dt.UTC))
+        self.assertEqual(calendar.requested, [(
+            dt.datetime(2026, 9, 15, tzinfo=dt.UTC), dt.datetime(2026, 9, 30, tzinfo=dt.UTC)
+        )])
+
+    def test_option_changes_the_window(self) -> None:
+        calendar = self._calendar({"calendar_window_days": 30})
+        self._get(calendar, dt.datetime(2025, 1, 1, tzinfo=dt.UTC), dt.datetime(2027, 1, 1, tzinfo=dt.UTC))
+        start, end = calendar.requested[0]
+        self.assertEqual(start, dt.datetime(2026, 8, 23, tzinfo=dt.UTC))
+        self.assertEqual(end, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+
+    def test_narrow_request_inside_the_window_is_untouched(self) -> None:
+        calendar = self._calendar({})
+        start = dt.datetime(2026, 9, 21, tzinfo=dt.UTC)
+        end = dt.datetime(2026, 9, 28, tzinfo=dt.UTC)
+        self._get(calendar, start, end)
+        self.assertEqual(calendar.requested, [(start, end)])
+
+    def test_request_outside_the_window_returns_nothing(self) -> None:
+        calendar = self._calendar({})
+        events = self._get(calendar, dt.datetime(2026, 11, 1, tzinfo=dt.UTC), dt.datetime(2026, 11, 8, tzinfo=dt.UTC))
+        self.assertEqual(events, [])
+        self.assertEqual(calendar.requested, [])
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import CONF_CALENDAR_DAYS, DEFAULT_CALENDAR_DAYS, DOMAIN
 from .entity import WorxVisionEntity
 from .helpers import (
     get_dict_value,
@@ -64,6 +64,19 @@ EVENT_LABELS = {
 SUMMARY_SEPARATOR = {"fr": " : "}
 
 
+def calendar_window(
+    now: dt.datetime, days: int
+) -> tuple[dt.datetime, dt.datetime]:
+    """Return the span the calendar publishes occurrences for.
+
+    The schedule repeats every week, so without a limit the calendar filled
+    every week the calendar view asked for, years back and forth. Only whole
+    days from `days` days before today to `days` days after are kept.
+    """
+    today = dt.datetime.combine(now.date(), dt.time.min, tzinfo=now.tzinfo)
+    return today - dt.timedelta(days=days), today + dt.timedelta(days=days + 1)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -114,7 +127,13 @@ class WorxVisionScheduleCalendar(WorxVisionEntity, CalendarEntity):
         start_date: dt.datetime,
         end_date: dt.datetime,
     ) -> list[CalendarEvent]:
-        """Return mowing events in a time range."""
+        """Return mowing events in a time range, within the configured window."""
+        days = self._entry.options.get(CONF_CALENDAR_DAYS, DEFAULT_CALENDAR_DAYS)
+        first, last = calendar_window(dt_util.now(), int(days))
+        start_date = max(start_date, first)
+        end_date = min(end_date, last)
+        if start_date >= end_date:
+            return []
         return self._events_between(start_date, end_date)
 
     def _events_between(

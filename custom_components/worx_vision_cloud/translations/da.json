@@ -401,12 +401,14 @@
         "data": {
           "disconnect_grace_minutes": "Forsinkelse før en afbrydelse rapporteres (minutter, 0 = straks)",
           "blade_service_hours": "Serviceinterval for knive (klippetimer)",
-          "battery_service_cycles": "Servicetærskel for batteri (ladecyklusser)"
+          "battery_service_cycles": "Servicetærskel for batteri (ladecyklusser)",
+          "calendar_window_days": "Kalenderperiode (dage før og efter i dag)"
         },
         "data_description": {
           "disconnect_grace_minutes": "Korte cloud-/MQTT-afbrydelser er normale (genforbindelser, wifi-udfald, plæneklipperens dvale). En afbrydelse vises først på sensorerne Online og MQTT forbundet, når den varer længere end denne forsinkelse; genforbindelse vises altid straks. Den rå livestatus er stadig tilgængelig i sensorernes attributter.",
           "blade_service_hours": "Vedligeholdelsessensoren og Reparationer-advarslen markerer knivservice, når klippetiden siden sidste nulstilling overstiger denne værdi. Typiske pivotknive holder 60-120 timer.",
-          "battery_service_cycles": "Markerer batteriservice, når ladecyklusserne siden sidste nulstilling overstiger denne værdi. Worx Li-Ion-batterier er klassificeret til cirka 500-800 cyklusser."
+          "battery_service_cycles": "Markerer batteriservice, når ladecyklusserne siden sidste nulstilling overstiger denne værdi. Worx Li-Ion-batterier er klassificeret til cirka 500-800 cyklusser.",
+          "calendar_window_days": "Klippekalenderen gentager ugeplanen. Den viser kun tidsrum fra dette antal dage før i dag til dette antal dage efter."
         }
       }
     }

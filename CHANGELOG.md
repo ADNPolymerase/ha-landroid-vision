@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.7.1 - 2026-09-22
+
+### Fixed
+
+- **The mowing calendar filled every week it was asked for, years back and years ahead.** The schedule repeats weekly, and the calendar generated an occurrence for each slot across whatever range the calendar view requested, so browsing months or opening a long list view showed a schedule that never existed in the past and may not exist in the future. It now only publishes occurrences from one week before today to one week after.
+
+### Added
+
+- **An option to set that calendar window**, from 1 to 90 days before and after today, in the integration options. The current or next mowing event used by the calendar entity state is not affected.
+
 ## 2.7.0 - 2026-09-21
 
 ### Added
