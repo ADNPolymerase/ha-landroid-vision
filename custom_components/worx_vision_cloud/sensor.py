@@ -132,6 +132,59 @@ STATUS_STATE_OPTIONS = [
     "offline",
 ]
 
+# Worx error ids mapped to canonical, translatable state keys. The sensor used
+# to look the description up in the status table, which knows none of them, so
+# every real error (lifted, trapped, camera error...) read unknown. Keyed on the
+# id rather than the text: pyworxcloud reports "unknown" for ids it does not
+# know yet (107, 117 to 120), and the id survives that.
+ERROR_STATE_KEYS = {
+    0: "no_error",
+    1: "trapped",
+    2: "lifted",
+    3: "wire_missing",
+    4: "outside_boundary",
+    5: "rain_delay",
+    6: "close_door_to_mow",
+    7: "close_door_to_go_home",
+    8: "blade_motor_blocked",
+    9: "wheel_motor_blocked",
+    10: "trapped_timeout",
+    11: "upside_down",
+    12: "battery_low",
+    13: "wire_reversed",
+    14: "charge_error",
+    15: "home_search_timeout",
+    16: "wifi_locked",
+    17: "battery_temperature_error",
+    18: "dummy_model",
+    19: "battery_trunk_open_timeout",
+    20: "wire_sync",
+    100: "docking_error",
+    101: "hbi_error",
+    102: "ota_error",
+    103: "map_error",
+    104: "excessive_slope",
+    105: "unreachable_zone",
+    106: "unreachable_charging_station",
+    107: "calibration_needed",
+    108: "insufficient_sensor_data",
+    109: "training_start_disallowed",
+    110: "camera_error",
+    111: "lawn_exploration_required",
+    112: "mapping_exploration_failed",
+    113: "rfid_reader_error",
+    114: "headlight_error",
+    115: "missing_charging_station",
+    116: "blade_height_adjustment_blocked",
+    117: "unsupported_blade_height",
+    118: "manual_firmware_upgrade_required",
+    119: "area_limit_exceeded",
+    120: "undocking_error",
+}
+# Any other non zero id: a real error this table does not name yet.
+OTHER_ERROR = "other_error"
+ERROR_STATE_OPTIONS = [*ERROR_STATE_KEYS.values(), OTHER_ERROR]
+
 READINESS_STATE_OPTIONS = [
     "ready",
     "mowing",
@@ -188,9 +241,15 @@ def _error(device, key, default=None):
 
 
 def _error_state(device) -> str | None:
-    # Unmapped/rare device error descriptions surface via the raw_description
-    # attribute; the enum state stays None to avoid noisy non-option warnings.
-    return _state_key(_error(device, "description"), STATUS_STATE_KEYS)
+    """Return the translatable key of the current mower error."""
+    try:
+        error_id = int(_error(device, "id"))
+    except (TypeError, ValueError):
+        return None
+    if error_id < 0:
+        # pyworxcloud's placeholder before the first update.
+        return None
+    return ERROR_STATE_KEYS.get(error_id, OTHER_ERROR)
 
 
 def _is_rain_delay(device) -> bool:
@@ -777,7 +836,7 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         icon="mdi:alert-circle-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.ENUM,
-        options=STATUS_STATE_OPTIONS,
+        options=ERROR_STATE_OPTIONS,
         value_fn=_error_state,
         attrs_fn=lambda d: {
             "id": _error(d, "id"),

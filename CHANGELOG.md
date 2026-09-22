@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.7.2 - 2026-09-22
+
+### Fixed
+
+- **The error sensor read `unknown` for nearly every real error.** It looked the error text up in the table of mower statuses, which holds no error at all, so only "no error" and "rain delay" ever came through. A mower lifted, trapped, upside down or with a camera error showed `unknown`, with the real error hidden in an attribute. Seen live: a mower lifted to check its blades read `unknown` for four minutes. The sensor now maps the error id to one of 42 named errors, in the eleven supported languages, and reads `other_error` for an id it does not know. It is keyed on the id rather than the text, because pyworxcloud describes the most recent Vision and RTK errors (calibration needed, unsupported blade height, manual firmware update required, area limit exceeded, undocking error) as "unknown" while still passing their id.
+
 ## 2.7.1 - 2026-09-22
 
 ### Fixed
