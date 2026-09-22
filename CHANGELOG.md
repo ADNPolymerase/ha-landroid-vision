@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.8.1 - 2026-09-22
+
+### Fixed
+
+- **A mower resting on its base made zone mowing fail, although the command had most likely reached it.** A Landroid answers nothing for hours once docked, and pyworxcloud treats that silence as a failed command. But one-time jobs sent in exactly that state have run, so the silence says nothing about delivery. A missing acknowledgement no longer fails the job: the slot is recorded as sent but unconfirmed, and checked against the next weekly schedule the mower publishes.
+  - The slot showing up there confirms it, and the job carries on as usual.
+  - A mower that publishes its week **without** the slot never got it: the job is dropped, with the reason in the log, so it cannot block the next one. Nothing has to be put back in that case, since nothing was written.
+
 ## 2.8.0 - 2026-09-22
 
 ### Added

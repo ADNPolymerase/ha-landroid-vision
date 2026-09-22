@@ -489,6 +489,26 @@ def slot_crosses_midnight(slot: dict[str, Any]) -> bool:
     return window is not None and window[1] > MINUTES_PER_DAY
 
 
+def slot_in_schedule(slots: Any, slot: dict[str, Any]) -> bool:
+    """Return whether the mower's published week already carries a slot.
+
+    Matched on day, start and runtime rather than the whole block: the
+    firmware normalizes the cut block it echoes back (an absent `ob`, an
+    order flag it rewrites), and those differences do not make it a
+    different slot.
+    """
+    for other in slots or []:
+        if not isinstance(other, dict):
+            continue
+        if (
+            get_dict_value(other, "d") == slot.get("d")
+            and get_dict_value(other, "s") == slot.get("s")
+            and get_dict_value(other, "t") == slot.get("t")
+        ):
+            return True
+    return False
+
+
 def zone_mowing_restore_reason(
     job: dict[str, Any], docked: bool, now: datetime
 ) -> str | None:

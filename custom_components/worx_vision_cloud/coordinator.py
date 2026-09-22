@@ -53,6 +53,7 @@ from .helpers import (
     masked_connectivity,
     conflicting_schedule_slot,
     one_time_cut_config,
+    slot_in_schedule,
     raw_schedule_slots,
     rtk_map_id,
     rtk_position,
@@ -1110,16 +1111,34 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if command_topic is None or uuid is None:
             raise HomeAssistantError("Worx command topic is not available")
 
-        await self._async_publish_command(
-            uuid,
-            command_topic,
-            schedule_slots_payload([*current_slots, slot]),
-            1,
-        )
+        confirmed = True
+        try:
+            await self._async_publish_command(
+                uuid,
+                command_topic,
+                schedule_slots_payload([*current_slots, slot]),
+                1,
+            )
+        except TimeoutException:
+            # A mower resting on its base answers nothing for hours, but the
+            # command still reaches it: one-time jobs sent in that state have
+            # run. So a missing acknowledgement is not a failure here, it is
+            # an unconfirmed write, checked against the next week the mower
+            # publishes.
+            confirmed = False
+            _LOGGER.warning(
+                "Zone mowing: %s did not acknowledge the temporary slot; it is "
+                "probably resting on its base. The slot is treated as sent and "
+                "checked against the next schedule the mower publishes",
+                serial_number,
+            )
 
         deadline = start + timedelta(minutes=runtime + ZONE_MOWING_GRACE_MINUTES)
         self._zone_mowing_jobs[serial_number] = {
             "slots": current_slots,
+            "slot": slot,
+            "confirmed": confirmed,
+            "sent_at": now.isoformat(),
             "start": start.isoformat(),
             "deadline": deadline.isoformat(),
             "left": False,
@@ -1155,6 +1174,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             return
 
         now = dt_util.now()
+        if not job.get("confirmed", True) and not self._confirm_zone_slot(job, device):
+            return
+
         start = dt_util.parse_datetime(str(job.get("start") or ""))
         docked = self._is_docked(device)
         if not docked and (start is None or now >= start):
@@ -1167,6 +1189,50 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self.hass.async_create_task(
                 self._async_restore_schedule(serial_number, reason == "deadline")
             )
+
+    def _confirm_zone_slot(
+        self, job: dict[str, Any], device: DeviceHandler
+    ) -> bool:
+        """Check an unacknowledged slot against what the mower publishes.
+
+        Returns whether the job is still live. A mower that has spoken again
+        without carrying the slot never got it, so the job is dropped: there
+        is nothing to put back, and leaving it would block the next one.
+        """
+        slot = job.get("slot")
+        if not isinstance(slot, dict):
+            job["confirmed"] = True
+            return True
+
+        if slot_in_schedule(raw_schedule_slots(device), slot):
+            job["confirmed"] = True
+            _LOGGER.info("Zone mowing: the mower confirmed the temporary slot")
+            self.hass.async_create_task(
+                self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
+            )
+            return True
+
+        reported = getattr(device, "updated", None)
+        sent_at = dt_util.parse_datetime(str(job.get("sent_at") or ""))
+        if (
+            isinstance(reported, datetime)
+            and sent_at is not None
+            and dt_util.as_utc(reported) > dt_util.as_utc(sent_at)
+        ):
+            serial_number = str(getattr(device, "serial_number", ""))
+            self._zone_mowing_jobs.pop(serial_number, None)
+            _LOGGER.warning(
+                "Zone mowing: %s published its schedule without the temporary "
+                "slot, so the job never reached it and was dropped",
+                serial_number,
+            )
+            self.hass.async_create_task(
+                self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
+            )
+            return False
+
+        # Nothing new from the mower yet: keep waiting.
+        return False
 
     async def _async_restore_schedule(
         self, serial_number: str, expired: bool = False

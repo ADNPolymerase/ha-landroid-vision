@@ -189,5 +189,41 @@ class RestoreReasonTests(unittest.TestCase):
         )
 
 
+class SlotConfirmationTests(unittest.TestCase):
+    """An unacknowledged slot is checked against the published week."""
+
+    def setUp(self) -> None:
+        self.slot = HELPERS.temporary_schedule_slot(MONDAY_EVENING, 30, [2, 1])
+
+    def test_absent_from_the_week(self) -> None:
+        self.assertFalse(HELPERS.slot_in_schedule(WEEK, self.slot))
+
+    def test_present_in_the_week(self) -> None:
+        self.assertTrue(HELPERS.slot_in_schedule([*WEEK, self.slot], self.slot))
+
+    def test_a_rewritten_cut_block_still_matches(self) -> None:
+        # The firmware echoes the cut block back in its own shape, which does
+        # not make it another slot.
+        echoed = {
+            "e": 1,
+            "d": self.slot["d"],
+            "s": self.slot["s"],
+            "t": self.slot["t"],
+            "cfg": {"cut": {"b": 0, "z": [2, 1], "zo": 1}},
+        }
+        self.assertTrue(HELPERS.slot_in_schedule([*WEEK, echoed], self.slot))
+
+    def test_same_time_another_day_does_not_match(self) -> None:
+        other = dict(self.slot, d=(self.slot["d"] + 1) % 7)
+        self.assertFalse(HELPERS.slot_in_schedule([*WEEK, other], self.slot))
+
+    def test_same_start_another_runtime_does_not_match(self) -> None:
+        other = dict(self.slot, t=self.slot["t"] + 15)
+        self.assertFalse(HELPERS.slot_in_schedule([*WEEK, other], self.slot))
+
+    def test_a_week_without_slots_is_safe(self) -> None:
+        self.assertFalse(HELPERS.slot_in_schedule(None, self.slot))
+
+
 if __name__ == "__main__":
     unittest.main()
