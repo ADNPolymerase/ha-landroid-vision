@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Beräknad feltid"
+      },
+      "zone_mowing_pattern": {
+        "name": "Klippmönster {zone}",
+        "state": {
+          "natural": "Naturligt",
+          "parallel": "Parallellt",
+          "diamond": "Romb",
+          "checker": "Schackruta",
+          "other": "Annat"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Klippvinkel {zone}"
       }
     },
     "binary_sensor": {

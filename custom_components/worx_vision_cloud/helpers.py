@@ -445,6 +445,50 @@ def zone_job_task_started(
     return False
 
 
+# Mowing pattern codes, as cut_type in the Worx map and `t` in the mower's
+# per-zone config. Observed in the Worx app and pyworxcloud issue #398.
+ZONE_CUT_PATTERNS = {0: "natural", 1: "parallel", 4: "diamond", 5: "checker"}
+ZONE_CUT_PATTERN_OPTIONS = [*ZONE_CUT_PATTERNS.values(), "other"]
+
+
+def rtk_zone_cuts(device: Any) -> dict[int, dict[str, Any]]:
+    """Return each RTK zone's mowing pattern and angle, keyed by zone id.
+
+    Read from the mower's own per-zone config (`cfg.rtk.zs[].cfg.cut`), which
+    the mower updates once a change made in the Worx app is activated, so it
+    shows what the mower will actually mow. `t` is the pattern, `d` the angle
+    in degrees.
+    """
+    names = rtk_zone_names(device)
+    cuts: dict[int, dict[str, Any]] = {}
+    for zone in rtk_map_attributes(device).get("zones", []) or []:
+        try:
+            zone_id = int(get_dict_value(zone, "id"))
+        except (TypeError, ValueError):
+            continue
+        if zone_id <= 0:
+            continue
+        cutting = get_dict_value(zone, "cutting", {}) or {}
+        if not isinstance(cutting, dict):
+            cutting = {}
+        code = cutting.get("t")
+        try:
+            code = int(code) if code is not None else None
+        except (TypeError, ValueError):
+            code = None
+        try:
+            direction = int(cutting["d"]) % 360 if cutting.get("d") is not None else None
+        except (TypeError, ValueError):
+            direction = None
+        cuts[zone_id] = {
+            "name": names.get(zone_id),
+            "pattern": None if code is None else ZONE_CUT_PATTERNS.get(code, "other"),
+            "pattern_code": code,
+            "direction": direction,
+        }
+    return cuts
+
+
 _LOCATION_KEY_PARTS = ("lat", "lon", "lng", "coord", "pos", "point", "center", "centre", "geo")
 
 

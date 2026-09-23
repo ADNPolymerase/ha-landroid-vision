@@ -53,6 +53,9 @@ from .helpers import (
     rtk_map_attributes,
     rtk_map_id,
     rtk_position,
+    rtk_zone_cuts,
+    rtk_zone_ids,
+    ZONE_CUT_PATTERN_OPTIONS,
     schedule_attributes,
     schedule_summary,
 )
@@ -1173,6 +1176,13 @@ async def async_setup_entry(
         entities.append(WorxScheduleSensor(coordinator, entry, serial_number))
         entities.append(WorxNextScheduleSensor(coordinator, entry, serial_number))
         entities.append(WorxRtkMapSensor(coordinator, entry, serial_number))
+        for zone_id in rtk_zone_ids(device):
+            entities.append(
+                WorxZonePatternSensor(coordinator, entry, serial_number, zone_id)
+            )
+            entities.append(
+                WorxZoneAngleSensor(coordinator, entry, serial_number, zone_id)
+            )
         entities.append(
             WorxStateDurationSensor(coordinator, entry, serial_number, "dock")
         )
@@ -1339,6 +1349,64 @@ class WorxRtkMapSensor(WorxVisionEntity, SensorEntity):
         """Return RTK map metadata best-effort from the live device."""
         attrs = rtk_map_attributes(self.device)
         return {key: value for key, value in attrs.items() if value is not None}
+
+
+class _WorxZoneCutSensor(WorxVisionEntity, SensorEntity):
+    """Base for a read-only mowing setting of one RTK zone."""
+
+    _kind: str
+
+    def __init__(self, coordinator, entry, serial_number: str, zone_id: int) -> None:
+        """Initialize the sensor for one zone."""
+        super().__init__(
+            coordinator, entry, serial_number, f"zone_{zone_id}_{self._kind}"
+        )
+        self._zone_id = zone_id
+        name = self._cut().get("name")
+        self._attr_translation_placeholders = {"zone": name or str(zone_id)}
+
+    def _cut(self) -> dict[str, Any]:
+        return rtk_zone_cuts(self.device).get(self._zone_id, {})
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the zone this setting belongs to."""
+        cut = self._cut()
+        return {"zone_id": self._zone_id, "zone_name": cut.get("name")}
+
+
+class WorxZonePatternSensor(_WorxZoneCutSensor):
+    """Mowing pattern of one RTK zone, as the mower reports it."""
+
+    _kind = "mowing_pattern"
+    _attr_translation_key = "zone_mowing_pattern"
+    _attr_icon = "mdi:texture-box"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ZONE_CUT_PATTERN_OPTIONS
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the pattern name."""
+        return self._cut().get("pattern")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Add the raw pattern code, useful for a code not named yet."""
+        return {**super().extra_state_attributes, "code": self._cut().get("pattern_code")}
+
+
+class WorxZoneAngleSensor(_WorxZoneCutSensor):
+    """Mowing angle of one RTK zone, in degrees, as the mower reports it."""
+
+    _kind = "mowing_angle"
+    _attr_translation_key = "zone_mowing_angle"
+    _attr_icon = "mdi:angle-acute"
+    _attr_native_unit_of_measurement = DEGREE
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the angle in degrees."""
+        return self._cut().get("direction")
 
 
 LAST_UPDATE_REPORT_INTERVAL = timedelta(hours=24)

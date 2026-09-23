@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Berekende fouttijd"
+      },
+      "zone_mowing_pattern": {
+        "name": "Maaipatroon {zone}",
+        "state": {
+          "natural": "Natuurlijk",
+          "parallel": "Parallel",
+          "diamond": "Ruit",
+          "checker": "Dambord",
+          "other": "Anders"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Maaihoek {zone}"
       }
     },
     "binary_sensor": {

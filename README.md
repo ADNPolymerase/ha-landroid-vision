@@ -22,6 +22,7 @@ This integration is built on top of the community `pyworxcloud` library and adds
 
 - Native `lawn_mower` entity: start, pause, dock, one-time mowing and on-demand edge cutting.
 - One-time zone mowing on RTK mowers, the way the Worx app does it: pick the zones, a fixed or automatic order and the edge routine, and the mower mows them through before coming home. Available as the `worx_vision_cloud.start_zone_mowing` action, so an automation can schedule it, and from the Start one-time mowing button.
+- Each RTK zone's mowing pattern (natural, parallel, diamond, checker) and angle, read from the mower, one pair of sensors per zone named after it. Display only: the settings are changed in the Worx app.
 - Mower controls: firmware auto-update, lock, native schedule, smart edge cutting, save the hedgehogs, party mode, and (when your mower reports the matching hardware module) ACS, off limits, cutting height, torque and border distance.
 - Daily area/progress tracking persisted per mower in Home Assistant storage, immune to cloud counter resets and multi-day gaps, plus a locally computed estimate that keeps moving even when Worx's own stats go stale.
 - Schedule sensor and calendar (one week before and after today by default, adjustable in the integration options), next mowing time, RTK map camera with mowed-area trail, RTK robot position and reverse-geocoded address (opt-in).

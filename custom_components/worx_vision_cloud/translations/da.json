@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Beregnet fejltid"
+      },
+      "zone_mowing_pattern": {
+        "name": "Klippemønster {zone}",
+        "state": {
+          "natural": "Naturligt",
+          "parallel": "Parallelt",
+          "diamond": "Rude",
+          "checker": "Skakbræt",
+          "other": "Andet"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Klippevinkel {zone}"
       }
     },
     "binary_sensor": {

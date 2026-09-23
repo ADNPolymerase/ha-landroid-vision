@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Tiempo en error calculado"
+      },
+      "zone_mowing_pattern": {
+        "name": "Patrón de corte {zone}",
+        "state": {
+          "natural": "Natural",
+          "parallel": "Paralelo",
+          "diamond": "Rombo",
+          "checker": "Damero",
+          "other": "Otro"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Ángulo de corte {zone}"
       }
     },
     "binary_sensor": {

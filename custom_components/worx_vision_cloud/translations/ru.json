@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Расчётное время в ошибке"
+      },
+      "zone_mowing_pattern": {
+        "name": "Схема кошения {zone}",
+        "state": {
+          "natural": "Естественная",
+          "parallel": "Параллельная",
+          "diamond": "Ромб",
+          "checker": "Шахматная",
+          "other": "Другая"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Угол кошения {zone}"
       }
     },
     "binary_sensor": {

@@ -2,9 +2,13 @@
 
 ## 2.8.1 - 2026-09-23
 
+### Added
+
+- **Each RTK zone's mowing pattern and angle.** Two sensors per mowing zone, named after it as in the Worx app: the pattern (natural, parallel, diamond or checker) and the angle in degrees. They are read from the mower's own per-zone config, which it updates once a change made in the app is activated, so they show what the mower will actually mow, zone by zone, whether the zones share the same settings or not. A pattern code not named yet reads `other`, with the code in the `code` attribute. Display only: the settings are still changed in the Worx app.
+
 ### Changed
 
-- **Diagnostics show how the RTK map identifies its zones**, without any of its geometry. Each zone now includes the plain fields of its `summary`, and a new `rtk_map_layout` section describes the map's structure: identifiers, types and names are kept, lists of points are reduced to their length, and any key naming a position is redacted. This is the groundwork for setting each zone's mowing pattern and angle from Home Assistant: the Worx Maps API addresses a zone by an id the mower's own config does not carry, so it has to be read from the map first.
+- **Diagnostics show how the RTK map identifies its zones**, without any of its geometry. Each zone now includes the plain fields of its `summary`, and a new `rtk_map_layout` section describes the map's structure: identifiers, types and names are kept, lists of points are reduced to their length, and any key naming a position is redacted.
 
 ## 2.8.0 - 2026-09-23
 

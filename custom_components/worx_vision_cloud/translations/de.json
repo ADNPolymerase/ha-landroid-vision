@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Berechnete Fehlerzeit"
+      },
+      "zone_mowing_pattern": {
+        "name": "Mähmuster {zone}",
+        "state": {
+          "natural": "Natürlich",
+          "parallel": "Parallel",
+          "diamond": "Raute",
+          "checker": "Schachbrett",
+          "other": "Andere"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Mähwinkel {zone}"
       }
     },
     "binary_sensor": {

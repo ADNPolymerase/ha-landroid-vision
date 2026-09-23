@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Computed error time"
+      },
+      "zone_mowing_pattern": {
+        "name": "Mowing pattern {zone}",
+        "state": {
+          "natural": "Natural",
+          "parallel": "Parallel",
+          "diamond": "Diamond",
+          "checker": "Checker",
+          "other": "Other"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Mowing angle {zone}"
       }
     },
     "binary_sensor": {

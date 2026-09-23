@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Temps en erreur calculé"
+      },
+      "zone_mowing_pattern": {
+        "name": "Motif de tonte {zone}",
+        "state": {
+          "natural": "Naturel",
+          "parallel": "Parallèle",
+          "diamond": "Losange",
+          "checker": "Damier",
+          "other": "Autre"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Angle de tonte {zone}"
       }
     },
     "binary_sensor": {

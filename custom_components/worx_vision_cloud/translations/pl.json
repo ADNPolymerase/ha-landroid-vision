@@ -255,6 +255,19 @@
       },
       "computed_error_time": {
         "name": "Obliczony czas błędu"
+      },
+      "zone_mowing_pattern": {
+        "name": "Wzór koszenia {zone}",
+        "state": {
+          "natural": "Naturalny",
+          "parallel": "Równoległy",
+          "diamond": "Romb",
+          "checker": "Szachownica",
+          "other": "Inny"
+        }
+      },
+      "zone_mowing_angle": {
+        "name": "Kąt koszenia {zone}"
       }
     },
     "binary_sensor": {
