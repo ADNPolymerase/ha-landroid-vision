@@ -591,6 +591,15 @@ def zone_slot_verdict(
     return "dropped"
 
 
+# Every `sc` write this mower is known to obey carries a command beside it:
+# one-time mowing sends `cmd` 10, the edge cut 101, and pyworxcloud pairs the
+# party-mode `sc` patch with `cmd` 0. The schedule write is the only one that
+# went out bare, and it is the only one that never took effect, three times
+# over, awake or asleep. `cmd` 0 is FORCE_REFRESH, so it also asks the mower
+# to report back, which a bare write never made it do.
+SCHEDULE_WRITE_COMMAND = 0
+
+
 def schedule_slots_payload(
     current_schedule: Any, slots: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -613,7 +622,7 @@ def schedule_slots_payload(
         if key != "slots"
     }
     payload["slots"] = slots
-    return {"sc": payload}
+    return {"cmd": SCHEDULE_WRITE_COMMAND, "sc": payload}
 
 
 

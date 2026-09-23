@@ -105,7 +105,17 @@ class TemporarySlotTests(unittest.TestCase):
         for published in ({}, None, [], "sc"):
             with self.subTest(published=published):
                 payload = HELPERS.schedule_slots_payload(published, WEEK)
-                self.assertEqual(payload, {"sc": {"slots": WEEK}})
+                self.assertEqual(
+                    payload,
+                    {"cmd": HELPERS.SCHEDULE_WRITE_COMMAND, "sc": {"slots": WEEK}},
+                )
+
+    def test_the_write_carries_a_command(self) -> None:
+        # Every `sc` write the mower obeys carries one; the bare schedule
+        # write was the only one that did not, and the only one ignored.
+        payload = HELPERS.schedule_slots_payload(SC_BLOCK, WEEK)
+        self.assertEqual(payload["cmd"], 0)
+        self.assertIn("sc", payload)
 
     def test_raw_slots_are_read_from_the_mower(self) -> None:
         self.assertEqual(HELPERS.raw_schedule_slots(_device(WEEK)), WEEK)

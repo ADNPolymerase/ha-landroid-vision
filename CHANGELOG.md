@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.8.3 - 2026-09-23
+
+### Fixed
+
+- **A schedule write now carries a command, like every other write the mower obeys.** Measured on firmware 3.46.0+47: one-time mowing sends `cmd` 10, the edge cut 101, returning to base 3, and pyworxcloud pairs its party-mode `sc` patch with `cmd` 0. All of them work. The weekly schedule write was the only one published bare, with an `sc` block and nothing else, and it is the only one that never took effect: three attempts on 23 September, mower asleep, mowing, then resting on its base, each time no acknowledgement, no change to the published week, and on the last one the mower simply did not leave its base when the slot was due. It now goes out with `cmd` 0, which is FORCE_REFRESH, so the mower is also asked to report back.
+  - The 2.8.2 note blamed the partial `sc` block. Sending the full block changed nothing, so that was not the cause, although it remains worth keeping for what it could otherwise erase.
+
 ## 2.8.2 - 2026-09-23
 
 ### Changed
