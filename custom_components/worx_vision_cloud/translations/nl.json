@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Maaipatroon hoek {zone}"
+        "name": "Maaipatroon {zone} hoek"
       }
     },
     "binary_sensor": {

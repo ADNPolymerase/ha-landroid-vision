@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Klippmönster vinkel {zone}"
+        "name": "Klippmönster {zone} vinkel"
       }
     },
     "binary_sensor": {

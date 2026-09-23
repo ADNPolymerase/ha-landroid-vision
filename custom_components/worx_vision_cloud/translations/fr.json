@@ -257,7 +257,7 @@
         "name": "Temps en erreur calculé"
       },
       "zone_mowing_pattern": {
-        "name": "Motif de tonte {zone}",
+        "name": "Motif {zone}",
         "state": {
           "natural": "Naturel",
           "parallel": "Parallèle",
@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Motif angle {zone}"
+        "name": "Motif {zone} angle"
       }
     },
     "binary_sensor": {
