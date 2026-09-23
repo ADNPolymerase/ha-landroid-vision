@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from datetime import date, datetime, time, timedelta
 from enum import Enum
 import json
-from math import cos, hypot, radians
+from math import cos, hypot, isfinite, radians
 from typing import Any
 
 from homeassistant.util import slugify
@@ -590,6 +590,28 @@ def rtk_position(device: Any) -> tuple[float, float] | None:
     if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
         return None
     return latitude, longitude
+
+
+def rtk_heading(device: Any) -> float | None:
+    """Return the mower's heading on a north-up map, clockwise from north.
+
+    The mower reports its yaw counter-clockwise from east, the usual robot
+    convention: checked on a Vision Cloud, whose yaw alternates between two
+    values 180 degrees apart while it mows parallel lanes, and whose lanes
+    drawn on the RTK map run at 90 minus that yaw. The same yaw is 90
+    degrees ahead of the lane angle set in the Worx app.
+    """
+    orientation = getattr(device, "orientation", None)
+    yaw = get_dict_value(orientation, "yaw") if isinstance(orientation, dict) else None
+    if isinstance(yaw, bool):
+        return None
+    try:
+        yaw = float(yaw)
+    except (TypeError, ValueError):
+        return None
+    if not isfinite(yaw) or abs(yaw) > 360:
+        return None
+    return round((90.0 - yaw) % 360.0, 1)
 
 
 def rtk_station_position(device: Any) -> tuple[float, float] | None:

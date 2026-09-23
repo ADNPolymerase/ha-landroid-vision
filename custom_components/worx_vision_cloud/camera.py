@@ -20,6 +20,7 @@ from .helpers import (
     get_nested_value,
     rtk_current_zone,
     rtk_current_zone_name,
+    rtk_heading,
     rtk_position,
 )
 
@@ -216,6 +217,7 @@ class WorxVisionMapCamera(WorxVisionEntity, Camera):
             trail,
             _cutting_width_m(self.device),
             language,
+            rtk_heading(self.device),
         )
         self._last_mowed_swath_width_px = swath_width_px
         self.async_write_ha_state()
@@ -587,12 +589,53 @@ def _mowed_swath_width_px(cutting_width_m: float, meters_to_pixels: float) -> fl
     )
 
 
+
+def _robot_svg(x: float, y: float, heading: float | None) -> str:
+    """Return the robot marker, turned to its heading when one is known.
+
+    With a heading, a top-down mower with a chevron at its nose, rotated
+    clockwise from north. Without one (no valid yaw), the original
+    three-quarter view, which has no front to point.
+    """
+    if heading is None:
+        return (
+            f'<g class="robot" transform="translate({x:.2f} {y:.2f}) scale(0.68)">'
+            '<ellipse class="robot-shadow" cx="2" cy="21" rx="27" ry="10" />'
+            '<path class="track" d="M -27 -11 L -18 -18 L -16 20 L -25 17 Z" />'
+            '<path class="track" d="M 27 -11 L 18 -18 L 16 20 L 25 17 Z" />'
+            '<path class="body" d="M -20 -18 L -8 -24 H 12 L 22 -15 L 20 16 L 10 25 H -13 L -22 15 Z" />'
+            '<path class="wing left" d="M -20 -17 L -7 -23 H -2 L -8 -4 H -18 Z" />'
+            '<path class="wing right" d="M 10 -23 L 22 -14 L 17 0 L 7 -5 Z" />'
+            '<circle class="rtk" cx="-6" cy="7" r="8" />'
+            '<rect class="panel" x="3" y="2" width="13" height="10" rx="3" />'
+            '<rect class="stop" x="9" y="7" width="9" height="13" rx="4" />'
+            '<circle class="knob" cx="10" cy="-7" r="5" />'
+            '<rect class="camera" x="-16" y="8" width="6" height="7" rx="2" />'
+            '<path class="groove" d="M -14 -7 H -6 M 1 -11 H 10 M -2 18 H 6" />'
+            '</g>'
+        )
+    return (
+        f'<g class="robot heading" transform="translate({x:.2f} {y:.2f})">'
+        '<circle class="robot-shadow" cx="2" cy="4" r="22" />'
+        f'<g transform="rotate({heading:.1f}) scale(0.68)">'
+        '<rect class="track" x="-27" y="2" width="9" height="22" rx="3" />'
+        '<rect class="track" x="18" y="2" width="9" height="22" rx="3" />'
+        '<path class="body" d="M -18 -22 Q 0 -33 18 -22 L 20 20 Q 0 29 -20 20 Z" />'
+        '<path class="wing" d="M -13 -19 Q 0 -27 13 -19 L 14 -4 H -14 Z" />'
+        '<circle class="rtk" cx="0" cy="11" r="7" />'
+        '<rect class="camera" x="-5" y="-31" width="10" height="7" rx="2" />'
+        '<path class="nose" d="M -9 -37 L 0 -48 L 9 -37 Z" />'
+        "</g></g>"
+    )
+
+
 def _render_svg_map(
     map_data: dict[str, Any] | None,
     robot_position: tuple[float, float] | None,
     trail: list[tuple[datetime, float, float]] | None = None,
     cutting_width_m: float = DEFAULT_CUTTING_WIDTH_M,
     language: str = DEFAULT_LANGUAGE,
+    heading: float | None = None,
 ) -> tuple[str, float | None]:
     """Render map data to SVG."""
     if not isinstance(map_data, dict):
@@ -677,22 +720,7 @@ def _render_svg_map(
 
     if robot_position is not None:
         x, y = project(robot_position)
-        body.append(
-            f'<g class="robot" transform="translate({x:.2f} {y:.2f}) scale(0.68)">'
-            '<ellipse class="robot-shadow" cx="2" cy="21" rx="27" ry="10" />'
-            '<path class="track" d="M -27 -11 L -18 -18 L -16 20 L -25 17 Z" />'
-            '<path class="track" d="M 27 -11 L 18 -18 L 16 20 L 25 17 Z" />'
-            '<path class="body" d="M -20 -18 L -8 -24 H 12 L 22 -15 L 20 16 L 10 25 H -13 L -22 15 Z" />'
-            '<path class="wing left" d="M -20 -17 L -7 -23 H -2 L -8 -4 H -18 Z" />'
-            '<path class="wing right" d="M 10 -23 L 22 -14 L 17 0 L 7 -5 Z" />'
-            '<circle class="rtk" cx="-6" cy="7" r="8" />'
-            '<rect class="panel" x="3" y="2" width="13" height="10" rx="3" />'
-            '<rect class="stop" x="9" y="7" width="9" height="13" rx="4" />'
-            '<circle class="knob" cx="10" cy="-7" r="5" />'
-            '<rect class="camera" x="-16" y="8" width="6" height="7" rx="2" />'
-            '<path class="groove" d="M -14 -7 H -6 M 1 -11 H 10 M -2 18 H 6" />'
-            '</g>'
-        )
+        body.append(_robot_svg(x, y, heading))
 
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_WIDTH}" '
@@ -710,7 +738,7 @@ def _render_svg_map(
         ".exclusion{fill:#b66b36;stroke:#b66b36;stroke-width:4;opacity:.96}"
         ".mowed{fill:none;stroke:#005726;stroke-linecap:round;stroke-linejoin:round}"
         ".station-shadow{fill:#000;opacity:.14}.station circle{fill:#70380f}.station path{fill:#fff}"
-        ".robot-shadow{fill:#000;opacity:.35}.robot .track{fill:#161b1f;stroke:#4b5563;stroke-width:2;stroke-linejoin:round}.robot .body{fill:#33383d;stroke:#111820;stroke-width:3;stroke-linejoin:round}.robot .wing{fill:#f47b20;stroke:#ffae55;stroke-width:1.5;stroke-linejoin:round}.robot .rtk{fill:#f8fafc;stroke:#e5e7eb;stroke-width:2}.robot .panel{fill:#22272e;stroke:#111820;stroke-width:1.5}.robot .stop{fill:#f43f4f;stroke:#991b1b;stroke-width:1.5}.robot .knob{fill:#f47b20;stroke:#fff7ed;stroke-width:1.5}.robot .camera{fill:#1f2429;stroke:#89929d;stroke-width:1}.robot .groove{fill:none;stroke:#171b20;stroke-width:2;stroke-linecap:round;opacity:.7}"
+        ".robot-shadow{fill:#000;opacity:.35}.robot .track{fill:#161b1f;stroke:#4b5563;stroke-width:2;stroke-linejoin:round}.robot .body{fill:#33383d;stroke:#111820;stroke-width:3;stroke-linejoin:round}.robot .wing{fill:#f47b20;stroke:#ffae55;stroke-width:1.5;stroke-linejoin:round}.robot .rtk{fill:#f8fafc;stroke:#e5e7eb;stroke-width:2}.robot .panel{fill:#22272e;stroke:#111820;stroke-width:1.5}.robot .stop{fill:#f43f4f;stroke:#991b1b;stroke-width:1.5}.robot .knob{fill:#f47b20;stroke:#fff7ed;stroke-width:1.5}.robot .camera{fill:#1f2429;stroke:#89929d;stroke-width:1}.robot .nose{fill:#f47b20;stroke:#fff7ed;stroke-width:2;stroke-linejoin:round}.robot .groove{fill:none;stroke:#171b20;stroke-width:2;stroke-linecap:round;opacity:.7}"
         "</style>"
         '<defs><pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">'
         '<path class="grid" d="M 48 0 L 0 0 0 48" /></pattern></defs>'
