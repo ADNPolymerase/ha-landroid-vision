@@ -4,7 +4,7 @@
 
 ### Documentation
 
-- **A README in French**, `README.fr.md`, linked from the English one.
+- **A shorter README, and a French one**, `README.fr.md`, linked from the English one. The details that were cut stay in `docs/entities.md` and in this changelog.
 - **The card lives in this repository**, and `CONTRIBUTING.md` says how to edit it and run its tests.
 
 ### Changed
