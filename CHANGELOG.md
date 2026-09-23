@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Each RTK zone's mowing pattern and angle.** Two sensors per mowing zone, named after it as in the Worx app: the pattern (natural, parallel, diamond or checker) and the angle in degrees. They are read from the mower's own per-zone config, which it updates once a change made in the app is activated, so they show what the mower will actually mow, zone by zone, whether the zones share the same settings or not. A pattern code not named yet reads `other`, with the code in the `code` attribute. Display only: the settings are still changed in the Worx app.
+- **Each RTK zone's mowing pattern and angle.** Two sensors per mowing zone, named after it as in the Worx app: the pattern (natural, parallel, diamond or checker) and the angle in degrees. Both names start the same way, "Mowing pattern" and "Mowing pattern angle", so a zone's settings sit together in the device's sensor list rather than the angles being sorted apart. They are read from the mower's own per-zone config, which it updates once a change made in the app is activated, so they show what the mower will actually mow, zone by zone, whether the zones share the same settings or not. A pattern code not named yet reads `other`, with the code in the `code` attribute. Display only: the settings are still changed in the Worx app.
 
 ### Changed
 

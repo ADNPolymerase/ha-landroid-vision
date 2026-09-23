@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Угол кошения {zone}"
+        "name": "Схема кошения угол {zone}"
       }
     },
     "binary_sensor": {

@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Angolo di taglio {zone}"
+        "name": "Schema di taglio angolo {zone}"
       }
     },
     "binary_sensor": {

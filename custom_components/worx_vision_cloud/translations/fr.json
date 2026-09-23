@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Angle de tonte {zone}"
+        "name": "Motif angle {zone}"
       }
     },
     "binary_sensor": {

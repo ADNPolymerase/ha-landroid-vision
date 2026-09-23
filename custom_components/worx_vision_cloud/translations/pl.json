@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Kąt koszenia {zone}"
+        "name": "Wzór koszenia kąt {zone}"
       }
     },
     "binary_sensor": {

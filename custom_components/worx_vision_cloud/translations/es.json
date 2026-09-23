@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Ángulo de corte {zone}"
+        "name": "Patrón de corte ángulo {zone}"
       }
     },
     "binary_sensor": {

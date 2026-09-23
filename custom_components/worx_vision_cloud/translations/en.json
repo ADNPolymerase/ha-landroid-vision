@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Mowing angle {zone}"
+        "name": "Mowing pattern angle {zone}"
       }
     },
     "binary_sensor": {

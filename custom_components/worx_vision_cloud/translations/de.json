@@ -267,7 +267,7 @@
         }
       },
       "zone_mowing_angle": {
-        "name": "Mähwinkel {zone}"
+        "name": "Mähmuster Winkel {zone}"
       }
     },
     "binary_sensor": {
