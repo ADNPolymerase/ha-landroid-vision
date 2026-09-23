@@ -79,16 +79,38 @@ See [docs/entities.md](docs/entities.md) for a more detailed list.
 
 ## Cards
 
-Any standard Home Assistant card works with these entities. Two are worth knowing:
+The integration ships its own card, **Worx Landroid Vision**, and registers it for you: after installing or updating, reload the browser and pick it in the card list. It shows:
 
-- **[landroid-card](https://github.com/Barma-lej/landroid-card)** by Barma-lej: a full mower dashboard card. Point its `camera:` option at the RTK map camera to show the map inside it.
-- **`lovelace/worx-map-rtk-card.js`** in this repository: a standalone RTK map card, with a companion info card. Copy it to `config/www/`, register it as a Lovelace resource, then use `type: custom:worx-map-rtk-card` with your map camera entity.
+- the mower's detailed state (searching a zone, crossing a border, leaving home...) with the zone it is in and the battery, where the `lawn_mower` entity alone only knows mowing, docked, paused, returning or error;
+- the Wi-Fi signal next to the battery, whether the mower is ready to mow, and a red banner with the current error and since when, only when there is one;
+- start, pause and dock, and a party mode button under the battery: while it is on, a banner says the mower will not go out, even during the schedule;
+- the RTK map with the day's trail;
+- one-time mowing the way the Worx app does it: tick the zones, shown side by side, keep the order you ticked them in (Special) or let the mower choose (Auto), add the edge cut or not, and start;
+- the weekly schedule received from the cloud, folded under the slot running now, or the next mowing time otherwise, and unfolded day by day with each slot's zones, order and edge cut;
+- the mower's current blade time, as in the Worx app, with progress toward the blade service threshold, and a reset button that asks for confirmation first.
+
+A click on the state, the zone, the battery, the Wi-Fi, the readiness, the error or the map opens Home Assistant's more-info dialog, with its history.
+
+```yaml
+type: custom:worx-vision-card
+entity: lawn_mower.your_mower
+```
+
+Only `entity` is needed, the card finds the other entities of the same mower by itself, so renaming them does not break it. Optional: `title`, `show_info`, `show_controls`, `show_map`, `show_zones`, `show_schedule`, `show_blades` (all `true` by default) and `refresh_interval` for the map, in seconds (30 by default, 0 to turn it off). On an older Landroid with no RTK map and no zones, the card shows the state, the controls and the schedule.
+
+The card is developed in [ha-landroid-vision-card](https://github.com/ADNPolymerase/ha-landroid-vision-card), and this integration ships a copy of it. If you installed that card through HACS, uninstall it there: the integration now registers its own copy and removes the HACS resource on start, but HACS may add it back on its next update, and both files would compete for the same card name.
+
+The card replaces `worx-map-rtk-card.js`, which is no longer in this repository. A Lovelace resource pointing at it is removed automatically, and dashboards still using `custom:worx-map-rtk-card` keep showing the map, now drawn by the new card.
+
+*If your Lovelace resources are managed in YAML, the integration never writes to them: add `/worx_vision_cloud_frontend/worx-vision-card.js` as a `module` resource yourself.*
+
+**[landroid-card](https://github.com/Barma-lej/landroid-card)** by Barma-lej also works with these entities, if you prefer a card shared across mower and vacuum brands. Point its `camera:` option at the RTK map camera to show the map inside it.
 
 The `lawn_mower` entity deliberately has no name of its own, so it displays exactly the device name, and it stays available through connectivity blips rather than going unavailable. Both are for cards like landroid-card, which use it as the label prefix for every other entity and blank their body when it is unavailable. Only commands are blocked while genuinely offline, with a clear error.
 
 ## RTK Map & Address
 
-For Vision Cloud / RTK mowers, a camera entity renders the boundary, excluded areas, station and the day's mowing trail as SVG from the private Worx map endpoint. It is not a video stream: it updates when new data arrives. The trail covers the full local day like the Worx app, resets at local midnight, survives a restart, and keeps the last known map if a fetch briefly fails.
+For Vision Cloud / RTK mowers, a camera entity renders the boundary, excluded areas, station, the day's mowing trail and the robot turned to its heading as SVG from the private Worx map endpoint. It is not a video stream: it updates when new data arrives. The trail covers the full local day like the Worx app, resets at local midnight, survives a restart, and keeps the last known map if a fetch briefly fails.
 
 An `RTK address` sensor (disabled by default) reverse-geocodes the mower's rounded position with OpenStreetMap Nominatim, cached 24h. It is opt-in because RTK coordinates can reveal a home location. Maps and coordinates are precise, so don't publish debug dumps, storage files, tokens or screenshots showing them. See [SECURITY.md](SECURITY.md).
 
