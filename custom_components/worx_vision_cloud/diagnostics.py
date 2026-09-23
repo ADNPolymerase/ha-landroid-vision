@@ -16,7 +16,12 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .helpers import get_dict_value, get_nested_value, raw_schedule_config
+from .helpers import (
+    get_dict_value,
+    get_nested_value,
+    raw_schedule_config,
+    safe_shape,
+)
 
 # async_redact_data matches key names, so every spelling a payload can use
 # has to be listed. The 4G module reports its SIM identifiers as "ICCID" and
@@ -115,6 +120,7 @@ def _rtk_map_zone_summary(device: Any) -> list[dict[str, Any]] | None:
                     "area": get_dict_value(zone, "area"),
                     "perimeter": get_dict_value(zone, "perimeter"),
                     "metadata": get_dict_value(zone, "metadata"),
+                    "summary": safe_shape(get_dict_value(zone, "summary"), depth=2),
                     "keys": sorted(zone.keys()),
                     "contour_count": len(contours) if isinstance(contours, list) else 0,
                 }
@@ -145,6 +151,12 @@ async def async_get_config_entry_diagnostics(
             getattr(device, "_worx_vision_firmware_upgrade", None)
         )
         sections["rtk_map_zones"] = _rtk_map_zone_summary(device)
+        # How the map identifies its layers, needed to write a zone's mowing
+        # pattern through the Maps API. Structure only, no geometry.
+        map_data = getattr(device, "_worx_vision_rtk_map", None)
+        sections["rtk_map_layout"] = (
+            safe_shape(map_data, depth=5) if isinstance(map_data, dict) else None
+        )
         # The parsed "schedules" section above cannot show which zones a
         # weekly slot targets, nor the one-time job block: pyworxcloud
         # drops both while normalizing. Keep the raw block alongside it.

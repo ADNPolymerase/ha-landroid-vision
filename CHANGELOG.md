@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.1 - 2026-09-23
+
+### Changed
+
+- **Diagnostics show how the RTK map identifies its zones**, without any of its geometry. Each zone now includes the plain fields of its `summary`, and a new `rtk_map_layout` section describes the map's structure: identifiers, types and names are kept, lists of points are reduced to their length, and any key naming a position is redacted. This is the groundwork for setting each zone's mowing pattern and angle from Home Assistant: the Worx Maps API addresses a zone by an id the mower's own config does not carry, so it has to be read from the map first.
+
 ## 2.8.0 - 2026-09-23
 
 ### Added

@@ -445,6 +445,37 @@ def zone_job_task_started(
     return False
 
 
+_LOCATION_KEY_PARTS = ("lat", "lon", "lng", "coord", "pos", "point", "center", "centre", "geo")
+
+
+def safe_shape(value: Any, depth: int = 2) -> Any:
+    """Describe a payload's structure without any location data.
+
+    Scalars are kept, except under keys that name a position. A list of
+    plain values (a contour, a coordinate pair) is reduced to its length,
+    and anything below `depth` to its keys or length, so a map dump shows
+    how zones are identified without a single point of their geometry.
+    """
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        if depth <= 0:
+            return f"<dict keys={sorted(str(key) for key in value)}>"
+        shaped: dict[str, Any] = {}
+        for key, item in value.items():
+            name = str(key)
+            if any(part in name.lower() for part in _LOCATION_KEY_PARTS):
+                shaped[name] = "**REDACTED**"
+            else:
+                shaped[name] = safe_shape(item, depth - 1)
+        return shaped
+    if isinstance(value, (list, tuple)):
+        if depth > 0 and value and all(isinstance(item, dict) for item in value):
+            return [safe_shape(item, depth - 1) for item in value[:5]]
+        return f"<list len={len(value)}>"
+    return f"<{type(value).__name__}>"
+
+
 def raw_schedule_config(device: Any) -> dict[str, Any]:
     """Return the raw `cfg.sc` schedule block exactly as the mower publishes it.
 
