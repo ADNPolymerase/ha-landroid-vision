@@ -47,7 +47,7 @@ type: custom:worx-vision-card
 entity: lawn_mower.your_mower
 ```
 
-It shows the detailed state (searching a zone, crossing a border...), battery and Wi-Fi, error and rain banners, party mode, start, pause and dock, the RTK map, one-time zone mowing, the weekly schedule and the blade time with its reset. A click on a value opens its history. Only `entity` is needed: the card finds the rest of the mower by itself. Optional: `title`, `show_info`, `show_controls`, `show_map`, `show_zones`, `show_schedule`, `show_blades` and `refresh_interval` (map, in seconds). On an older Landroid, it shows the state, the controls and the schedule.
+It shows the detailed state (searching a zone, crossing a border...), battery and Wi-Fi, error and rain banners, party mode, start, pause and dock, the RTK map with the day's estimated progress as a thin bar under it, one-time zone mowing, the weekly schedule and the blade time with its reset. One-time mowing stays folded on one line, with its settings summed up and Start on the right; unfold it to pick the zones, the order and the edge cut. The last settings are remembered in the browser. A click on a value opens its history. Only `entity` is needed: the card finds the rest of the mower by itself. Optional: `title`, `show_info`, `show_controls`, `show_map`, `show_zones`, `show_schedule`, `show_blades` and `refresh_interval` (map, in seconds). On an older Landroid, it shows the state, the controls and the schedule.
 
 *With Lovelace resources in YAML, add `/worx_vision_cloud_frontend/worx-vision-card.js` as a `module` resource yourself.*
 

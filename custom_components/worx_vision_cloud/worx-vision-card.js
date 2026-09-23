@@ -299,6 +299,7 @@ function resolveEntities(hass, entityId) {
     calendar: find("calendar", "schedule"),
     party: find("switch", "party_mode"),
     rainRemaining: find("sensor", "rain_remaining"),
+    progress: find("sensor", "estimated_daily_progress"),
     rainDelay: find("number", "rain_delay_minutes"),
     maintenance: find("sensor", "maintenance_status"),
     bladeCurrent: find("sensor", "blade_runtime_current"),
@@ -381,6 +382,8 @@ class WorxVisionCard extends HTMLElement {
     this._signature = null;
     this._scheduleOpen = false;
     this._confirmReset = false;
+    this._zonesOpen = false;
+    this._settingsKey = null;
   }
 
   setConfig(config) {
@@ -390,6 +393,7 @@ class WorxVisionCard extends HTMLElement {
     // Lovelace hands over a frozen object: copy, never write on it.
     this._userConfig = config;
     this._config = { ...DEFAULTS, ...config };
+    this._loadZoneSettings(config.entity);
     this._signature = null;
     this._render();
     this._resetTimer();
@@ -475,7 +479,7 @@ class WorxVisionCard extends HTMLElement {
       ? [ents.mower, ents.status, ents.battery, ents.zoneCurrent, ents.camera, ents.zoneSelect,
         ents.rssi, ents.readiness, ents.error, ents.schedule, ents.nextSchedule,
         ents.maintenance, ents.bladeReset, ents.calendar, ents.party, ents.bladeCurrent,
-        ents.rainRemaining, ents.rainDelay,
+        ents.rainRemaining, ents.rainDelay, ents.progress,
         ...ents.zones.flatMap((z) => [z.pattern, z.angle])]
       : [this._config.entity];
     const snap = ids.filter(Boolean).map((id) => {
@@ -487,7 +491,7 @@ class WorxVisionCard extends HTMLElement {
         s.last_changed] : [id];
     });
     return stableStringify([snap, this._selected, this._order, this._edge, this._busy,
-      this._notice, this._scheduleOpen, this._confirmReset, language(this._hass), this._config]);
+      this._notice, this._scheduleOpen, this._confirmReset, this._zonesOpen, language(this._hass), this._config]);
   }
 
   _render() {
@@ -799,10 +803,22 @@ class WorxVisionCard extends HTMLElement {
   _map(ents) {
     const url = this._mapUrl();
     if (!ents.camera) return "";
-    if (!url) return `<div class="map-empty">${escapeHtml(t(this._hass, "map_unavailable"))}</div>`;
+    if (!url) return `<div class="map-empty">${escapeHtml(t(this._hass, "map_unavailable"))}</div>` + this._progressBar(ents);
     const fit = ["contain", "cover", "fill", "scale-down"].includes(this._config.fit) ? this._config.fit : "contain";
     const ratio = /^[\d.\s/]+$/u.test(String(this._config.aspect_ratio)) ? this._config.aspect_ratio : DEFAULTS.aspect_ratio;
-    return `<div class="map-wrap" style="aspect-ratio:${ratio}"><img class="map link" alt="RTK" style="object-fit:${fit}" src="${escapeHtml(url)}"${moreInfo(ents.camera)}></div>`;
+    return `<div class="map-wrap" style="aspect-ratio:${ratio}"><img class="map link" alt="RTK" style="object-fit:${fit}" src="${escapeHtml(url)}"${moreInfo(ents.camera)}></div>`
+      + this._progressBar(ents);
+  }
+
+  /** A thin bar under the map: the day's estimated progress, nothing else. */
+  _progressBar(ents) {
+    const hass = this._hass;
+    const progressObj = hass.states[ents.progress];
+    if (!usable(progressObj)) return "";
+    const pct = Math.max(0, Math.min(100, Number(progressObj.state)));
+    if (!Number.isFinite(pct)) return "";
+    return `<div class="map-progress link" title="${escapeHtml(formatState(hass, progressObj))}"${moreInfo(ents.progress)}>`
+      + `<div class="map-progress-fill" style="width:${Math.round(pct * 10) / 10}%"></div></div>`;
   }
 
   _zones(ents) {
@@ -828,17 +844,64 @@ class WorxVisionCard extends HTMLElement {
     const notice = this._notice
       ? `<div class="notice ${this._notice.ok ? "ok" : "error"}">${escapeHtml(this._notice.text)}</div>`
       : "";
+    const go = `<button class="go" data-action="go" title="${escapeHtml(this._selected.length ? t(hass, "go") : t(hass, "pick"))}"${ready ? "" : " disabled"}>`
+      + `<ha-icon icon="mdi:play"></ha-icon><span>${escapeHtml(t(hass, "go"))}</span></button>`;
+    const open = this._zonesOpen;
+    const head = `<div class="zones-head">`
+      + `<button class="zones-toggle" data-action="zones-toggle" aria-expanded="${open}">`
+      + `<ha-icon icon="${open ? "mdi:chevron-down" : "mdi:chevron-right"}"></ha-icon>`
+      + `<span class="zones-titles"><span class="section">${escapeHtml(t(hass, "one_time"))}</span>`
+      + `<span class="zones-summary">${escapeHtml(this._zoneSummary(ents))}</span></span></button>${go}</div>`;
+    if (!open) return `<div class="zones">${head}${notice}</div>`;
+
     const actions = `<div class="zone-actions">`
       + `<div class="segmented" role="group" aria-label="${escapeHtml(t(hass, "order"))}">`
       + `<button data-action="order" data-order="fixed" aria-pressed="${fixed}" class="${fixed ? "on" : ""}">${escapeHtml(t(hass, "order_fixed"))}</button>`
       + `<button data-action="order" data-order="auto" aria-pressed="${!fixed}" class="${fixed ? "" : "on"}">${escapeHtml(t(hass, "order_auto"))}</button></div>`
       + `<button class="toggle${this._edge ? " on" : ""}" data-action="edge" aria-pressed="${this._edge}">`
-      + `<ha-icon icon="mdi:border-outside"></ha-icon><span>${escapeHtml(t(hass, "edge"))}</span></button>`
-      + `<button class="go" data-action="go" title="${escapeHtml(this._selected.length ? t(hass, "go") : t(hass, "pick"))}"${ready ? "" : " disabled"}>`
-      + `<ha-icon icon="mdi:play"></ha-icon><span>${escapeHtml(t(hass, "go"))}</span></button></div>`;
+      + `<ha-icon icon="mdi:border-outside"></ha-icon><span>${escapeHtml(t(hass, "edge"))}</span></button></div>`;
 
-    return `<div class="zones"><div class="section">${escapeHtml(t(hass, "one_time"))}</div>`
-      + `<div class="zone-chips">${chips}</div>${actions}${notice}</div>`;
+    return `<div class="zones">${head}<div class="zone-chips">${chips}</div>${actions}${notice}</div>`;
+  }
+
+  /** One line saying what Start will send: the zones, the order and the edge cut. */
+  _zoneSummary(ents) {
+    const hass = this._hass;
+    if (!this._selected.length) return t(hass, "pick");
+    const byId = new Map(ents.zones.map((z) => [z.id, z.name || `${t(hass, "zone")} ${z.id}`]));
+    const ids = this._order === "fixed" ? this._selected : [...this._selected].sort((a, b) => a - b);
+    const parts = [ids.map((id) => byId.get(id)).filter(Boolean).join(", "),
+      t(hass, this._order === "fixed" ? "order_fixed" : "order_auto")];
+    if (this._edge) parts.push(t(hass, "edge"));
+    return parts.join(" · ");
+  }
+
+  /** The last one-time settings, kept per mower in this browser only. */
+  _loadZoneSettings(entity) {
+    const key = `worx-vision-card:${entity}`;
+    if (this._settingsKey === key) return;
+    this._settingsKey = key;
+    try {
+      const saved = JSON.parse(globalThis.localStorage?.getItem(key) || "null");
+      if (!saved || typeof saved !== "object") return;
+      if (Array.isArray(saved.zones)) {
+        this._selected = saved.zones.map(Number).filter((id) => Number.isInteger(id) && id > 0);
+      }
+      if (saved.order === "fixed" || saved.order === "auto") this._order = saved.order;
+      if (typeof saved.edge === "boolean") this._edge = saved.edge;
+    } catch (_err) {
+      // Private window, blocked storage or a damaged value: start from the defaults.
+    }
+  }
+
+  _saveZoneSettings() {
+    if (!this._settingsKey) return;
+    try {
+      globalThis.localStorage?.setItem(this._settingsKey,
+        JSON.stringify({ zones: this._selected, order: this._order, edge: this._edge }));
+    } catch (_err) {
+      // Storage unavailable: the settings only last until the page is reloaded.
+    }
   }
 
   _onClick(ev) {
@@ -851,6 +914,7 @@ class WorxVisionCard extends HTMLElement {
     else if (action === "zone") this._toggleZone(Number(target.dataset.zone));
     else if (action === "order") this._setOrder(target.dataset.order);
     else if (action === "edge") this._setEdge(!this._edge);
+    else if (action === "zones-toggle") { this._zonesOpen = !this._zonesOpen; this._render(); }
     else if (action === "go") this._startZones();
     else if (action === "schedule") { this._scheduleOpen = !this._scheduleOpen; this._render(); }
     else if (action === "party") this._toggleParty();
@@ -872,17 +936,20 @@ class WorxVisionCard extends HTMLElement {
     this._selected = this._selected.includes(id)
       ? this._selected.filter((z) => z !== id)
       : [...this._selected, id];
+    this._saveZoneSettings();
     this._render();
   }
 
   _setOrder(order) {
     if (order !== "fixed" && order !== "auto") return;
     this._order = order;
+    this._saveZoneSettings();
     this._render();
   }
 
   _setEdge(value) {
     this._edge = Boolean(value);
+    this._saveZoneSettings();
     this._render();
   }
 
@@ -914,7 +981,6 @@ class WorxVisionCard extends HTMLElement {
     this._render();
     try {
       await this._hass.callService(DOMAIN, "start_zone_mowing", payload);
-      this._selected = [];
       this._notify(true);
     } catch (err) {
       this._notify(false, err);
@@ -995,6 +1061,16 @@ const STYLES = `
   .map-empty, .warning { padding: 24px 16px; text-align: center; color: var(--secondary-text-color); }
   .warning { color: var(--error-color, #db4437); }
   .zones { padding: 4px 16px 12px; }
+  .zones-head { display: flex; align-items: center; gap: 8px; }
+  .zones-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 4px 0;
+    background: transparent; color: var(--primary-text-color); text-align: left; }
+  .zones-toggle ha-icon { flex: none; color: var(--secondary-text-color); }
+  .zones-titles { min-width: 0; display: flex; flex-direction: column; }
+  .zones-titles .section { margin: 0; }
+  .zones-summary { font-size: 0.85em; color: var(--secondary-text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zones-head + .zone-chips { margin-top: 8px; }
+  .map-progress { height: 4px; background: var(--secondary-background-color); }
+  .map-progress-fill { height: 100%; background: var(--success-color, #43a047); }
   .section { font-weight: 500; margin: 4px 0 6px; color: var(--primary-text-color); }
   .zone-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .zone-chip { flex: 1 1 calc(50% - 6px); min-width: 0; display: flex; align-items: center; gap: 8px;
@@ -1009,7 +1085,7 @@ const STYLES = `
   .segmented { display: inline-flex; border-radius: 18px; overflow: hidden; background: var(--secondary-background-color); }
   .segmented button { padding: 8px 12px; background: transparent; color: var(--primary-text-color); }
   .segmented button.on, .toggle.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
-  .go { margin-left: auto; background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .go { flex: none; margin-left: auto; background: var(--primary-color); color: var(--text-primary-color, #fff); }
   .notice { margin-top: 8px; color: var(--secondary-text-color); font-size: 0.9em; }
   .notice.ok { color: var(--success-color, #43a047); }
   .notice.error { color: var(--error-color, #db4437); }

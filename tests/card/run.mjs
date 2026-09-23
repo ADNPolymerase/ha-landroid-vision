@@ -73,6 +73,7 @@ function makeHass(overrides = {}) {
       "sensor.robot_lames": reg("sensor.robot_lames", "dev1", "blade_runtime_current"),
       "button.robot_reset_blades": reg("button.robot_reset_blades", "dev1", "reset_blade_counter"),
       "sensor.robot_pluie": reg("sensor.robot_pluie", "dev1", "rain_remaining"),
+      "sensor.robot_avance": reg("sensor.robot_avance", "dev1", "estimated_daily_progress"),
       "number.robot_delai": reg("number.robot_delai", "dev1", "rain_delay_minutes"),
       // Other mower's zone: must not leak into dev1's list.
       "sensor.old_p": reg("sensor.old_p", "dev4", "zone_mowing_pattern"),
@@ -115,6 +116,7 @@ function makeHass(overrides = {}) {
       "switch.robot_fete": st("off"),
       "sensor.robot_lames": st("380", { unit_of_measurement: "min" }),
       "sensor.robot_pluie": st("0", { unit_of_measurement: "min" }),
+      "sensor.robot_avance": st("62.4", { unit_of_measurement: "%" }),
       "number.robot_delai": st("180", { unit_of_measurement: "min" }),
       "number.robot_odd": st("7", { zone_id: 5, zone_name: "Odd" }),
       "sensor.robot_other_status": st("WRONG_STATUS"),
@@ -184,9 +186,15 @@ const flush = () => new Promise((r) => setImmediate(r));
   contains("charging shown", html, "charging");
   check("zone pattern no longer shown", html.includes("F(parallel)"), false);
   check("zone angle no longer shown", html.includes("314°"), false);
-  contains("zones as side-by-side chips", html, 'class="zone-chips"><button class="zone-chip"');
-  contains("full zone name kept as a tooltip", html, 'title="Front &lt;b&gt;lawn&lt;/b&gt;"');
-  contains("zone name escaped", html, "Front &lt;b&gt;lawn&lt;/b&gt;");
+  check("one-time mowing folded by default", html.includes('class="zone-chips"'), false);
+  contains("folded row says what to do", html, '<span class="zones-summary">Tick at least one zone</span>');
+  click(card, { action: "zones-toggle" });
+  const open = markup(card);
+  contains("unfolded on a click", open, 'data-action="zones-toggle" aria-expanded="true"');
+  contains("zones as side-by-side chips", open, 'class="zone-chips"><button class="zone-chip"');
+  contains("full zone name kept as a tooltip", open, 'title="Front &lt;b&gt;lawn&lt;/b&gt;"');
+  contains("zone name escaped", open, "Front &lt;b&gt;lawn&lt;/b&gt;");
+  check("no raw html from a zone name when open", open.includes("<b>lawn"), false);
   check("no raw html from a zone name", html.includes("<b>lawn"), false);
   contains("map image from the camera", html, "/api/camera_proxy/camera.robot_carte?token=abc&amp;worx_vision=");
   check("other mower's zone absent", html.includes("Elsewhere"), false);
@@ -556,6 +564,7 @@ const flush = () => new Promise((r) => setImmediate(r));
 {
   const hass = makeHass();
   const card = make({ entity: "lawn_mower.robot" }, hass);
+  click(card, { action: "zones-toggle" });
   click(card, { action: "zone", zone: "2" });
   click(card, { action: "zone", zone: "1" });
   let html = markup(card);
@@ -573,7 +582,7 @@ const flush = () => new Promise((r) => setImmediate(r));
   check("the lawn_mower entity is targeted", call.data.entity_id, "lawn_mower.robot");
   check("no duration is sent", "runtime" in call.data, false);
   contains("success notice", markup(card), "Sent to the mower");
-  check("selection cleared after success", card._selected.length, 0);
+  check("settings kept after success", card._selected.join(","), "2,1");
 }
 
 {
@@ -583,6 +592,9 @@ const flush = () => new Promise((r) => setImmediate(r));
   click(card, { action: "zone", zone: "1" });
   click(card, { action: "order", order: "auto" });
   click(card, { action: "edge" });
+  contains("summary while folded", markup(card), '<span class="zones-summary">Front &lt;b&gt;lawn&lt;/b&gt;, Back lawn · Auto · Edge cut</span>');
+  check("go stays on the folded row", markup(card).includes('data-action="go" title="Start">'), true);
+  click(card, { action: "zones-toggle" });
   contains("auto order shown", markup(card), 'aria-pressed="true" class="on">Auto');
   click(card, { action: "go" });
   await flush();
@@ -765,6 +777,85 @@ function rainy(extra = {}) {
   }
   const fr = markup(make({ entity: "lawn_mower.robot" }, rainy({ language: "fr", locale: { language: "fr" } })));
   contains("French wording", fr, "Reprise possible dans 2 h 35 · délai pluie de 3 h 00");
+}
+
+// ── progress bar under the map ──────────────────────────────────────────────
+
+{
+  const html = markup(make({ entity: "lawn_mower.robot" }));
+  contains("progress bar right under the map", html, '</div><div class="map-progress link" title="F(62.4)" data-action="more-info" data-entity="sensor.robot_avance"');
+  contains("bar filled to the estimate", html, '<div class="map-progress-fill" style="width:62.4%"></div>');
+  check("no text next to the bar", /map-progress[^>]*>[^<]/u.test(html), false);
+
+  const over = makeHass();
+  over.states["sensor.robot_avance"] = st("137", { unit_of_measurement: "%" });
+  contains("capped at a full bar", markup(make({ entity: "lawn_mower.robot" }, over)), 'style="width:100%"');
+
+  const down = makeHass();
+  down.states["sensor.robot_avance"] = st("unavailable");
+  check("no bar without an estimate", markup(make({ entity: "lawn_mower.robot" }, down)).includes('class="map-progress'), false);
+
+  check("no bar with the map hidden", markup(make({ entity: "lawn_mower.robot", show_map: false })).includes('class="map-progress'), false);
+
+  const noMap = makeHass();
+  noMap.states["camera.robot_carte"] = st("unavailable");
+  const noMapHtml = markup(make({ entity: "lawn_mower.robot" }, noMap));
+  contains("bar still under the map placeholder", noMapHtml, 'class="map-empty"');
+  contains("with the estimate", noMapHtml, 'class="map-progress-fill"');
+
+  const live = make({ entity: "lawn_mower.robot" });
+  const later = makeHass();
+  later.states["sensor.robot_avance"] = st("80", { unit_of_measurement: "%" });
+  live.hass = later;
+  contains("bar follows the estimate", markup(live), 'style="width:80%"');
+
+  check("old mower without the sensor has no bar", markup(make({ entity: "lawn_mower.old" })).includes('class="map-progress'), false);
+}
+
+// ── one-time settings remembered ────────────────────────────────────────────
+
+{
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+  };
+  const first = make({ entity: "lawn_mower.robot" });
+  click(first, { action: "zone", zone: "2" });
+  click(first, { action: "zone", zone: "1" });
+  check("ticking alone is saved", store.get("worx-vision-card:lawn_mower.robot"), '{"zones":[2,1],"order":"fixed","edge":false}');
+  click(first, { action: "order", order: "auto" });
+  click(first, { action: "edge" });
+  check("settings saved per mower", store.get("worx-vision-card:lawn_mower.robot"), '{"zones":[2,1],"order":"auto","edge":true}');
+
+  const again = make({ entity: "lawn_mower.robot" });
+  check("zones back after a reload", again._selected.join(","), "2,1");
+  check("order back after a reload", again._order, "auto");
+  check("edge cut back after a reload", again._edge, true);
+  check("still folded after a reload", markup(again).includes('class="zone-chips"'), false);
+  contains("reloaded summary", markup(again), "Front &lt;b&gt;lawn&lt;/b&gt;, Back lawn · Auto · Edge cut");
+
+  const other = make({ entity: "lawn_mower.old" });
+  check("another mower keeps its own settings", other._selected.length, 0);
+
+  store.set("worx-vision-card:lawn_mower.robot", "{not json");
+  const damaged = make({ entity: "lawn_mower.robot" });
+  check("damaged value ignored", damaged._selected.length + damaged._order + damaged._edge, "0fixedfalse");
+
+  store.set("worx-vision-card:lawn_mower.robot", '{"zones":["x",-1,2],"order":"sideways","edge":"yes"}');
+  const odd = make({ entity: "lawn_mower.robot" });
+  check("only valid zone ids kept", odd._selected.join(","), "2");
+  check("unknown order ignored", odd._order, "fixed");
+  check("non-boolean edge ignored", odd._edge, false);
+
+  globalThis.localStorage = {
+    getItem: () => { throw new Error("blocked"); },
+    setItem: () => { throw new Error("blocked"); },
+  };
+  const blocked = make({ entity: "lawn_mower.robot" });
+  click(blocked, { action: "zone", zone: "1" });
+  check("blocked storage does not break the card", blocked._selected.join(","), "1");
+  delete globalThis.localStorage;
 }
 
 // ── translations ────────────────────────────────────────────────────────────

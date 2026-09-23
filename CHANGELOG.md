@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **One-time mowing takes a single line in the card.** It stays folded, with its settings summed up (zones, order, edge cut) and Start on the right, so the card is shorter. A click on the line unfolds the zones, the order and the edge cut. Start stays greyed out until a zone is ticked.
+- **The card remembers the last one-time settings.** Zones, order and edge cut are kept after a start and after a reload, per mower, in the browser: each device keeps its own. Nothing breaks when the browser blocks storage, the settings then only last until the page is reloaded.
+
+### Added
+
+- **The day's progress under the RTK map**, as a thin bar with nothing else: the locally estimated progress, which follows the day as it goes rather than waiting for the Worx statistics. A click opens its history.
+
 ## 3.0.1 - 2026-09-24
 
 ### Documentation
