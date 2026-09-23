@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Mäher außerhalb der Ladestation angehalten ({mower_name})",
       "description": "{mower_name} steht seit {minutes} Minuten außerhalb der Ladestation und lädt nicht. Möglicherweise wird die STOP-Taste gedrückt gehalten, zum Beispiel durch ein Hindernis, oder der Mäher steckt fest. Er fährt nicht von selbst zum Laden zurück. Prüfen Sie ihn, bevor der Akku leer ist."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Zonenmähen nicht empfangen ({mower_name})",
+      "description": "{mower_name} hat einen Zonenmähauftrag nicht bestätigt, weder beim Senden noch beim erneuten Versuch, nachdem sich der Mäher wieder gemeldet hatte. Er schläft wahrscheinlich in seiner Ladestation oder ist nicht erreichbar, daher wurde der Auftrag nicht gestartet. Starten Sie ihn erneut über die Worx-App oder Home Assistant. Diese Meldung verschwindet beim nächsten vom Mäher bestätigten Zonenauftrag."
     }
   },
   "options": {

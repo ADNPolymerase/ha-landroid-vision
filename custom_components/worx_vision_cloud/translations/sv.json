@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Robotgräsklipparen har stannat utanför laddstationen ({mower_name})",
       "description": "{mower_name} har stått stilla i {minutes} minuter utanför laddstationen och laddar inte. STOP-knappen kan vara intryckt, till exempel av ett hinder, eller så har klipparen fastnat. Den åker inte tillbaka och laddar av sig själv, så kontrollera den innan batteriet tar slut."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Zonklippning inte mottagen ({mower_name})",
+      "description": "{mower_name} bekräftade inte en zonklippning, varken när den skickades eller vid det nya försöket som skickades när robotten hörde av sig igen. Den sover troligen i sin laddstation eller är utom räckhåll, så klippningen startade inte. Starta den igen från Worx-appen eller Home Assistant. Varningen försvinner vid nästa zonklippning som robotten bekräftar."
     }
   },
   "options": {

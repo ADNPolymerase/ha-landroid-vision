@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Robot fermo fuori dalla base ({mower_name})",
       "description": "{mower_name} è fermo da {minutes} minuti fuori dalla base e non è in carica. Il pulsante STOP potrebbe essere premuto, ad esempio da un ostacolo, oppure il robot è bloccato. Non tornerà da solo a ricaricarsi, quindi controllalo prima che la batteria si scarichi."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Taglio per zone non ricevuto ({mower_name})",
+      "description": "{mower_name} non ha confermato un taglio per zone, né all'invio né al nuovo tentativo inviato quando il robot si è rifatto vivo. Probabilmente dorme sulla base o è fuori portata, quindi il taglio non è partito. Riavvialo dall'app Worx o da Home Assistant. Questo avviso scompare al prossimo taglio per zone confermato dal robot."
     }
   },
   "options": {

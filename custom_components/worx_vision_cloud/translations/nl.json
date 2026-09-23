@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Maaier gestopt buiten het laadstation ({mower_name})",
       "description": "{mower_name} staat al {minutes} minuten stil buiten het laadstation en laadt niet op. Mogelijk wordt de STOP-knop ingedrukt, bijvoorbeeld door een obstakel, of zit de maaier vast. Hij keert niet uit zichzelf terug om te laden. Controleer hem voordat de accu leeg is."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Zonemaaien niet ontvangen ({mower_name})",
+      "description": "{mower_name} heeft een zonemaaitaak niet bevestigd, niet bij het verzenden en niet bij de nieuwe poging nadat de maaier zich weer meldde. Hij slaapt waarschijnlijk in zijn basisstation of is buiten bereik, dus de taak is niet gestart. Start hem opnieuw vanuit de Worx-app of Home Assistant. Deze melding verdwijnt bij de volgende zonetaak die de maaier bevestigt."
     }
   },
   "options": {

@@ -407,6 +407,44 @@ def zone_job_command(
     }
 
 
+# The mower stamps a task with its own clock, so allow for drift.
+ZONE_JOB_CLOCK_SLACK = timedelta(minutes=1)
+
+
+def zone_job_task_started(
+    device: Any, command: dict[str, Any], sent_at: datetime
+) -> bool:
+    """Return whether the mower created a task for a zone job sent at `sent_at`.
+
+    An unanswered command is not always a lost one: seen live, the mower
+    created the task two seconds after the command, but its first report only
+    came a minute later, under an unrelated message id. The task list is what
+    tells the two apart: a manual task (`tr` 1) stamped after the command, on
+    zones that were asked for.
+    """
+    requested = {int(zone) for zone in get_nested_value(command, "cut", "z", default=[]) or []}
+    tasks = get_nested_value(_raw_dat(device), "cut", "tsk", default=[]) or []
+    if not isinstance(tasks, list):
+        return False
+    for task in tasks:
+        if not isinstance(task, dict) or task.get("tr") != 1:
+            continue
+        try:
+            created = datetime.fromisoformat(str(task.get("tm")).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if created.tzinfo is None or created < sent_at - ZONE_JOB_CLOCK_SLACK:
+            continue
+        zones = {
+            int(zone["id"])
+            for zone in task.get("z") or []
+            if isinstance(zone, dict) and isinstance(zone.get("id"), int)
+        }
+        if zones and zones <= requested:
+            return True
+    return False
+
+
 def raw_schedule_config(device: Any) -> dict[str, Any]:
     """Return the raw `cfg.sc` schedule block exactly as the mower publishes it.
 

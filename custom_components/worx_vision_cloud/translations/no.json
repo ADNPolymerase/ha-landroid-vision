@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Robotklipperen har stoppet utenfor ladestasjonen ({mower_name})",
       "description": "{mower_name} har stått stille i {minutes} minutter utenfor ladestasjonen og lader ikke. STOP-knappen kan være trykket inn, for eksempel av en hindring, eller klipperen har kjørt seg fast. Den kjører ikke tilbake for å lade av seg selv, så sjekk den før batteriet går tomt."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Soneklipping ikke mottatt ({mower_name})",
+      "description": "{mower_name} bekreftet ikke en soneklipping, verken ved sending eller ved det nye forsøket som ble sendt da robotten meldte seg igjen. Den sover sannsynligvis på basen eller er utenfor rekkevidde, så klippingen startet ikke. Start den på nytt fra Worx-appen eller Home Assistant. Dette varselet forsvinner ved neste soneklipping robotten bekrefter."
     }
   },
   "options": {

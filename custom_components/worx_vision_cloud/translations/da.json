@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Robotplæneklipperen er stoppet uden for ladestationen ({mower_name})",
       "description": "{mower_name} har holdt stille i {minutes} minutter uden for ladestationen og oplader ikke. STOP-knappen kan være trykket ned, for eksempel af en forhindring, eller plæneklipperen sidder fast. Den kører ikke selv tilbage for at lade, så tjek den, før batteriet løber tør."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Zoneklipning ikke modtaget ({mower_name})",
+      "description": "{mower_name} bekræftede ikke en zoneklipning, hverken ved afsendelse eller ved det nye forsøg, der blev sendt, da robotten meldte sig igen. Den sover sandsynligvis på sin base eller er uden for rækkevidde, så klipningen startede ikke. Start den igen fra Worx-appen eller Home Assistant. Denne advarsel forsvinder ved den næste zoneklipning, robotten bekræfter."
     }
   },
   "options": {

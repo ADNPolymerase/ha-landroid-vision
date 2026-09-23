@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Robot detenido fuera de su base ({mower_name})",
       "description": "{mower_name} lleva {minutes} minutos detenido fuera de su base y sin cargar. Puede que el botón STOP esté pulsado, por ejemplo por un obstáculo, o que el robot esté atascado. No volverá solo a cargar, así que revísalo antes de que se agote la batería."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Corte por zonas no recibido ({mower_name})",
+      "description": "{mower_name} no confirmó un corte por zonas, ni al enviarlo ni en el reintento enviado cuando el cortacésped volvió a comunicarse. Probablemente está dormido en su base o fuera de alcance, así que el corte no empezó. Vuelve a iniciarlo desde la app Worx o Home Assistant. Esta alerta desaparece con el próximo corte por zonas que confirme el cortacésped."
     }
   },
   "options": {

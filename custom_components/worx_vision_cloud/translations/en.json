@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Mower stopped away from its base ({mower_name})",
       "description": "{mower_name} has been stopped for {minutes} minutes, away from its base and not charging. The STOP button may be held down, for example by an obstacle, or the mower may be stuck. It will not go back to charge on its own, so check it before the battery runs flat."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Zone mowing not received ({mower_name})",
+      "description": "{mower_name} did not acknowledge a zone mowing job, neither when it was sent nor on the retry sent after the mower next reported in. It is probably asleep at its base or out of reach, so the job did not start. Start it again from the Worx app or Home Assistant. This alert clears on the next zone job the mower acknowledges."
     }
   },
   "options": {

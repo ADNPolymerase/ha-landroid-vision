@@ -55,6 +55,7 @@ from .helpers import (
     rtk_current_zone_name,
     rtk_zone_ids,
     zone_job_command,
+    zone_job_task_started,
     rtk_map_id,
     rtk_position,
     is_firmware_updating,
@@ -74,6 +75,10 @@ RTK_ADDRESS_USER_AGENT = (
 )
 PRODUCT_ITEM_CACHE_TTL = timedelta(minutes=5)
 LIVE_REFRESH_INTERVAL = timedelta(minutes=5)
+# Docked and charged, a Vision mower wakes every 5 to 7 minutes. An
+# unacknowledged zone job waits this long for it to report in before its
+# single retry is sent anyway.
+ZONE_JOB_RETRY_WAIT = timedelta(minutes=15)
 FIRMWARE_UPGRADE_CACHE_TTL = timedelta(minutes=30)
 STATISTICS_STORAGE_VERSION = 1
 STATISTICS_SAVE_DELAY = 60
@@ -219,6 +224,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         # the stopped_away_from_base repair issue.
         self._stopped_since: dict[str, datetime] = {}
         self._stopped_recheck_unsubs: dict[str, Callable[[], None]] = {}
+        # A zone job the mower did not acknowledge, waiting to be sent again
+        # the next time that mower reports in (see async_start_zone_mowing).
+        self._zone_job_retries: dict[str, asyncio.Task[None]] = {}
+        self._mower_heard: dict[str, asyncio.Event] = {}
         self._state_duration_store = Store[dict[str, Any]](
             hass,
             STATE_DURATION_STORAGE_VERSION,
@@ -303,6 +312,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         for unsub in self._stopped_recheck_unsubs.values():
             unsub()
         self._stopped_recheck_unsubs.clear()
+        for task in self._zone_job_retries.values():
+            task.cancel()
+        self._zone_job_retries.clear()
         self._statistics_save_pending = False
         self._rtk_trail_save_pending = False
         try:
@@ -683,6 +695,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             data[str(serial)] = device
             self.async_set_updated_data(data)
 
+        heard = self._mower_heard.get(str(serial))
+        if heard is not None:
+            heard.set()
+
     async def _refresh_from_cloud_cache(self) -> dict[str, DeviceHandler]:
         """Return current cloud cache."""
         devices = _device_map(self.cloud)
@@ -971,8 +987,125 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         command = zone_job_command(
             _normalize_zone_ids(zones), edge_cut, fixed_order, rtk_zone_ids(device)
         )
-        await self._async_publish_command(uuid, command_topic, command, 1)
+        self._cancel_zone_job_retry(serial_number)
+        sent_at = datetime.now(UTC)
+        try:
+            await self._async_publish_command(uuid, command_topic, command, 1)
+        except TimeoutException:
+            # Docked and charged, the mower sleeps and only listens for a
+            # moment every few minutes, so a command can be lost. It can also
+            # arrive with the answer delayed: its next report tells which.
+            _LOGGER.warning(
+                "Zone mowing on %s was not acknowledged; checking the mower's "
+                "next report before sending it again",
+                serial_number,
+            )
+            self._zone_job_retries[serial_number] = (
+                self.config_entry.async_create_background_task(
+                    self.hass,
+                    self._async_confirm_zone_job(
+                        serial_number, uuid, command_topic, command, sent_at
+                    ),
+                    f"{DOMAIN} zone job retry {serial_number}",
+                )
+            )
+            return
+
+        self._sync_zone_job_issue(serial_number, acknowledged=True)
         await self._async_request_device_update_best_effort(serial_number)
+
+    def _cancel_zone_job_retry(self, serial_number: str) -> None:
+        """Drop a pending zone job retry, superseded by a newer command."""
+        task = self._zone_job_retries.pop(serial_number, None)
+        if task is not None:
+            task.cancel()
+        self._mower_heard.pop(serial_number, None)
+
+    async def _async_wait_for_report(self, serial_number: str) -> None:
+        """Wait for the mower's next report, or ZONE_JOB_RETRY_WAIT at most."""
+        heard = asyncio.Event()
+        self._mower_heard[serial_number] = heard
+        try:
+            await asyncio.wait_for(heard.wait(), ZONE_JOB_RETRY_WAIT.total_seconds())
+        except TimeoutError:
+            _LOGGER.debug(
+                "%s did not report in within %s", serial_number, ZONE_JOB_RETRY_WAIT
+            )
+        finally:
+            self._mower_heard.pop(serial_number, None)
+
+    def _zone_job_started(
+        self, serial_number: str, command: dict[str, Any], sent_at: datetime
+    ) -> bool:
+        """Return whether the mower's last report shows the job's task."""
+        device = (self.data or {}).get(serial_number)
+        return device is not None and zone_job_task_started(device, command, sent_at)
+
+    async def _async_confirm_zone_job(
+        self,
+        serial_number: str,
+        uuid: str,
+        command_topic: str,
+        command: dict[str, Any],
+        sent_at: datetime,
+    ) -> None:
+        """Confirm an unacknowledged zone job, sending it once more if needed.
+
+        The job counts as received once a report shows its task. Without one,
+        it is sent a second time; if that one does not show up either, a
+        repair issue says the job did not start.
+        """
+        try:
+            for attempt in (1, 2):
+                if not self._zone_job_started(serial_number, command, sent_at):
+                    await self._async_wait_for_report(serial_number)
+                if self._zone_job_started(serial_number, command, sent_at):
+                    _LOGGER.info(
+                        "Zone mowing on %s confirmed by the mower's task list",
+                        serial_number,
+                    )
+                    self._sync_zone_job_issue(serial_number, acknowledged=True)
+                    return
+                if attempt == 2:
+                    break
+                sent_at = datetime.now(UTC)
+                try:
+                    await self._async_publish_command(
+                        uuid, command_topic, command, 1
+                    )
+                except (TimeoutException, NoConnectionError, HomeAssistantError):
+                    continue
+                _LOGGER.info("Zone mowing on %s acknowledged on retry", serial_number)
+                self._sync_zone_job_issue(serial_number, acknowledged=True)
+                await self._async_request_device_update_best_effort(serial_number)
+                return
+
+            _LOGGER.warning(
+                "Zone mowing on %s did not start after a retry", serial_number
+            )
+            self._sync_zone_job_issue(serial_number, acknowledged=False)
+        finally:
+            if self._zone_job_retries.get(serial_number) is asyncio.current_task():
+                self._zone_job_retries.pop(serial_number, None)
+
+    def _sync_zone_job_issue(self, serial_number: str, *, acknowledged: bool) -> None:
+        """Raise or clear the repair issue for a zone job the mower missed."""
+        issue_id = f"zone_mowing_not_acknowledged_{serial_number}"
+        if acknowledged:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+            return
+        device = (self.data or {}).get(serial_number)
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="zone_mowing_not_acknowledged",
+            translation_placeholders={
+                "mower_name": device_display_name(device),
+            },
+        )
 
     async def async_start_one_time_mowing(
         self,

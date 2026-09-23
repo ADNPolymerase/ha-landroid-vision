@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Tondeuse arrêtée hors de sa base ({mower_name})",
       "description": "{mower_name} est arrêtée depuis {minutes} min, hors de sa base et sans charger. Le bouton STOP est peut-être enfoncé, par exemple par un obstacle, ou la tondeuse est bloquée. Elle ne retournera pas se charger seule : vérifiez-la avant que la batterie soit vide."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Tonte de zone non reçue ({mower_name})",
+      "description": "{mower_name} n'a pas accusé réception d'une tonte de zone, ni à l'envoi, ni à la nouvelle tentative envoyée quand la tondeuse a de nouveau donné signe de vie. Elle dort probablement sur sa base ou est hors de portée : la tonte n'a pas démarré. Relancez-la depuis l'app Worx ou Home Assistant. Cette alerte disparaît à la prochaine tonte de zone reçue par la tondeuse."
     }
   },
   "options": {

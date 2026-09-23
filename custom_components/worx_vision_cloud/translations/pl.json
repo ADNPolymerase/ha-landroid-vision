@@ -420,6 +420,10 @@
     "stopped_away_from_base": {
       "title": "Kosiarka zatrzymana poza stacją ({mower_name})",
       "description": "{mower_name} stoi od {minutes} min poza stacją i się nie ładuje. Przycisk STOP może być wciśnięty, na przykład przez przeszkodę, albo kosiarka utknęła. Nie wróci sama do ładowania, więc sprawdź ją, zanim bateria się rozładuje."
+    },
+    "zone_mowing_not_acknowledged": {
+      "title": "Koszenie strefy nie zostało odebrane ({mower_name})",
+      "description": "{mower_name} nie potwierdził zadania koszenia strefy, ani przy wysłaniu, ani przy ponownej próbie wysłanej, gdy kosiarka znów się odezwała. Prawdopodobnie śpi w stacji bazowej lub jest poza zasięgiem, więc koszenie się nie rozpoczęło. Uruchom je ponownie z aplikacji Worx lub Home Assistant. Ten alert zniknie przy następnym zadaniu strefowym potwierdzonym przez kosiarkę."
     }
   },
   "options": {
