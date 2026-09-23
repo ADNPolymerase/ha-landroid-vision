@@ -464,20 +464,6 @@
         }
       }
     },
-    "send_raw_command": {
-      "name": "Ruwe opdracht versturen",
-      "description": "Diagnosehulpmiddel: stuurt een JSON-inhoud ongewijzigd naar de maaier, om een opdracht van de Worx-app na te bootsen. Alleen de vorm wordt gecontroleerd, dus een verkeerde inhoud kan de maaier starten of stoppen.",
-      "fields": {
-        "entity_id": {
-          "name": "Maaier",
-          "description": "De Worx Landroid Vision PLUS maaier-entiteit."
-        },
-        "payload": {
-          "name": "Inhoud",
-          "description": "Het te versturen JSON-object, zonder id, uuid of tm, die automatisch worden toegevoegd."
-        }
-      }
-    },
     "set_rtk_map_id": {
       "name": "RTK-kaart-id instellen",
       "description": "Stelt de gecachte RTK-kaart-id handmatig in wanneer Worx deze niet opnieuw verstuurt. De laatst bekende waarde staat in de geschiedenis van de RTK-kaartsensor en deblokkeert de camera en afhankelijke sensoren direct.",

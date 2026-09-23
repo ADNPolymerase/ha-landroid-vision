@@ -464,20 +464,6 @@
         }
       }
     },
-    "send_raw_command": {
-      "name": "Send raw command",
-      "description": "Diagnostic tool: sends a JSON body to the mower exactly as written, to reproduce a command the Worx app sends. Nothing is checked beyond its form, so a wrong body can start or stop the mower.",
-      "fields": {
-        "entity_id": {
-          "name": "Mower",
-          "description": "The Worx Landroid Vision PLUS lawn mower entity."
-        },
-        "payload": {
-          "name": "Payload",
-          "description": "The JSON object to send, without id, uuid or tm, which are added automatically."
-        }
-      }
-    },
     "set_rtk_map_id": {
       "name": "Set RTK map id",
       "description": "Manually sets the cached RTK map id when Worx does not resend it. Find the last known value in the RTK map sensor's history to unblock the map camera and dependent sensors immediately.",

@@ -464,20 +464,6 @@
         }
       }
     },
-    "send_raw_command": {
-      "name": "Envoyer une commande brute",
-      "description": "Outil de diagnostic : envoie à la tondeuse un corps JSON tel quel, pour reproduire une commande de l'app Worx. Seule sa forme est vérifiée, un corps erroné peut donc démarrer ou arrêter la tondeuse.",
-      "fields": {
-        "entity_id": {
-          "name": "Tondeuse",
-          "description": "L'entité tondeuse Worx Landroid Vision PLUS."
-        },
-        "payload": {
-          "name": "Contenu",
-          "description": "L'objet JSON à envoyer, sans id, uuid ni tm, ajoutés automatiquement."
-        }
-      }
-    },
     "set_rtk_map_id": {
       "name": "Définir l'identifiant de carte RTK",
       "description": "Définit manuellement l'identifiant de carte RTK en cache quand Worx ne le renvoie pas. Retrouvez la dernière valeur connue dans l'historique du capteur Carte RTK pour débloquer immédiatement la caméra de carte et les capteurs dépendants.",

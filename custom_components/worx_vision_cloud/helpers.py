@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from copy import deepcopy
 from datetime import date, datetime, time, timedelta
 from enum import Enum
 import json
@@ -1138,32 +1137,3 @@ def schedule_attributes(
         "time_extension": get_dict_value(schedules, "time_extension"),
         "next_schedule_start": get_dict_value(schedules, "next_schedule_start"),
     }
-
-
-# pyworxcloud stamps every message with these itself; letting a raw payload
-# carry them would let it impersonate another message or another mower.
-RAW_COMMAND_RESERVED_KEYS = frozenset({"id", "uuid", "tm"})
-
-
-def raw_command_payload(value: Any) -> dict[str, Any]:
-    """Return a raw MQTT command body, or raise ValueError.
-
-    Meant for reproducing what the Worx app sends while working out a
-    command, not for everyday use: the body goes to the mower as is. It must
-    be a non-empty JSON object, given as a mapping or as its text, and must
-    not carry the envelope keys pyworxcloud adds on its own.
-    """
-    if isinstance(value, str):
-        try:
-            value = json.loads(value)
-        except ValueError as err:
-            raise ValueError(f"payload is not valid JSON: {err}") from err
-    if not isinstance(value, dict) or not value:
-        raise ValueError("payload must be a non-empty JSON object")
-    reserved = sorted(RAW_COMMAND_RESERVED_KEYS.intersection(value))
-    if reserved:
-        raise ValueError(
-            "payload must not set " + ", ".join(reserved)
-            + ": pyworxcloud adds them itself"
-        )
-    return deepcopy(value)

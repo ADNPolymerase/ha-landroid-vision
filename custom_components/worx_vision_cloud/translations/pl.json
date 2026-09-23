@@ -464,20 +464,6 @@
         }
       }
     },
-    "send_raw_command": {
-      "name": "Wyślij surowe polecenie",
-      "description": "Narzędzie diagnostyczne: wysyła do kosiarki treść JSON bez zmian, aby odtworzyć polecenie aplikacji Worx. Sprawdzana jest tylko forma, więc błędna treść może uruchomić lub zatrzymać kosiarkę.",
-      "fields": {
-        "entity_id": {
-          "name": "Kosiarka",
-          "description": "Encja kosiarki Worx Landroid Vision PLUS."
-        },
-        "payload": {
-          "name": "Treść",
-          "description": "Obiekt JSON do wysłania, bez id, uuid i tm, które są dodawane automatycznie."
-        }
-      }
-    },
     "set_rtk_map_id": {
       "name": "Ustaw identyfikator mapy RTK",
       "description": "Ręcznie ustawia identyfikator mapy RTK w pamięci podręcznej, gdy Worx go nie wysyła. Ostatnią znaną wartość znajdziesz w historii czujnika mapy RTK, aby natychmiast odblokować kamerę mapy i zależne czujniki.",

@@ -6,7 +6,6 @@
 
 - **Send the mower to the zones you pick, the way the Worx app does it.** Watched live on Vision firmware 3.46.0+47 with pyworxcloud's MQTT log at debug level, the app's one-time mowing is `cmd` 1 with a top-level `cut` block: the zones, whether their order is imposed, and the edge routine. The mower answers by creating a new task on those zones, which replaces any task it had on hold, and mows them through before going home. The new `worx_vision_cloud.start_zone_mowing` action sends exactly that: `zones` in mowing order, `zone_order` (`fixed`, the app's Special mode, or `auto`) and `edge_cut`. An automation calling it at a given time is how to schedule a zone job.
   - There is no duration, as in the app. The mower estimates the time left per zone itself, and a zone it had started keeps its progress: sending it back to a half-mowed zone finishes that zone rather than mowing it again.
-- **A diagnostic action sends a raw command to the mower: `worx_vision_cloud.send_raw_command`.** It publishes a JSON object as is, with pyworxcloud adding the `id`, `uuid` and `tm` envelope. The object must be non-empty and may not set those envelope keys. It is how the command above was found, and it stays for the next one: nothing is checked beyond the form of the object, so it is restricted to administrators and every use is logged with its body.
 
 ### Changed
 

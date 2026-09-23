@@ -464,20 +464,6 @@
         }
       }
     },
-    "send_raw_command": {
-      "name": "Send rå kommando",
-      "description": "Diagnoseværktøj: sender et JSON-indhold uændret til robotten for at efterligne en kommando fra Worx-appen. Kun formen kontrolleres, så et forkert indhold kan starte eller stoppe robotten.",
-      "fields": {
-        "entity_id": {
-          "name": "Robotplæneklipper",
-          "description": "Worx Landroid Vision PLUS robotplæneklipper-enheden."
-        },
-        "payload": {
-          "name": "Indhold",
-          "description": "JSON-objektet der sendes, uden id, uuid eller tm, som tilføjes automatisk."
-        }
-      }
-    },
     "set_rtk_map_id": {
       "name": "Angiv RTK-kort-id",
       "description": "Angiver det cachede RTK-kort-id manuelt, når Worx ikke sender det igen. Den senest kendte værdi findes i RTK-kortsensorens historik og frigiver kameraet og afhængige sensorer med det samme.",

@@ -57,19 +57,6 @@ start_zone_mowing:
       selector:
         boolean:
 
-send_raw_command:
-  fields:
-    entity_id:
-      required: true
-      selector:
-        entity:
-          domain: lawn_mower
-    payload:
-      required: true
-      example: '{"cmd": 1}'
-      selector:
-        object:
-
 set_rtk_map_id:
   fields:
     entity_id:

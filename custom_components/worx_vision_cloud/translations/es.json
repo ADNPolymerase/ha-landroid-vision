@@ -464,20 +464,6 @@
         }
       }
     },
-    "send_raw_command": {
-      "name": "Enviar comando sin procesar",
-      "description": "Herramienta de diagnóstico: envía al robot un cuerpo JSON tal cual, para reproducir un comando de la app Worx. Solo se comprueba su forma, así que un cuerpo erróneo puede arrancar o detener el robot.",
-      "fields": {
-        "entity_id": {
-          "name": "Robot cortacésped",
-          "description": "La entidad de robot cortacésped Worx Landroid Vision PLUS."
-        },
-        "payload": {
-          "name": "Contenido",
-          "description": "El objeto JSON que se envía, sin id, uuid ni tm, que se añaden automáticamente."
-        }
-      }
-    },
     "set_rtk_map_id": {
       "name": "Establecer id de mapa RTK",
       "description": "Establece manualmente el id de mapa RTK en caché cuando Worx no lo reenvía. Busque el último valor conocido en el historial del sensor de mapa RTK para desbloquear de inmediato la cámara y los sensores dependientes.",

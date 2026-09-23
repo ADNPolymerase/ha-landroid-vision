@@ -903,37 +903,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 exc_info=True,
             )
 
-    async def async_send_raw_command(
-        self, serial_number: str, payload: dict[str, Any]
-    ) -> None:
-        """Publish one raw command body to the mower, as is.
-
-        A diagnostic escape hatch for reproducing what the Worx app sends:
-        the mower's echo is what tells whether a command shape works, so the
-        body is logged and a state refresh follows, like any other command.
-        """
-        self.raise_if_updating(serial_number)
-        mower = self.cloud.get_mower(serial_number)
-        if not mower.get("online"):
-            raise HomeAssistantError(
-                "The device is currently offline, no action was sent"
-            )
-        command_topic = (mower.get("mqtt_topics") or {}).get("command_in")
-        if command_topic is None:
-            raise HomeAssistantError("Worx command topic is not available")
-
-        _LOGGER.warning(
-            "Sending a raw command to %s, as requested: %s",
-            serial_number,
-            payload,
-        )
-        protocol = mower.get("protocol")
-        identifier = mower.get("uuid") if protocol == 1 else serial_number
-        await self._async_publish_command(
-            identifier or serial_number, command_topic, payload, protocol
-        )
-        await self._async_request_device_update_best_effort(serial_number)
-
     async def async_start_edge_cut(self, serial_number: str) -> None:
         """Start an on-demand edge cutting task."""
         self.raise_if_updating(serial_number)
