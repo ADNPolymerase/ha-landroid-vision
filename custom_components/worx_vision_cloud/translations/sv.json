@@ -467,6 +467,20 @@
         }
       }
     },
+    "send_raw_command": {
+      "name": "Skicka rått kommando",
+      "description": "Diagnosverktyg: skickar ett JSON-innehåll oförändrat till robotgräsklipparen för att efterlikna ett kommando från Worx-appen. Bara formen kontrolleras, så fel innehåll kan starta eller stoppa klipparen.",
+      "fields": {
+        "entity_id": {
+          "name": "Robotgräsklippare",
+          "description": "Worx Landroid Vision PLUS robotgräsklippar-entiteten."
+        },
+        "payload": {
+          "name": "Innehåll",
+          "description": "JSON-objektet som skickas, utan id, uuid eller tm, som läggs till automatiskt."
+        }
+      }
+    },
     "set_rtk_map_id": {
       "name": "Ange RTK-kart-id",
       "description": "Anger det cachade RTK-kart-id:t manuellt när Worx inte skickar om det. Det senast kända värdet finns i RTK-kartsensorns historik och låser upp kameran och beroende sensorer direkt.",

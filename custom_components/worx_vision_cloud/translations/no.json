@@ -467,6 +467,20 @@
         }
       }
     },
+    "send_raw_command": {
+      "name": "Send rå kommando",
+      "description": "Diagnoseverktøy: sender et JSON-innhold uendret til robotklipperen for å etterligne en kommando fra Worx-appen. Bare formen kontrolleres, så feil innhold kan starte eller stoppe klipperen.",
+      "fields": {
+        "entity_id": {
+          "name": "Robotklipper",
+          "description": "Worx Landroid Vision PLUS robotklipper-enheten."
+        },
+        "payload": {
+          "name": "Innhold",
+          "description": "JSON-objektet som sendes, uten id, uuid eller tm, som legges til automatisk."
+        }
+      }
+    },
     "set_rtk_map_id": {
       "name": "Sett RTK-kart-id",
       "description": "Setter den mellomlagrede RTK-kart-id-en manuelt når Worx ikke sender den på nytt. Den sist kjente verdien finnes i RTK-kartsensorens historikk og låser opp kameraet og avhengige sensorer umiddelbart.",

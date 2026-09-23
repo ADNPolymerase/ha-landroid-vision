@@ -467,6 +467,20 @@
         }
       }
     },
+    "send_raw_command": {
+      "name": "Rohbefehl senden",
+      "description": "Diagnosewerkzeug: sendet einen JSON-Inhalt unverändert an den Mäher, um einen Befehl der Worx-App nachzubilden. Nur die Form wird geprüft, ein falscher Inhalt kann den Mäher starten oder stoppen.",
+      "fields": {
+        "entity_id": {
+          "name": "Mäher",
+          "description": "Die Worx Landroid Vision PLUS Mäher-Entität."
+        },
+        "payload": {
+          "name": "Inhalt",
+          "description": "Das zu sendende JSON-Objekt, ohne id, uuid oder tm, die automatisch ergänzt werden."
+        }
+      }
+    },
     "set_rtk_map_id": {
       "name": "RTK-Karten-ID setzen",
       "description": "Setzt die zwischengespeicherte RTK-Karten-ID manuell, wenn Worx sie nicht erneut sendet. Der letzte bekannte Wert steht im Verlauf des RTK-Karten-Sensors und gibt Kamera und abhängige Sensoren sofort wieder frei.",

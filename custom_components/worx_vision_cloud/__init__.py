@@ -39,6 +39,7 @@ from .const import (
     ATTR_MOWER_NOTES,
     ATTR_RUNTIME,
     ATTR_START_AT,
+    ATTR_PAYLOAD,
     ATTR_VERSION,
     ATTR_ZONES,
     CONF_CLOUD,
@@ -53,9 +54,10 @@ from .const import (
     SERVICE_SET_RTK_MAP_ID,
     SERVICE_START_ONE_TIME_MOWING,
     SERVICE_START_ZONE_MOWING,
+    SERVICE_SEND_RAW_COMMAND,
 )
 from .coordinator import WorxVisionCoordinator
-from .helpers import device_entry_by_identifier
+from .helpers import device_entry_by_identifier, raw_command_payload
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -97,6 +99,22 @@ SET_RTK_MAP_ID_SCHEMA = vol.Schema(
         vol.Required(ATTR_MAP_ID): vol.All(cv.string, vol.Match(RTK_MAP_ID_REGEX)),
     }
 )
+
+def _service_raw_payload(value: Any) -> dict[str, Any]:
+    """Validate a raw command body for the service schema."""
+    try:
+        return raw_command_payload(value)
+    except ValueError as err:
+        raise vol.Invalid(str(err)) from err
+
+
+SEND_RAW_COMMAND_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+        vol.Required(ATTR_PAYLOAD): _service_raw_payload,
+    }
+)
+
 
 # Notes are free text pasted from the Worx account portal, so nothing is
 # validated beyond requiring the mower and at least one of the two bodies.
@@ -324,7 +342,16 @@ def _async_setup_services(hass: HomeAssistant) -> None:
             call.data.get(ATTR_HEAD_NOTES),
         )
 
-    # Admin-only: one starts the blades, the others rewrite persisted state.
+    async def async_send_raw_command(call) -> None:
+        serial_number, runtime_data = _resolve_mower_runtime(
+            hass, call.data[ATTR_ENTITY_ID]
+        )
+        await runtime_data.coordinator.async_send_raw_command(
+            serial_number, call.data[ATTR_PAYLOAD]
+        )
+
+    # Admin-only: two start the blades, one sends anything at all, the
+    # others rewrite persisted state.
     async_register_admin_service(
         hass,
         DOMAIN,
@@ -338,6 +365,13 @@ def _async_setup_services(hass: HomeAssistant) -> None:
         SERVICE_START_ZONE_MOWING,
         async_start_zone_mowing,
         schema=START_ZONE_MOWING_SCHEMA,
+    )
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_SEND_RAW_COMMAND,
+        async_send_raw_command,
+        schema=SEND_RAW_COMMAND_SCHEMA,
     )
     async_register_admin_service(
         hass,

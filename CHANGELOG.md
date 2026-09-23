@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.8.4 - 2026-09-23
+
+### Added
+
+- **A diagnostic action sends a raw command to the mower: `worx_vision_cloud.send_raw_command`.** It takes the `lawn_mower` entity and a JSON object, and publishes that object as is, with pyworxcloud adding the `id`, `uuid` and `tm` envelope as for any other command. The object may be given as a mapping or as JSON text; anything else, an empty object, or an object setting `id`, `uuid` or `tm` is refused before anything is sent. Like the other actions that move the mower, it is restricted to administrators, and each use is written to the log with its body.
+  - It exists to reproduce what the Worx app sends. Watched on 23 September with pyworxcloud's MQTT log at debug level, the app's one-time mowing does not go through the schedule's `once` block, which is what this integration sends: it arrives as a top-level `cut` block (`{"b": 1, "z": [2], "zo": 1}` for zone 2, zone order fixed, edge routine on), carries no duration, and starts a new task that replaces the one the mower had on hold. The echo does not show which `cmd` came with it, and this action is how to find out.
+  - It is not meant for everyday use: nothing is checked beyond the form of the object, so a wrong body can start the blades or send the mower home.
+
 ## 2.8.3 - 2026-09-23
 
 ### Fixed
