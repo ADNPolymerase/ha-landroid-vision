@@ -1,10 +1,21 @@
 # Changelog
 
+## 3.0.1 - 2026-09-24
+
+### Documentation
+
+- **A README in French**, `README.fr.md`, linked from the English one.
+- **The card lives in this repository**, and `CONTRIBUTING.md` says how to edit it and run its tests.
+
+### Changed
+
+- **Browsers pick up the latest card.** The card's resource carries the integration version, so this release moves it to `?v=3.0.1` and every browser loads the card again rather than keeping a cached copy of an earlier 3.0.0 build.
+
 ## 3.0.0 - 2026-09-23
 
 ### Breaking changes
 
-- **The integration now manages the card's Lovelace resource itself.** On start, it leaves a single module resource, `/worx_vision_cloud_frontend/worx-vision-card.js`, versioned with the integration. Any other resource loading `worx-vision-card.js` is removed, including the one HACS added for the standalone Worx Landroid Vision Card: both would load the same card and fight over its name. If you installed that card through HACS, uninstall it there, or HACS may add its resource back on its next update. Nothing is ever written when Lovelace resources are managed in YAML: a warning in the log gives the URL to add yourself.
+- **The integration now manages the card's Lovelace resource itself.** On start, it leaves a single module resource, `/worx_vision_cloud_frontend/worx-vision-card.js`, versioned with the integration. Any other resource loading `worx-vision-card.js` is removed, so two copies never fight over the card's name. Nothing is ever written when Lovelace resources are managed in YAML: a warning in the log gives the URL to add yourself.
 - **`lovelace/worx-map-rtk-card.js` is gone from this repository**, replaced by the card below. A resource still pointing at it is removed on start, and dashboards using `custom:worx-map-rtk-card` or `custom:worx-map-rtk-info-card` keep showing the map, now drawn by the new card.
 
 ### Added

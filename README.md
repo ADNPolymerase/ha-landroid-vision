@@ -16,6 +16,8 @@
 
 Custom Home Assistant integration for Worx Landroid Vision / Vision Cloud / RTK mowers.
 
+> 🇫🇷 [Lire en français](README.fr.md)
+
 This integration is built on top of the community `pyworxcloud` library and adds a cleaner Home Assistant entity layer for Vision mowers: mower controls, useful sensors, diagnostics, schedule calendar, RTK map rendering and live-ish robot position tracking.
 
 ## Features
@@ -99,7 +101,7 @@ entity: lawn_mower.your_mower
 
 Only `entity` is needed, the card finds the other entities of the same mower by itself, so renaming them does not break it. Optional: `title`, `show_info`, `show_controls`, `show_map`, `show_zones`, `show_schedule`, `show_blades` (all `true` by default) and `refresh_interval` for the map, in seconds (30 by default, 0 to turn it off). On an older Landroid with no RTK map and no zones, the card shows the state, the controls and the schedule.
 
-The card lives in this repository, in `custom_components/worx_vision_cloud/worx-vision-card.js`. If you installed the former standalone Worx Landroid Vision Card through HACS, uninstall it there and remove its custom repository: the integration now registers its own copy and removes the HACS resource on start, but HACS may add it back on its next update, and both files would compete for the same card name.
+The card lives in this repository, in `custom_components/worx_vision_cloud/worx-vision-card.js`.
 
 The card replaces `worx-map-rtk-card.js`, which is no longer in this repository. A Lovelace resource pointing at it is removed automatically, and dashboards still using `custom:worx-map-rtk-card` keep showing the map, now drawn by the new card.
 
