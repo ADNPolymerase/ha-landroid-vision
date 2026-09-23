@@ -9,16 +9,17 @@
 
 ### Added
 
-- **A card of its own, installed with the integration.** The Worx Landroid Vision card, version 0.1.8 of [ha-landroid-vision-card](https://github.com/ADNPolymerase/ha-landroid-vision-card), is served by the integration and registered on start, so there is nothing to download or add by hand: reload the browser and pick it in the card list. Only the `lawn_mower` entity is needed: the card finds the rest of the mower through its device, so renamed entities do not break it. It shows:
+- **A card of its own, installed with the integration.** The Worx Landroid Vision card, version 0.1.9 of [ha-landroid-vision-card](https://github.com/ADNPolymerase/ha-landroid-vision-card), is served by the integration and registered on start, so there is nothing to download or add by hand: reload the browser and pick it in the card list. Only the `lawn_mower` entity is needed: the card finds the rest of the mower through its device, so renamed entities do not break it. It shows:
   - **the detailed state**, "searching zone" or "border crossing" rather than just "mowing", with the zone the mower is in and the battery;
   - **the Wi-Fi signal next to the battery and the mowing readiness**, and a red banner with the current error and since when, only when there is one;
+  - **a light blue rain banner** while the mower waits because of rain, with the time left before it can go out again and the rain delay set. Rain is a wait, not a fault, so it is not shown as a red error;
   - **start, pause and dock**, through the standard `lawn_mower` actions, and a **party mode** button under the battery: while it is on, a banner says the mower will not go out, even during the schedule;
   - **the RTK map** with the day's trail;
   - **one-time mowing as in the Worx app**: tick the zones, shown side by side, keep the order they were ticked in (Special) or let the mower choose (Auto), add the edge cut or not, and start. It calls `worx_vision_cloud.start_zone_mowing`, with no duration;
   - **the weekly schedule received from the cloud**, folded under the slot running now, or the next mowing time otherwise, and unfolded day by day with each slot's zones, order and edge cut;
   - **the mower's current blade time**, as in the Worx app, with progress toward the blade service threshold set in the integration, and a reset button that asks for confirmation first.
 
-  A click on the state, the zone, the battery, the Wi-Fi, the readiness, the error or the map opens Home Assistant's more-info dialog, with its history. On an older Landroid, with no map and no zones, the card shows the state, the controls and the schedule. Translated into the same eleven languages as the integration.
+  A click on the state, the zone, the battery, the Wi-Fi, the readiness, the error, the rain banner or the map opens Home Assistant's more-info dialog, with its history. On an older Landroid, with no map and no zones, the card shows the state, the controls and the schedule. Translated into the same eleven languages as the integration.
 
 - **The robot on the RTK map points where the mower is heading.** It was always drawn facing up. It is now seen from above, with a chevron at its nose, turned to the mower's heading. The heading comes from the yaw the mower reports, which turned out to be measured counter-clockwise from east: watched on a Vision Cloud mowing parallel lanes, the yaw swung between two values 180 degrees apart, and the lanes drawn on the map run at 90 minus that yaw, on both zones. The same yaw sits 90 degrees ahead of the lane angle set in the Worx app. Without a usable yaw, the robot is drawn as before.
 

@@ -18,6 +18,7 @@ const UNUSABLE = ["unknown", "unavailable"];
 const I18N = {
   en: {
     party: "Party mode", party_banner: "Party mode: the mower will not go out, even during the schedule.",
+    rain_banner: "Rain detected", rain_resume: "Can resume in {d}", rain_delay_of: "{d} rain delay", rain_wait: "The mower waits for the rain to stop",
     now_slot: "Current slot: {range}",
     blades: "Blades", reset: "Reset", reset_title: "Reset the blade time to zero?", reset_body: "Only after replacing the blades. The current {time} will be lost.", cancel: "Cancel", of_threshold: "{pct} % of the service threshold ({h} h)", replaced_on: "replaced {date}", since: "Since {time}", ago: "{d} ago", ed_show_blades: "Blades",
     schedule: "Schedule", next: "Next", no_slots: "No mowing slot", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, readiness and errors", ed_show_schedule: "Schedule",
@@ -32,6 +33,7 @@ const I18N = {
   },
   fr: {
     party: "Mode festif", party_banner: "Mode festif : la tondeuse ne sortira pas, même pendant le programme.",
+    rain_banner: "Pluie détectée", rain_resume: "Reprise possible dans {d}", rain_delay_of: "délai pluie de {d}", rain_wait: "La tondeuse attend la fin de la pluie",
     now_slot: "Créneau en cours : {range}",
     blades: "Lames", reset: "Réinitialiser", reset_title: "Remettre le temps des lames à zéro ?", reset_body: "À faire seulement après avoir changé les lames. Les {time} actuelles seront perdues.", cancel: "Annuler", of_threshold: "{pct} % du seuil d'entretien ({h} h)", replaced_on: "changées le {date}", since: "Depuis {time}", ago: "il y a {d}", ed_show_blades: "Lames",
     schedule: "Programme", next: "Prochaine", no_slots: "Aucun créneau de tonte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, aptitude et erreurs", ed_show_schedule: "Programme",
@@ -46,6 +48,7 @@ const I18N = {
   },
   de: {
     party: "Partymodus", party_banner: "Partymodus: Der Mäher fährt nicht los, auch nicht während des Zeitplans.",
+    rain_banner: "Regen erkannt", rain_resume: "Weiter möglich in {d}", rain_delay_of: "Regenverzögerung {d}", rain_wait: "Der Mäher wartet, bis der Regen aufhört",
     now_slot: "Aktuelles Zeitfenster: {range}",
     blades: "Messer", reset: "Zurücksetzen", reset_title: "Messerzeit auf null setzen?", reset_body: "Nur nach dem Messerwechsel. Die aktuellen {time} gehen verloren.", cancel: "Abbrechen", of_threshold: "{pct} % der Wartungsschwelle ({h} h)", replaced_on: "gewechselt am {date}", since: "Seit {time}", ago: "vor {d}", ed_show_blades: "Messer",
     schedule: "Zeitplan", next: "Nächste", no_slots: "Kein Mähzeitraum", wifi: "WLAN", ed_show_info: "WLAN, Mähbereitschaft und Fehler", ed_show_schedule: "Zeitplan",
@@ -60,6 +63,7 @@ const I18N = {
   },
   es: {
     party: "Modo fiesta", party_banner: "Modo fiesta: el cortacésped no saldrá, ni siquiera durante el programa.",
+    rain_banner: "Lluvia detectada", rain_resume: "Puede reanudar en {d}", rain_delay_of: "retraso por lluvia de {d}", rain_wait: "El cortacésped espera a que pare la lluvia",
     now_slot: "Franja actual: {range}",
     blades: "Cuchillas", reset: "Restablecer", reset_title: "¿Poner a cero el tiempo de las cuchillas?", reset_body: "Solo tras cambiar las cuchillas. Se perderán las {time} actuales.", cancel: "Cancelar", of_threshold: "{pct} % del umbral de mantenimiento ({h} h)", replaced_on: "cambiadas el {date}", since: "Desde {time}", ago: "hace {d}", ed_show_blades: "Cuchillas",
     schedule: "Programa", next: "Próximo", no_slots: "Ningún tramo de corte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, disponibilidad y errores", ed_show_schedule: "Programa",
@@ -74,6 +78,7 @@ const I18N = {
   },
   it: {
     party: "Modalità festa", party_banner: "Modalità festa: il robot non uscirà, nemmeno durante il programma.",
+    rain_banner: "Pioggia rilevata", rain_resume: "Può ripartire tra {d}", rain_delay_of: "ritardo pioggia di {d}", rain_wait: "Il robot aspetta che smetta di piovere",
     now_slot: "Fascia in corso: {range}",
     blades: "Lame", reset: "Azzera", reset_title: "Azzerare il tempo delle lame?", reset_body: "Solo dopo aver cambiato le lame. Le {time} attuali andranno perse.", cancel: "Annulla", of_threshold: "{pct} % della soglia di manutenzione ({h} h)", replaced_on: "cambiate il {date}", since: "Dalle {time}", ago: "{d} fa", ed_show_blades: "Lame",
     schedule: "Programma", next: "Prossimo", no_slots: "Nessuna fascia di taglio", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, disponibilità ed errori", ed_show_schedule: "Programma",
@@ -88,6 +93,7 @@ const I18N = {
   },
   nl: {
     party: "Feestmodus", party_banner: "Feestmodus: de maaier gaat niet naar buiten, ook niet tijdens het schema.",
+    rain_banner: "Regen gedetecteerd", rain_resume: "Kan hervatten over {d}", rain_delay_of: "regenvertraging van {d}", rain_wait: "De maaier wacht tot de regen stopt",
     now_slot: "Huidige periode: {range}",
     blades: "Messen", reset: "Resetten", reset_title: "Messentijd op nul zetten?", reset_body: "Alleen na het vervangen van de messen. De huidige {time} gaan verloren.", cancel: "Annuleren", of_threshold: "{pct} % van de onderhoudsdrempel ({h} u)", replaced_on: "vervangen op {date}", since: "Sinds {time}", ago: "{d} geleden", ed_show_blades: "Messen",
     schedule: "Schema", next: "Volgende", no_slots: "Geen maaiperiode", wifi: "Wifi", ed_show_info: "Wifi, maaigereedheid en fouten", ed_show_schedule: "Schema",
@@ -102,6 +108,7 @@ const I18N = {
   },
   pl: {
     party: "Tryb imprezy", party_banner: "Tryb imprezy: kosiarka nie wyjedzie, nawet w czasie harmonogramu.",
+    rain_banner: "Wykryto deszcz", rain_resume: "Wznowienie możliwe za {d}", rain_delay_of: "opóźnienie deszczowe {d}", rain_wait: "Kosiarka czeka, aż przestanie padać",
     now_slot: "Bieżące okno: {range}",
     blades: "Noże", reset: "Resetuj", reset_title: "Wyzerować czas pracy noży?", reset_body: "Tylko po wymianie noży. Obecne {time} zostaną utracone.", cancel: "Anuluj", of_threshold: "{pct} % progu serwisowego ({h} h)", replaced_on: "wymienione {date}", since: "Od {time}", ago: "{d} temu", ed_show_blades: "Noże",
     schedule: "Harmonogram", next: "Następne", no_slots: "Brak okien koszenia", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, gotowość i błędy", ed_show_schedule: "Harmonogram",
@@ -116,6 +123,7 @@ const I18N = {
   },
   ru: {
     party: "Режим вечеринки", party_banner: "Режим вечеринки: косилка не выедет, даже по расписанию.",
+    rain_banner: "Обнаружен дождь", rain_resume: "Возобновление через {d}", rain_delay_of: "задержка из-за дождя {d}", rain_wait: "Косилка ждёт, пока закончится дождь",
     now_slot: "Текущий интервал: {range}",
     blades: "Ножи", reset: "Сбросить", reset_title: "Обнулить время работы ножей?", reset_body: "Только после замены ножей. Текущие {time} будут потеряны.", cancel: "Отмена", of_threshold: "{pct} % порога обслуживания ({h} ч)", replaced_on: "заменены {date}", since: "С {time}", ago: "{d} назад", ed_show_blades: "Ножи",
     schedule: "Расписание", next: "Следующее", no_slots: "Нет интервалов кошения", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, готовность и ошибки", ed_show_schedule: "Расписание",
@@ -130,6 +138,7 @@ const I18N = {
   },
   sv: {
     party: "Festläge", party_banner: "Festläge: klipparen kör inte ut, inte ens under schemat.",
+    rain_banner: "Regn upptäckt", rain_resume: "Kan återuppta om {d}", rain_delay_of: "regnfördröjning {d}", rain_wait: "Klipparen väntar tills regnet slutar",
     now_slot: "Pågående tid: {range}",
     blades: "Knivar", reset: "Återställ", reset_title: "Nollställa knivtiden?", reset_body: "Bara efter knivbyte. Nuvarande {time} går förlorade.", cancel: "Avbryt", of_threshold: "{pct} % av servicegränsen ({h} h)", replaced_on: "bytta {date}", since: "Sedan {time}", ago: "för {d} sedan", ed_show_blades: "Knivar",
     schedule: "Schema", next: "Nästa", no_slots: "Inga klipptider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, klippberedskap och fel", ed_show_schedule: "Schema",
@@ -144,6 +153,7 @@ const I18N = {
   },
   no: {
     party: "Festmodus", party_banner: "Festmodus: klipperen kjører ikke ut, heller ikke i tidsplanen.",
+    rain_banner: "Regn oppdaget", rain_resume: "Kan fortsette om {d}", rain_delay_of: "regnforsinkelse {d}", rain_wait: "Klipperen venter til regnet stopper",
     now_slot: "Pågående tid: {range}",
     blades: "Kniver", reset: "Tilbakestill", reset_title: "Nullstille knivtiden?", reset_body: "Bare etter knivbytte. Nåværende {time} går tapt.", cancel: "Avbryt", of_threshold: "{pct} % av servicegrensen ({h} t)", replaced_on: "byttet {date}", since: "Siden {time}", ago: "for {d} siden", ed_show_blades: "Kniver",
     schedule: "Tidsplan", next: "Neste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, klarhet og feil", ed_show_schedule: "Tidsplan",
@@ -158,6 +168,7 @@ const I18N = {
   },
   da: {
     party: "Festtilstand", party_banner: "Festtilstand: robotten kører ikke ud, heller ikke i tidsplanen.",
+    rain_banner: "Regn registreret", rain_resume: "Kan genoptage om {d}", rain_delay_of: "regnforsinkelse {d}", rain_wait: "Robotten venter, til regnen stopper",
     now_slot: "Igangværende tid: {range}",
     blades: "Knive", reset: "Nulstil", reset_title: "Nulstille knivtiden?", reset_body: "Kun efter knivskift. De nuværende {time} går tabt.", cancel: "Annuller", of_threshold: "{pct} % af servicegrænsen ({h} t)", replaced_on: "skiftet {date}", since: "Siden {time}", ago: "for {d} siden", ed_show_blades: "Knive",
     schedule: "Tidsplan", next: "Næste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, klarhed og fejl", ed_show_schedule: "Tidsplan",
@@ -287,6 +298,8 @@ function resolveEntities(hass, entityId) {
     nextSchedule: find("sensor", "next_schedule"),
     calendar: find("calendar", "schedule"),
     party: find("switch", "party_mode"),
+    rainRemaining: find("sensor", "rain_remaining"),
+    rainDelay: find("number", "rain_delay_minutes"),
     maintenance: find("sensor", "maintenance_status"),
     bladeCurrent: find("sensor", "blade_runtime_current"),
     bladeReset: find("button", "reset_blade_counter"),
@@ -462,12 +475,13 @@ class WorxVisionCard extends HTMLElement {
       ? [ents.mower, ents.status, ents.battery, ents.zoneCurrent, ents.camera, ents.zoneSelect,
         ents.rssi, ents.readiness, ents.error, ents.schedule, ents.nextSchedule,
         ents.maintenance, ents.bladeReset, ents.calendar, ents.party, ents.bladeCurrent,
+        ents.rainRemaining, ents.rainDelay,
         ...ents.zones.flatMap((z) => [z.pattern, z.angle])]
       : [this._config.entity];
     const snap = ids.filter(Boolean).map((id) => {
       const s = states[id];
       return s ? [id, s.state, s.attributes?.entity_picture, s.attributes?.charging,
-        s.attributes?.supported_features, s.attributes?.zone_name, s.attributes?.by_day,
+        s.attributes?.supported_features, s.attributes?.rain_delay, s.attributes?.zone_name, s.attributes?.by_day,
         s.attributes?.blade_runtime_since_reset, s.attributes?.blade_service_threshold_minutes,
         s.attributes?.blade_runtime_reset_at, s.attributes?.start_time, s.attributes?.end_time,
         s.last_changed] : [id];
@@ -507,6 +521,7 @@ class WorxVisionCard extends HTMLElement {
     return [
       ents.mower ? this._header(ents) : "",
       ents.mower && this._show("show_info") ? this._errorBanner(ents) : "",
+      ents.mower && this._show("show_info") ? this._rainBanner(ents) : "",
       ents.mower && this._show("show_info") ? this._partyBanner(ents) : "",
       ents.mower && this._show("show_info") ? this._info(ents) : "",
       ents.mower && this._show("show_controls") ? this._controls(ents) : "",
@@ -569,6 +584,34 @@ class WorxVisionCard extends HTMLElement {
       + `<span>${escapeHtml(t(this._hass, "party_banner"))}</span></div>`;
   }
 
+  /** Whether the mower is held back by rain, from any of the places saying so. */
+  _raining(ents) {
+    const states = this._hass.states;
+    return states[ents.mower]?.attributes?.rain_delay === true
+      || states[ents.error]?.state === "rain_delay"
+      || states[ents.status]?.state === "rain_delay";
+  }
+
+  _rainBanner(ents) {
+    const hass = this._hass;
+    if (!this._raining(ents)) return "";
+    const remaining = durationMinutes(hass.states[ents.rainRemaining]);
+    const delay = durationMinutes(hass.states[ents.rainDelay]);
+    let detail;
+    if (remaining > 0) {
+      detail = t(hass, "rain_resume", { d: formatMinutes(remaining) });
+      if (delay > 0) detail += ` · ${t(hass, "rain_delay_of", { d: formatMinutes(delay) })}`;
+    } else {
+      detail = t(hass, "rain_wait");
+    }
+    const target = ents.rainRemaining || ents.rainDelay || ents.mower;
+    return `<div class="rain-banner link"${moreInfo(target)}>`
+      + `<ha-icon icon="mdi:weather-pouring"></ha-icon><div>`
+      + `<div class="rain-title">${escapeHtml(t(hass, "rain_banner"))}</div>`
+      + `<div class="rain-detail">${escapeHtml(detail)}</div>`
+      + `</div></div>`;
+  }
+
   _wifi(ents) {
     const hass = this._hass;
     const rssiObj = hass.states[ents.rssi];
@@ -584,9 +627,11 @@ class WorxVisionCard extends HTMLElement {
     const chips = [];
     const readyObj = hass.states[ents.readiness];
     const errorObj = hass.states[ents.error];
-    const bannerShown = usable(errorObj) && errorObj.state !== "no_error";
-    // The error banner already says it: a readiness of "error" would repeat it.
-    if (usable(readyObj) && !(bannerShown && readyObj.state === "error")) {
+    const bannerShown = usable(errorObj) && errorObj.state !== "no_error" && errorObj.state !== "rain_delay";
+    const raining = this._raining(ents);
+    // A banner already says it: a readiness of "error" or "rain_delay" would repeat it.
+    if (usable(readyObj) && !(bannerShown && readyObj.state === "error")
+      && !(raining && readyObj.state === "rain_delay")) {
       const ok = readyObj.state === "ready" || readyObj.state === "mowing" || readyObj.state === "charging";
       chips.push(`<span class="chip link ${ok ? "good" : "warn"}"${moreInfo(ents.readiness)}>`
         + `<ha-icon icon="${ok ? "mdi:check-circle-outline" : "mdi:alert-outline"}"></ha-icon>`
@@ -598,7 +643,8 @@ class WorxVisionCard extends HTMLElement {
   _errorBanner(ents) {
     const hass = this._hass;
     const errorObj = hass.states[ents.error];
-    if (!usable(errorObj) || errorObj.state === "no_error") return "";
+    // Rain is a wait, not a fault: the rain banner shows it instead.
+    if (!usable(errorObj) || errorObj.state === "no_error" || errorObj.state === "rain_delay") return "";
     let when = "";
     const since = Date.parse(errorObj.last_changed);
     if (Number.isFinite(since)) {
@@ -926,6 +972,10 @@ const STYLES = `
     border: 1px solid transparent; }
   .party ha-icon { --mdc-icon-size: 16px; width: 16px; height: 16px; }
   .party.on { background: rgba(21, 101, 192, 0.14); color: #1565c0; border-color: #1565c0; }
+  .rain-banner { display: flex; gap: 10px; align-items: center; margin: 0 16px 10px; padding: 10px 12px;
+    border-radius: 10px; background: rgba(3, 169, 244, 0.12); color: #0277bd; border: 1px solid #03a9f4; }
+  .rain-title { font-weight: 500; }
+  .rain-detail { font-size: 0.85em; }
   .party-banner { display: flex; gap: 8px; align-items: center; margin: 0 16px 10px; padding: 8px 12px;
     border-radius: 10px; background: rgba(21, 101, 192, 0.12); color: #1565c0; font-size: 0.9em; }
   .corner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }

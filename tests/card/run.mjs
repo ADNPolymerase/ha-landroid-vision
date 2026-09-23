@@ -72,6 +72,8 @@ function makeHass(overrides = {}) {
       "switch.robot_fete": reg("switch.robot_fete", "dev1", "party_mode"),
       "sensor.robot_lames": reg("sensor.robot_lames", "dev1", "blade_runtime_current"),
       "button.robot_reset_blades": reg("button.robot_reset_blades", "dev1", "reset_blade_counter"),
+      "sensor.robot_pluie": reg("sensor.robot_pluie", "dev1", "rain_remaining"),
+      "number.robot_delai": reg("number.robot_delai", "dev1", "rain_delay_minutes"),
       // Other mower's zone: must not leak into dev1's list.
       "sensor.old_p": reg("sensor.old_p", "dev4", "zone_mowing_pattern"),
       "lawn_mower.old": reg("lawn_mower.old", "dev2", undefined),
@@ -112,6 +114,8 @@ function makeHass(overrides = {}) {
       "button.robot_reset_blades": st("unknown"),
       "switch.robot_fete": st("off"),
       "sensor.robot_lames": st("380", { unit_of_measurement: "min" }),
+      "sensor.robot_pluie": st("0", { unit_of_measurement: "min" }),
+      "number.robot_delai": st("180", { unit_of_measurement: "min" }),
       "number.robot_odd": st("7", { zone_id: 5, zone_name: "Odd" }),
       "sensor.robot_other_status": st("WRONG_STATUS"),
       "sensor.old_p": st("checker", { zone_id: 9, zone_name: "Elsewhere" }),
@@ -670,6 +674,97 @@ const flush = () => new Promise((r) => setImmediate(r));
   const onKey = listeners.find(([type]) => type === "keydown")?.[1];
   onKey?.({ key: "Enter", composedPath: () => [{ dataset: { action: "zone", zone: "2" } }] });
   check("Enter toggles a zone", card._selected.join(","), "1,2");
+}
+
+// ── rain banner ─────────────────────────────────────────────────────────────
+
+function rainy(extra = {}) {
+  const hass = makeHass(extra);
+  hass.states["lawn_mower.robot"] = st("docked", { supported_features: 7, rain_delay: true });
+  hass.states["sensor.robot_pluie"] = st("155", { unit_of_measurement: "min" });
+  return hass;
+}
+
+{
+  const dry = markup(make({ entity: "lawn_mower.robot" }));
+  check("no rain banner without rain", dry.includes('class="rain-banner'), false);
+
+  const hass = rainy();
+  const html = markup(make({ entity: "lawn_mower.robot" }, hass));
+  contains("rain banner title", html, '<div class="rain-title">Rain detected</div>');
+  contains("time left and the delay set", html, "Can resume in 2 h 35 · 3 h 00 rain delay");
+  contains("banner opens the remaining delay history", html, 'class="rain-banner link" data-action="more-info" data-entity="sensor.robot_pluie"');
+  check("banner comes before the controls", html.indexOf('class="rain-banner') < html.indexOf('class="controls"'), true);
+
+  const errOnly = makeHass();
+  errOnly.states["sensor.robot_err"] = { state: "rain_delay", attributes: {}, last_changed: "2026-01-15T19:00:00Z" };
+  const errHtml = markup(make({ entity: "lawn_mower.robot" }, errOnly));
+  check("rain is not shown as a red error", errHtml.includes('class="error-banner'), false);
+  contains("error state alone raises the rain banner", errHtml, "Rain detected");
+
+  const statusOnly = makeHass();
+  statusOnly.states["sensor.robot_etat"] = st("rain_delay");
+  contains("status alone raises the rain banner", markup(make({ entity: "lawn_mower.robot" }, statusOnly)), "Rain detected");
+
+  const waiting = rainy();
+  waiting.states["sensor.robot_pluie"] = st("0", { unit_of_measurement: "min" });
+  contains("no countdown yet: waits for the rain to stop", markup(make({ entity: "lawn_mower.robot" }, waiting)), "The mower waits for the rain to stop");
+
+  const noDelay = rainy();
+  noDelay.states["number.robot_delai"] = st("unavailable");
+  const noDelayHtml = markup(make({ entity: "lawn_mower.robot" }, noDelay));
+  contains("countdown without the delay setting", noDelayHtml, "Can resume in 2 h 35</div>");
+
+  const hours = rainy();
+  hours.states["sensor.robot_pluie"] = st("2.5", { unit_of_measurement: "h" });
+  contains("remaining shown in hours is converted", markup(make({ entity: "lawn_mower.robot" }, hours)), "Can resume in 2 h 30");
+
+  const both = rainy();
+  both.states["sensor.robot_err"] = { state: "lifted", attributes: {}, last_changed: "2026-01-15T19:00:00Z" };
+  const bothHtml = markup(make({ entity: "lawn_mower.robot" }, both));
+  contains("a real error stays red next to the rain", bothHtml, 'class="error-banner');
+  contains("and the rain banner still shows", bothHtml, 'class="rain-banner');
+
+  const chip = rainy();
+  chip.states["sensor.robot_apte"] = st("rain_delay");
+  check("readiness 'rain_delay' not repeated under the banner", markup(make({ entity: "lawn_mower.robot" }, chip)).includes("F(rain_delay)"), false);
+
+  check("no rain banner with show_info off", markup(make({ entity: "lawn_mower.robot", show_info: false }, rainy())).includes('class="rain-banner'), false);
+
+  const card = make({ entity: "lawn_mower.robot" }, rainy());
+  const later = rainy();
+  later.states["sensor.robot_pluie"] = st("20", { unit_of_measurement: "min" });
+  card.hass = later;
+  contains("countdown follows the sensor", markup(card), "Can resume in 20 min");
+  const cleared = makeHass();
+  card.hass = cleared;
+  check("banner goes when the rain delay ends", markup(card).includes('class="rain-banner'), false);
+
+  const starting = make({ entity: "lawn_mower.robot" });
+  const firstDrop = makeHass();
+  firstDrop.states["lawn_mower.robot"] = st("docked", { supported_features: 7, rain_delay: true });
+  starting.hass = firstDrop;
+  contains("banner appears when only the mower's rain flag changes", markup(starting), "The mower waits for the rain to stop");
+
+  const old = makeHass();
+  old.states["sensor.old_status"] = st("rain_delay");
+  const oldHtml = markup(make({ entity: "lawn_mower.old" }, old));
+  contains("mower without rain sensors still gets the banner", oldHtml, "The mower waits for the rain to stop");
+  contains("and it opens the mower", oldHtml, 'class="rain-banner link" data-action="more-info" data-entity="lawn_mower.old"');
+
+  for (const lang of ["da", "de", "en", "es", "fr", "it", "nl", "no", "pl", "ru", "sv"]) {
+    const table = Card.I18N[lang];
+    const h = rainy({ language: lang, locale: { language: lang } });
+    const out = markup(make({ entity: "lawn_mower.robot" }, h));
+    const title = table.rain_banner;
+    const detail = `${table.rain_resume.replace("{d}", "2 h 35")} · ${table.rain_delay_of.replace("{d}", "3 h 00")}`;
+    contains(`${lang}: rain banner title`, out, `<div class="rain-title">${title}</div>`);
+    contains(`${lang}: rain banner detail`, out, `<div class="rain-detail">${detail}</div>`);
+    check(`${lang}: no placeholder left`, /\{d\}/u.test(out), false);
+    if (lang !== "en") check(`${lang}: not the English text`, title === Card.I18N.en.rain_banner, false);
+  }
+  const fr = markup(make({ entity: "lawn_mower.robot" }, rainy({ language: "fr", locale: { language: "fr" } })));
+  contains("French wording", fr, "Reprise possible dans 2 h 35 · délai pluie de 3 h 00");
 }
 
 // ── translations ────────────────────────────────────────────────────────────

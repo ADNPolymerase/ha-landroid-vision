@@ -83,13 +83,14 @@ The integration ships its own card, **Worx Landroid Vision**, and registers it f
 
 - the mower's detailed state (searching a zone, crossing a border, leaving home...) with the zone it is in and the battery, where the `lawn_mower` entity alone only knows mowing, docked, paused, returning or error;
 - the Wi-Fi signal next to the battery, whether the mower is ready to mow, and a red banner with the current error and since when, only when there is one;
+- a light blue rain banner while the mower waits because of rain, with the time left before it can go out again and the rain delay set, rather than a red error;
 - start, pause and dock, and a party mode button under the battery: while it is on, a banner says the mower will not go out, even during the schedule;
 - the RTK map with the day's trail;
 - one-time mowing the way the Worx app does it: tick the zones, shown side by side, keep the order you ticked them in (Special) or let the mower choose (Auto), add the edge cut or not, and start;
 - the weekly schedule received from the cloud, folded under the slot running now, or the next mowing time otherwise, and unfolded day by day with each slot's zones, order and edge cut;
 - the mower's current blade time, as in the Worx app, with progress toward the blade service threshold, and a reset button that asks for confirmation first.
 
-A click on the state, the zone, the battery, the Wi-Fi, the readiness, the error or the map opens Home Assistant's more-info dialog, with its history.
+A click on the state, the zone, the battery, the Wi-Fi, the readiness, the error, the rain banner or the map opens Home Assistant's more-info dialog, with its history.
 
 ```yaml
 type: custom:worx-vision-card
