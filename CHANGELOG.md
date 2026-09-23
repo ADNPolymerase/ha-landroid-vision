@@ -9,7 +9,7 @@
 
 ### Added
 
-- **A card of its own, installed with the integration.** The Worx Landroid Vision card, version 0.1.9 of [ha-landroid-vision-card](https://github.com/ADNPolymerase/ha-landroid-vision-card), is served by the integration and registered on start, so there is nothing to download or add by hand: reload the browser and pick it in the card list. Only the `lawn_mower` entity is needed: the card finds the rest of the mower through its device, so renamed entities do not break it. It shows:
+- **A card of its own, installed with the integration.** The Worx Landroid Vision card is served by the integration and registered on start, so there is nothing to download or add by hand: reload the browser and pick it in the card list. Only the `lawn_mower` entity is needed: the card finds the rest of the mower through its device, so renamed entities do not break it. It shows:
   - **the detailed state**, "searching zone" or "border crossing" rather than just "mowing", with the zone the mower is in and the battery;
   - **the Wi-Fi signal next to the battery and the mowing readiness**, and a red banner with the current error and since when, only when there is one;
   - **a light blue rain banner** while the mower waits because of rain, with the time left before it can go out again and the rain delay set. Rain is a wait, not a fault, so it is not shown as a red error;

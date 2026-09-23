@@ -99,7 +99,7 @@ entity: lawn_mower.your_mower
 
 Only `entity` is needed, the card finds the other entities of the same mower by itself, so renaming them does not break it. Optional: `title`, `show_info`, `show_controls`, `show_map`, `show_zones`, `show_schedule`, `show_blades` (all `true` by default) and `refresh_interval` for the map, in seconds (30 by default, 0 to turn it off). On an older Landroid with no RTK map and no zones, the card shows the state, the controls and the schedule.
 
-The card is developed in [ha-landroid-vision-card](https://github.com/ADNPolymerase/ha-landroid-vision-card), and this integration ships a copy of it. If you installed that card through HACS, uninstall it there: the integration now registers its own copy and removes the HACS resource on start, but HACS may add it back on its next update, and both files would compete for the same card name.
+The card lives in this repository, in `custom_components/worx_vision_cloud/worx-vision-card.js`. If you installed the former standalone Worx Landroid Vision Card through HACS, uninstall it there and remove its custom repository: the integration now registers its own copy and removes the HACS resource on start, but HACS may add it back on its next update, and both files would compete for the same card name.
 
 The card replaces `worx-map-rtk-card.js`, which is no longer in this repository. A Lovelace resource pointing at it is removed automatically, and dashboards still using `custom:worx-map-rtk-card` keep showing the map, now drawn by the new card.
 
