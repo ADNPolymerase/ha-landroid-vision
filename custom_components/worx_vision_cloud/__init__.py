@@ -57,9 +57,12 @@ from .const import (
     ZONE_ORDER_FIXED,
 )
 from .coordinator import WorxVisionCoordinator
+from .frontend import async_register_card
 from .helpers import device_entry_by_identifier
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 START_ONE_TIME_MOWING_SCHEMA = vol.Schema(
     {
@@ -123,6 +126,15 @@ class WorxVisionRuntimeData:
 
     cloud: WorxCloud
     coordinator: WorxVisionCoordinator
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Serve the Worx Vision card and register its Lovelace resource."""
+    from homeassistant.loader import async_get_integration
+
+    integration = await async_get_integration(hass, DOMAIN)
+    await async_register_card(hass, str(integration.version or "0"))
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

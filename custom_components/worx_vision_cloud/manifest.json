@@ -1,12 +1,16 @@
 {
   "domain": "worx_vision_cloud",
   "name": "Worx Landroid Vision PLUS",
-  "after_dependencies": [],
+  "after_dependencies": [
+    "lovelace"
+  ],
   "codeowners": [
     "@ADNPolymerase"
   ],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": [
+    "http"
+  ],
   "documentation": "https://github.com/ADNPolymerase/ha-landroid-vision",
   "integration_type": "hub",
   "iot_class": "cloud_push",

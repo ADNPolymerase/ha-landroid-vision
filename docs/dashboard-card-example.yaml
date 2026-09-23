@@ -1,6 +1,3 @@
-# Example only. Replace entity IDs with entities created in your Home Assistant.
-type: picture-entity
-entity: camera.your_mower_mapa_rtk
-camera_view: auto
-show_name: true
-show_state: false
+# Example only. Replace the entity ID with your own lawn_mower entity.
+type: custom:worx-vision-card
+entity: lawn_mower.your_mower
