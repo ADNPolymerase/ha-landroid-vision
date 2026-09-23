@@ -58,11 +58,6 @@ async def _start_one_time_mowing(coordinator, serial_number: str) -> None:
     await coordinator.async_start_configured_one_time_mowing(serial_number)
 
 
-async def _start_zone_mowing(coordinator, serial_number: str) -> None:
-    """Mow the selected zones now, through a temporary schedule slot."""
-    await coordinator.async_start_configured_zone_mowing(serial_number)
-
-
 async def _restart_mower(coordinator, serial_number: str) -> None:
     """Reboot the mower baseboard, e.g. when it is stuck."""
     await coordinator.async_restart_mower(serial_number)
@@ -107,13 +102,6 @@ BUTTONS: tuple[WorxButtonDescription, ...] = (
         translation_key="start_one_time_mowing",
         icon="mdi:play-circle-outline",
         press_fn=_start_one_time_mowing,
-        available_fn=_is_online,
-    ),
-    WorxButtonDescription(
-        key="start_zone_mowing",
-        translation_key="start_zone_mowing",
-        icon="mdi:map-marker-path",
-        press_fn=_start_zone_mowing,
         available_fn=_is_online,
     ),
     WorxButtonDescription(

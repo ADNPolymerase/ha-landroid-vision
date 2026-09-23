@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Uruchom ponownie kosiarkę"
-      },
-      "start_zone_mowing": {
-        "name": "Uruchom koszenie strefy"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Uruchom koszenie jednorazowe",
-      "description": "Uruchamia jednorazowe koszenie z wybranym czasem pracy, opcjonalnym koszeniem krawędzi i opcjonalną listą stref RTK.",
+      "description": "Rozpoczyna jednorazowe koszenie. W kosiarce Vision to jednorazowe koszenie z aplikacji Worx: strefy i procedura krawędzi opcjonalne, bez czasu trwania, a wstrzymane zadanie zostaje zastąpione. Starsze kosiarki koszą przez wybrany czas.",
       "fields": {
         "entity_id": {
           "name": "Kosiarka",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Czas koszenia",
-          "description": "Czas koszenia jednorazowego w minutach. Ustaw 0 z włączonym koszeniem krawędzi, aby kosić tylko krawędzie."
+          "description": "Czas koszenia w minutach, używany tylko przez kosiarki bez RTK. Kosiarka Vision kosi swoje strefy do końca i go pomija."
         },
         "edge_cut": {
           "name": "Koszenie krawędzi",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Strefy",
-          "description": "Opcjonalna lista identyfikatorów stref RTK w kolejności koszenia, np. [2, 1]. Puste pole oznacza koszenie wszystkich stref. Oprogramowanie Vision 3.46.0+47 ignoruje ją przy koszeniu jednorazowym. Aby skosić konkretną strefę, przypisz ją do przedziału harmonogramu tygodniowego w aplikacji Worx: te strefy są respektowane, łącznie z kolejnością."
+          "description": "Opcjonalna lista identyfikatorów stref RTK w kolejności koszenia, np. [2, 1]. Pozostaw pustą, aby kosić wszystkie strefy."
         }
       }
     },
@@ -522,8 +519,8 @@
       }
     },
     "start_zone_mowing": {
-      "name": "Uruchom koszenie strefy",
-      "description": "Kosi wybrane strefy RTK teraz, w podanej kolejności, dodając tymczasowy przedział do harmonogramu tygodniowego. Oprogramowanie Vision ignoruje strefy koszenia jednorazowego, ale respektuje strefy przedziału. Harmonogram wraca do pierwotnej postaci po powrocie kosiarki do stacji.",
+      "name": "Rozpocznij koszenie stref",
+      "description": "Wysyła kosiarkę do koszenia wybranych stref RTK, tak jak jednorazowe koszenie w aplikacji Worx. Bez czasu trwania: kosiarka kosi strefy do końca, a potem wraca. Wstrzymane zadanie zostaje zastąpione.",
       "fields": {
         "entity_id": {
           "name": "Kosiarka",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Strefy",
-          "description": "Identyfikatory stref RTK w kolejności koszenia, np. [2, 1]. Pierwsza jest koszona najpierw."
+          "description": "Identyfikatory stref RTK, np. [2, 1]. Przy stałej kolejności pierwsza jest koszona jako pierwsza."
         },
-        "runtime": {
-          "name": "Czas koszenia",
-          "description": "Czas trwania zadania w minutach."
+        "zone_order": {
+          "name": "Kolejność stref",
+          "description": "Stała kosi strefy w podanej kolejności, jak tryb Specjalny w aplikacji. Auto pozwala kosiarce wybrać, jak tryb Auto w aplikacji."
         },
         "edge_cut": {
           "name": "Koszenie krawędzi",
-          "description": "Czy zadanie zaczyna się od koszenia krawędzi."
-        },
-        "start_at": {
-          "name": "Godzina startu",
-          "description": "Kiedy zadanie się zaczyna. Puste pole oznacza start za dwie minuty. W ciągu najbliższych sześciu dni, ponieważ harmonogram tygodniowy się powtarza."
+          "description": "Czy zadanie obejmuje procedurę krawędzi."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Stała",
+        "auto": "Auto"
       }
     }
   }

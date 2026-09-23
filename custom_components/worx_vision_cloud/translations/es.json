@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Reiniciar el cortacésped"
-      },
-      "start_zone_mowing": {
-        "name": "Iniciar corte por zonas"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Iniciar corte puntual",
-      "description": "Inicia un corte puntual con la duración elegida, corte de bordes opcional y una lista opcional de zonas RTK.",
+      "description": "Inicia un corte único. En un Vision es el corte único de la app Worx: zonas y rutina de bordes opcionales, sin duración, y una tarea en espera se sustituye. En modelos antiguos dura el tiempo elegido.",
       "fields": {
         "entity_id": {
           "name": "Cortacésped",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Tiempo de corte",
-          "description": "Duración del corte puntual en minutos. Ponga 0 con el corte de bordes activado para cortar solo los bordes."
+          "description": "Tiempo de corte en minutos, usado solo por robots sin RTK. Un Vision corta sus zonas hasta el final y lo ignora."
         },
         "edge_cut": {
           "name": "Corte de bordes",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zonas",
-          "description": "Lista opcional de identificadores de zonas RTK, en orden de corte, por ejemplo [2, 1]. Dejar vacío para cortar todas las zonas. El firmware Vision 3.46.0+47 la ignora en un corte puntual. Para cortar una zona concreta, asígnela a una franja del horario semanal en la app Worx: esas zonas se respetan, orden incluido."
+          "description": "Lista opcional de IDs de zonas RTK, en orden de corte, por ejemplo [2, 1]. Dejar vacía para cortar todas las zonas."
         }
       }
     },
@@ -523,7 +520,7 @@
     },
     "start_zone_mowing": {
       "name": "Iniciar corte por zonas",
-      "description": "Corta ahora las zonas RTK elegidas, en orden, añadiendo una franja temporal al horario semanal. El firmware Vision ignora las zonas de un corte puntual pero respeta las de una franja del horario. El horario se restaura cuando el robot vuelve a la base.",
+      "description": "Envía el robot a cortar las zonas RTK indicadas, como el corte único de la app Worx. Sin duración: el robot corta las zonas hasta el final y vuelve a la base. Una tarea en espera se sustituye.",
       "fields": {
         "entity_id": {
           "name": "Robot",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zonas",
-          "description": "Identificadores de zonas RTK, en orden de corte, por ejemplo [2, 1]. La primera se corta primero."
+          "description": "IDs de zonas RTK, por ejemplo [2, 1]. Con orden fijo, la primera se corta primero."
         },
-        "runtime": {
-          "name": "Duración",
-          "description": "Duración del trabajo, en minutos."
+        "zone_order": {
+          "name": "Orden de las zonas",
+          "description": "Fijo corta las zonas en el orden dado, como el modo Especial de la app. Auto deja que el robot elija, como el modo Auto de la app."
         },
         "edge_cut": {
-          "name": "Corte de borde",
-          "description": "Si el trabajo empieza con un corte de borde."
-        },
-        "start_at": {
-          "name": "Hora de inicio",
-          "description": "Cuándo empieza el trabajo. Dejar vacío para empezar en dos minutos. Dentro de los próximos seis días, porque el horario semanal se repite."
+          "name": "Corte de bordes",
+          "description": "Si la tarea incluye la rutina de bordes."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Fijo",
+        "auto": "Auto"
       }
     }
   }

@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Starta om gräsklipparen"
-      },
-      "start_zone_mowing": {
-        "name": "Starta zonklippning"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Starta engångsklippning",
-      "description": "Startar en engångsklippning med vald tid, valfri kantklippning och en valfri RTK-zonlista.",
+      "description": "Startar en engångsklippning. På en Vision är det Worx-appens engångsklippning: zoner och kantrutin valfria, utan varaktighet, och en pausad uppgift ersätts. Äldre klippare klipper den valda tiden.",
       "fields": {
         "entity_id": {
           "name": "Gräsklippare",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Klipptid",
-          "description": "Engångsklippningens längd i minuter. Ange 0 med kantklippning aktiverad för att bara klippa kanter."
+          "description": "Klipptid i minuter, används bara av klippare utan RTK. En Vision klipper klart sina zoner och ignorerar den."
         },
         "edge_cut": {
           "name": "Kantklippning",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "Valfri lista med RTK-zon-id i klippordning, till exempel [2, 1]. Lämna tomt för att klippa alla zoner. Vision-firmware 3.46.0+47 ignorerar den vid en engångsklippning. För att klippa en viss zon, ange den på ett tidsfönster i veckoschemat i Worx-appen: de zonerna respekteras, ordning inräknad."
+          "description": "Valfri lista med RTK-zon-ID:n i klippordning, t.ex. [2, 1]. Lämna tom för att klippa alla zoner."
         }
       }
     },
@@ -523,7 +520,7 @@
     },
     "start_zone_mowing": {
       "name": "Starta zonklippning",
-      "description": "Klipper de valda RTK-zonerna nu, i ordning, genom att lägga till ett tillfälligt tidsfönster i veckoschemat. Vision-firmware ignorerar zonerna i en engångsklippning men respekterar dem i ett tidsfönster. Schemat återställs när klipparen är tillbaka.",
+      "description": "Skickar klipparen för att klippa de valda RTK-zonerna, som engångsklippningen i Worx-appen. Utan varaktighet: klipparen klipper klart zonerna och åker sedan hem. En pausad uppgift ersätts.",
       "fields": {
         "entity_id": {
           "name": "Klippare",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zoner",
-          "description": "RTK-zon-id i klippordning, till exempel [2, 1]. Den första klipps först."
+          "description": "RTK-zon-ID:n, t.ex. [2, 1]. Med fast ordning klipps den första först."
         },
-        "runtime": {
-          "name": "Klipptid",
-          "description": "Hur länge jobbet pågår, i minuter."
+        "zone_order": {
+          "name": "Zonordning",
+          "description": "Fast klipper zonerna i angiven ordning, som appens Special-läge. Auto låter klipparen välja, som appens Auto-läge."
         },
         "edge_cut": {
           "name": "Kantklippning",
-          "description": "Om jobbet börjar med kantklippning."
-        },
-        "start_at": {
-          "name": "Starttid",
-          "description": "När jobbet börjar. Lämna tomt för att starta om två minuter. Inom de närmaste sex dagarna, eftersom veckoschemat upprepas."
+          "description": "Om uppgiften omfattar kantrutinen."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Fast",
+        "auto": "Auto"
       }
     }
   }

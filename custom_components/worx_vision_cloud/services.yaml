@@ -42,25 +42,20 @@ start_zone_mowing:
         - 1
       selector:
         object:
-    runtime:
+    zone_order:
       required: false
-      default: 60
+      default: fixed
       selector:
-        number:
-          min: 5
-          max: 360
-          step: 5
-          unit_of_measurement: min
-          mode: slider
+        select:
+          translation_key: zone_order
+          options:
+            - fixed
+            - auto
     edge_cut:
       required: false
       default: false
       selector:
         boolean:
-    start_at:
-      required: false
-      selector:
-        datetime:
 
 send_raw_command:
   fields:

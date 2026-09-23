@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Start gressklipperen på nytt"
-      },
-      "start_zone_mowing": {
-        "name": "Start soneklipping"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Start engangsklipping",
-      "description": "Starter en engangsklipping med valgt varighet, valgfri kantklipping og en valgfri RTK-soneliste.",
+      "description": "Starter en engangsklipping. På en Vision er det Worx-appens engangsklipping: soner og kantrutine valgfrie, uten varighet, og en oppgave på pause erstattes. Eldre klippere klipper den valgte tiden.",
       "fields": {
         "entity_id": {
           "name": "Gressklipper",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Klippetid",
-          "description": "Varighet for engangsklippingen i minutter. Sett 0 med kantklipping aktivert for kun å klippe kanter."
+          "description": "Klippetid i minutter, brukes bare av klippere uten RTK. En Vision klipper sonene ferdig og ignorerer den."
         },
         "edge_cut": {
           "name": "Kantklipping",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Soner",
-          "description": "Valgfri liste med RTK-sone-id-er i klipperekkefølge, for eksempel [2, 1]. La stå tomt for å klippe alle soner. Vision-fastvare 3.46.0+47 ignorerer den ved en engangsklipping. For å klippe en bestemt sone, angi den på et tidsrom i ukeplanen i Worx-appen: de sonene respekteres, rekkefølge inkludert."
+          "description": "Valgfri liste over RTK-sone-ID-er i klipperekkefølge, f.eks. [2, 1]. La den stå tom for å klippe alle soner."
         }
       }
     },
@@ -523,7 +520,7 @@
     },
     "start_zone_mowing": {
       "name": "Start soneklipping",
-      "description": "Klipper de valgte RTK-sonene nå, i rekkefølge, ved å legge til et midlertidig tidsrom i ukeplanen. Vision-fastvaren ignorerer sonene i en engangsklipping, men respekterer dem i et tidsrom. Ukeplanen gjenopprettes når klipperen er tilbake.",
+      "description": "Sender klipperen ut for å klippe de valgte RTK-sonene, som engangsklippingen i Worx-appen. Uten varighet: klipperen klipper sonene ferdig og kjører så hjem. En oppgave på pause erstattes.",
       "fields": {
         "entity_id": {
           "name": "Klipper",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Soner",
-          "description": "RTK-sone-id-er i klipperekkefølge, for eksempel [2, 1]. Den første klippes først."
+          "description": "RTK-sone-ID-er, f.eks. [2, 1]. Med fast rekkefølge klippes den første først."
         },
-        "runtime": {
-          "name": "Klippetid",
-          "description": "Hvor lenge jobben varer, i minutter."
+        "zone_order": {
+          "name": "Sonerekkefølge",
+          "description": "Fast klipper sonene i oppgitt rekkefølge, som appens Spesial-modus. Auto lar klipperen velge, som appens Auto-modus."
         },
         "edge_cut": {
           "name": "Kantklipping",
-          "description": "Om jobben starter med kantklipping."
-        },
-        "start_at": {
-          "name": "Starttidspunkt",
-          "description": "Når jobben starter. La stå tomt for å starte om to minutter. Innen de neste seks dagene, fordi ukeplanen gjentar seg."
+          "description": "Om oppgaven inkluderer kantrutinen."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Fast",
+        "auto": "Auto"
       }
     }
   }

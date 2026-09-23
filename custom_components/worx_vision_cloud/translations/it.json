@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Riavvia il tagliaerba"
-      },
-      "start_zone_mowing": {
-        "name": "Avvia il taglio per zone"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Avvia taglio singolo",
-      "description": "Avvia una sessione di taglio singolo con durata scelta, taglio bordi opzionale e un elenco opzionale di zone RTK.",
+      "description": "Avvia un taglio singolo. Su un Vision è il taglio singolo dell'app Worx: zone e routine dei bordi facoltative, senza durata, e un'attività in pausa viene sostituita. Sui modelli precedenti dura il tempo scelto.",
       "fields": {
         "entity_id": {
           "name": "Robot",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Durata taglio",
-          "description": "Durata del taglio singolo in minuti. Impostare 0 con il taglio bordi attivo per tagliare solo i bordi."
+          "description": "Durata del taglio in minuti, usata solo dai robot senza RTK. Un Vision taglia le sue zone fino in fondo e la ignora."
         },
         "edge_cut": {
           "name": "Taglio bordi",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zone",
-          "description": "Elenco opzionale di id delle zone RTK, nell'ordine di taglio, ad esempio [2, 1]. Lasciare vuoto per tagliare tutte le zone. Il firmware Vision 3.46.0+47 lo ignora per un taglio singolo. Per tagliare una zona precisa, assegnarla a una fascia della programmazione settimanale nell'app Worx: quelle zone vengono rispettate, ordine compreso."
+          "description": "Elenco facoltativo di ID delle zone RTK, in ordine di taglio, per esempio [2, 1]. Lasciare vuoto per tagliare tutte le zone."
         }
       }
     },
@@ -522,8 +519,8 @@
       }
     },
     "start_zone_mowing": {
-      "name": "Avvia il taglio per zone",
-      "description": "Taglia subito le zone RTK scelte, nell'ordine indicato, aggiungendo una fascia temporanea alla programmazione settimanale. Il firmware Vision ignora le zone di un taglio singolo ma rispetta quelle di una fascia. La programmazione viene ripristinata al rientro alla base.",
+      "name": "Avvia taglio per zone",
+      "description": "Manda il robot a tagliare le zone RTK indicate, come il taglio singolo dell'app Worx. Senza durata: il robot taglia le zone fino in fondo, poi rientra. Un'attività in pausa viene sostituita.",
       "fields": {
         "entity_id": {
           "name": "Robot",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zone",
-          "description": "Id delle zone RTK, nell'ordine di taglio, ad esempio [2, 1]. La prima viene tagliata per prima."
+          "description": "ID delle zone RTK, per esempio [2, 1]. Con ordine fisso, la prima viene tagliata per prima."
         },
-        "runtime": {
-          "name": "Durata",
-          "description": "Durata del lavoro, in minuti."
+        "zone_order": {
+          "name": "Ordine delle zone",
+          "description": "Fisso taglia le zone nell'ordine indicato, come la modalità Speciale dell'app. Auto lascia scegliere al robot, come la modalità Auto dell'app."
         },
         "edge_cut": {
-          "name": "Taglio del bordo",
-          "description": "Se il lavoro inizia con un taglio del bordo."
-        },
-        "start_at": {
-          "name": "Ora di avvio",
-          "description": "Quando inizia il lavoro. Lasciare vuoto per partire tra due minuti. Entro i prossimi sei giorni, perché la programmazione settimanale si ripete."
+          "name": "Taglio dei bordi",
+          "description": "Se l'attività include la routine dei bordi."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Fisso",
+        "auto": "Auto"
       }
     }
   }

@@ -16,7 +16,7 @@ from .entity import WorxVisionEntity
 from .helpers import (
     get_dict_value,
     get_nested_value,
-    rtk_map_attributes,
+    rtk_zone_ids,
     rtk_zone_names as _zone_names,
 )
 
@@ -92,17 +92,7 @@ async def async_setup_entry(
 
 def _zone_ids(device: Any) -> list[int]:
     """Return available RTK zone IDs from the current mower payload."""
-    zones = rtk_map_attributes(device).get("zones", []) or []
-    zone_ids: list[int] = []
-    for zone in zones:
-        zone_id = get_dict_value(zone, "id")
-        try:
-            zone_id = int(zone_id)
-        except (TypeError, ValueError):
-            continue
-        if zone_id > 0 and zone_id not in zone_ids:
-            zone_ids.append(zone_id)
-    return sorted(zone_ids)
+    return rtk_zone_ids(device)
 
 
 def _option_label(

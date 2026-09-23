@@ -378,32 +378,34 @@ def _raw_dat(device: Any) -> Any:
     return getattr(device, "raw_dat", {}) or {}
 
 
-def one_time_cut_config(edge_cut: Any, zone_ids: Any) -> dict[str, Any]:
-    """Return the `cut` block of a one-time mowing job, the way the app writes it.
+# Starting a one-time job the way the Worx app does, watched live on Vision
+# firmware 3.46.0+47: `cmd` 1 with a top-level `cut` block. The mower then
+# creates a new task on those zones, replacing whatever task it had on hold.
+ZONE_JOB_COMMAND = 1
 
-    Rebuilt from the raw weekly slots of a Vision Cloud mower, where every
-    block the firmware accepts follows two rules this integration used to
-    break.
 
-    `zo` says whether an order was imposed on the zone list: 1 for the app's
-    "Special" mode, where the zones are mowed in the order given, 0 for
-    "Auto", where the mower picks. Both modes carry a real selection in `z`,
-    so `zo` is about order, not about whether the list counts.
+def zone_job_command(
+    zone_ids: Any, edge_cut: Any, fixed_order: Any, all_zone_ids: Any = ()
+) -> dict[str, Any]:
+    """Return the command starting a one-time job, as the Worx app sends it.
 
-    `ob` only ever appears next to an edge cut turned off. Across three
-    dumps, `b: 1` came without it and `b: 0` came with `ob: 0`, every time.
-    A block with `b: 0` and no `ob` is a shape the app never writes, and it
-    is exactly what earlier releases sent, so it is the most likely reason a
-    selected zone looked ignored while the same job started from the app
-    reached its zone.
+    `b` asks for the edge routine, `z` lists the zones and `zo` says whether
+    they are mowed in the order given (1, the app's "Special") or in the order
+    the mower picks (0, "Auto"). No duration travels with it: the mower mows
+    the zones through, then goes home.
+
+    Without a selection every known zone is sent, since the app always sends
+    a real list; an order only means something for a selection, so that case
+    is always sent as "Auto".
     """
-    zones = [zone for zone in (zone_ids or [])]
-    cut: dict[str, Any] = {"b": int(bool(edge_cut))}
-    if not cut["b"]:
-        cut["ob"] = 0
-    cut["z"] = zones
-    cut["zo"] = 1 if zones else 0
-    return cut
+    zones = [int(zone) for zone in (zone_ids or [])]
+    fixed = bool(fixed_order) and bool(zones)
+    if not zones:
+        zones = [int(zone) for zone in (all_zone_ids or [])]
+    return {
+        "cmd": ZONE_JOB_COMMAND,
+        "cut": {"b": int(bool(edge_cut)), "z": zones, "zo": int(fixed)},
+    }
 
 
 def raw_schedule_config(device: Any) -> dict[str, Any]:
@@ -417,213 +419,6 @@ def raw_schedule_config(device: Any) -> dict[str, Any]:
     """
     schedule = get_dict_value(_raw_cfg(device), "sc", {})
     return schedule if isinstance(schedule, dict) else {}
-
-
-# A zone mowing job is run as a weekly slot starting in a couple of minutes,
-# because Vision firmware 3.46.0+47 ignores the zones of a one-time job while
-# honouring the ones attached to a schedule slot. The slot is added to the
-# week the mower already has, and removed once the job is over.
-TEMPORARY_SLOT_LEAD_MINUTES = 2
-MINUTES_PER_DAY = 24 * 60
-
-
-def raw_schedule_slots(device: Any) -> list[dict[str, Any]]:
-    """Return the raw weekly slots exactly as the mower publishes them."""
-    slots = raw_schedule_config(device).get("slots")
-    if not isinstance(slots, list):
-        return []
-    return [slot for slot in slots if isinstance(slot, dict)]
-
-
-def temporary_schedule_slot(
-    start: datetime, runtime_minutes: int, zone_ids: Any, edge_cut: bool = False
-) -> dict[str, Any]:
-    """Return a one-off weekly slot mowing the given zones, in order.
-
-    Shaped exactly like the slots the Worx app writes: the raw week starts on
-    Sunday, `s` counts minutes since midnight and `t` is the runtime.
-    """
-    zones = [int(zone) for zone in (zone_ids or [])]
-    return {
-        "e": 1,
-        "d": (start.weekday() + 1) % 7,
-        "s": start.hour * 60 + start.minute,
-        "t": int(runtime_minutes),
-        "cfg": {"cut": one_time_cut_config(edge_cut, zones)},
-    }
-
-
-def _slot_window(slot: Any) -> tuple[int, int] | None:
-    """Return the (start, end) minutes of a raw slot, or None when unusable."""
-    start = get_dict_value(slot, "s")
-    runtime = get_dict_value(slot, "t")
-    if not isinstance(start, int) or not isinstance(runtime, int) or runtime <= 0:
-        return None
-    return start, start + runtime
-
-
-def conflicting_schedule_slot(
-    slots: Any, candidate: dict[str, Any]
-) -> dict[str, Any] | None:
-    """Return the enabled slot a candidate slot would overlap, if any.
-
-    Two slots running at once on the same day is a shape the Worx app never
-    writes, and nothing says which one the firmware would follow. The caller
-    refuses rather than guessing.
-    """
-    window = _slot_window(candidate)
-    if window is None:
-        return None
-    start, end = window
-    for slot in slots or []:
-        if not isinstance(slot, dict) or slot is candidate:
-            continue
-        if get_dict_value(slot, "e") == 0:
-            continue
-        if get_dict_value(slot, "d") != candidate.get("d"):
-            continue
-        other = _slot_window(slot)
-        if other is None:
-            continue
-        if start < other[1] and other[0] < end:
-            return slot
-    return None
-
-
-def slot_crosses_midnight(slot: dict[str, Any]) -> bool:
-    """Return whether a slot would run past midnight."""
-    window = _slot_window(slot)
-    return window is not None and window[1] > MINUTES_PER_DAY
-
-
-def slot_in_schedule(slots: Any, slot: dict[str, Any]) -> bool:
-    """Return whether the mower's published week already carries a slot.
-
-    Matched on day, start and runtime rather than the whole block: the
-    firmware normalizes the cut block it echoes back (an absent `ob`, an
-    order flag it rewrites), and those differences do not make it a
-    different slot.
-    """
-    for other in slots or []:
-        if not isinstance(other, dict):
-            continue
-        if (
-            get_dict_value(other, "d") == slot.get("d")
-            and get_dict_value(other, "s") == slot.get("s")
-            and get_dict_value(other, "t") == slot.get("t")
-        ):
-            return True
-    return False
-
-
-def zone_mowing_restore_reason(
-    job: dict[str, Any], docked: bool, now: datetime
-) -> str | None:
-    """Return why a temporary zone slot should be removed now, or None.
-
-    "docked" once the mower has left and come back, which is the normal end
-    of a job. "deadline" is the safety net for a mower that never makes it
-    home: the schedule is given back anyway. Nothing counts before the slot
-    has started, so a job booked for later is not ended by the mowing the
-    mower does in the meantime.
-    """
-    start = job.get("start")
-    if isinstance(start, str) and start:
-        try:
-            starts_at = datetime.fromisoformat(start)
-        except ValueError:
-            starts_at = None
-        if starts_at is not None and now < starts_at:
-            # A job booked for later must survive the mowing that happens in
-            # the meantime, so nothing it does before its own start counts.
-            return None
-
-    deadline = job.get("deadline")
-    if isinstance(deadline, str) and deadline:
-        try:
-            parsed = datetime.fromisoformat(deadline)
-        except ValueError:
-            parsed = None
-        if parsed is not None and now >= parsed:
-            return "deadline"
-    if docked and job.get("left"):
-        return "docked"
-    return None
-
-
-# A slot the mower never acknowledged is only judged once it should be
-# running: the published week the integration holds can be minutes old, so
-# an earlier verdict reads a stale schedule rather than the mower's answer.
-ZONE_SLOT_CONFIRM_GRACE_MINUTES = 5
-
-
-def zone_slot_verdict(
-    job: dict[str, Any],
-    slots: Any,
-    now: datetime,
-    grace_minutes: int = ZONE_SLOT_CONFIRM_GRACE_MINUTES,
-) -> str:
-    """Return what to make of a temporary slot the mower never acknowledged.
-
-    "confirmed" once the slot shows up in the week the mower publishes,
-    "dropped" once the slot should be running and the week still does not
-    carry it, and "waiting" in between. Measured on firmware 3.46.0+47: a
-    Landroid acknowledges no schedule write at all, mowing or docked, so
-    silence says nothing about delivery and only the published week can
-    settle it.
-    """
-    slot = job.get("slot")
-    if not isinstance(slot, dict):
-        return "confirmed"
-    if slot_in_schedule(slots, slot):
-        return "confirmed"
-
-    start = job.get("start")
-    if isinstance(start, str) and start:
-        try:
-            starts_at = datetime.fromisoformat(start)
-        except ValueError:
-            starts_at = None
-        if starts_at is not None and now < starts_at + timedelta(
-            minutes=grace_minutes
-        ):
-            return "waiting"
-    return "dropped"
-
-
-# Every `sc` write this mower is known to obey carries a command beside it:
-# one-time mowing sends `cmd` 10, the edge cut 101, and pyworxcloud pairs the
-# party-mode `sc` patch with `cmd` 0. The schedule write is the only one that
-# went out bare, and it is the only one that never took effect, three times
-# over, awake or asleep. `cmd` 0 is FORCE_REFRESH, so it also asks the mower
-# to report back, which a bare write never made it do.
-SCHEDULE_WRITE_COMMAND = 0
-
-
-def schedule_slots_payload(
-    current_schedule: Any, slots: list[dict[str, Any]]
-) -> dict[str, Any]:
-    """Return the MQTT payload writing a whole week of slots.
-
-    The `sc` block is replaced whole, not merged, so everything the mower
-    published beside `slots` has to be echoed back: `enabled` says whether
-    the schedule runs at all, `p` carries the time extension and `once` the
-    one-time job. pyworxcloud's own encoder copies every key but `slots`
-    for protocol 1, and its decoder reads `sc.enabled` from the same block,
-    so a bare `{"slots": ...}` is a schedule with no on switch. Sent to
-    Vision firmware 3.46.0+47, such a block draws no answer and changes
-    nothing.
-    """
-    payload = {
-        key: deepcopy(value)
-        for key, value in (
-            current_schedule.items() if isinstance(current_schedule, dict) else ()
-        )
-        if key != "slots"
-    }
-    payload["slots"] = slots
-    return {"cmd": SCHEDULE_WRITE_COMMAND, "sc": payload}
-
 
 
 def rtk_map_id(device: Any) -> Any:
@@ -651,6 +446,21 @@ def rtk_map_attributes(device: Any) -> dict[str, Any]:
             if isinstance(zone, dict)
         ],
     }
+
+
+def rtk_zone_ids(device: Any) -> list[int]:
+    """Return the RTK zone ids of the mower's map, sorted."""
+    zones = rtk_map_attributes(device).get("zones", []) or []
+    zone_ids: list[int] = []
+    for zone in zones:
+        zone_id = get_dict_value(zone, "id")
+        try:
+            zone_id = int(zone_id)
+        except (TypeError, ValueError):
+            continue
+        if zone_id > 0 and zone_id not in zone_ids:
+            zone_ids.append(zone_id)
+    return sorted(zone_ids)
 
 
 def rtk_position(device: Any) -> tuple[float, float] | None:

@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Redémarrer la tondeuse"
-      },
-      "start_zone_mowing": {
-        "name": "Démarrer une tonte de zone"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Démarrer une tonte ponctuelle",
-      "description": "Démarre une tonte ponctuelle avec une durée choisie, une coupe de bordure optionnelle et une liste optionnelle de zones RTK.",
+      "description": "Lance une tonte unique. Sur une Vision, c'est la coupe unique de l'app Worx : zones et routine de bord au choix, sans durée, et une tâche en attente est remplacée. Sur les anciens modèles, elle dure le temps choisi.",
       "fields": {
         "entity_id": {
           "name": "Tondeuse",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Durée de tonte",
-          "description": "Durée de la tonte ponctuelle en minutes. Mettre 0 avec la coupe de bordure activée pour ne faire que les bordures."
+          "description": "Durée de tonte en minutes, utilisée seulement par les tondeuses sans RTK. Une Vision tond ses zones jusqu'au bout et l'ignore."
         },
         "edge_cut": {
           "name": "Coupe de bordure",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Liste optionnelle d'identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. Laisser vide pour tondre toutes les zones. Le firmware Vision 3.46.0+47 l'ignore pour une coupe unique. Pour tondre une zone précise, la définir sur un créneau du planning hebdomadaire dans l'app Worx : ces zones sont respectées, ordre compris."
+          "description": "Liste facultative d'identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. Laisser vide pour tondre toutes les zones."
         }
       }
     },
@@ -522,8 +519,8 @@
       }
     },
     "start_zone_mowing": {
-      "name": "Démarrer une tonte de zone",
-      "description": "Tond maintenant les zones RTK choisies, dans l'ordre, en ajoutant un créneau temporaire au planning hebdomadaire. Le firmware Vision ignore les zones d'une coupe unique mais respecte celles d'un créneau. Le planning est restauré dès le retour à la base.",
+      "name": "Lancer une tonte de zone",
+      "description": "Envoie la tondeuse tondre les zones RTK choisies, comme la coupe unique de l'app Worx. Aucune durée : la tondeuse tond les zones jusqu'au bout, puis rentre. Une tâche en attente est remplacée.",
       "fields": {
         "entity_id": {
           "name": "Tondeuse",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Identifiants de zones RTK, dans l'ordre de tonte, par exemple [2, 1]. La première est tondue en premier."
+          "description": "Identifiants de zones RTK, par exemple [2, 1]. En ordre imposé, la première est tondue en premier."
         },
-        "runtime": {
-          "name": "Durée de tonte",
-          "description": "Durée du travail, en minutes."
+        "zone_order": {
+          "name": "Ordre des zones",
+          "description": "Imposé tond les zones dans l'ordre donné, comme le mode Spécial de l'app. Auto laisse la tondeuse choisir, comme le mode Auto de l'app."
         },
         "edge_cut": {
           "name": "Coupe de bordure",
-          "description": "Si le travail commence par une coupe de bordure."
-        },
-        "start_at": {
-          "name": "Heure de départ",
-          "description": "Quand le travail démarre. Laisser vide pour partir dans deux minutes. Dans les six prochains jours, parce que le planning hebdomadaire se répète."
+          "description": "Inclure la routine de bord dans la tâche."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Imposé",
+        "auto": "Auto"
       }
     }
   }

@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Restart mower"
-      },
-      "start_zone_mowing": {
-        "name": "Start zone mowing"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Start one-time mowing",
-      "description": "Starts a one-time mowing session with a chosen runtime, optional edge cutting and an optional RTK zone list.",
+      "description": "Starts a one-time mowing session. On a Vision mower it is the Worx app's one-time mowing: optional zones and edge routine, no duration, and any task on hold is replaced. On older mowers it runs for the chosen time.",
       "fields": {
         "entity_id": {
           "name": "Mower",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Mowing time",
-          "description": "One-time mowing runtime in minutes. Set 0 with edge cutting enabled to run edges only."
+          "description": "Mowing time in minutes, used by mowers without RTK only. A Vision mower mows its zones through and ignores it."
         },
         "edge_cut": {
           "name": "Edge cutting",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optional list of RTK zone ids, in mowing order, for example [2, 1]. Leave empty to mow every zone. Vision firmware 3.46.0+47 ignores it for a one-time job. To mow a given zone, set it on a weekly schedule slot in the Worx app: those are honoured, order included."
+          "description": "Optional list of RTK zone ids, in mowing order, for example [2, 1]. Leave empty to mow every zone."
         }
       }
     },
@@ -523,7 +520,7 @@
     },
     "start_zone_mowing": {
       "name": "Start zone mowing",
-      "description": "Mows the selected RTK zones now, in order, by adding a temporary slot to the weekly schedule. Vision firmware ignores the zones of a one-time job but honours the ones of a schedule slot. The schedule is put back once the mower is home.",
+      "description": "Sends the mower to mow the given RTK zones, the way the Worx app's one-time mowing does. It carries no duration: the mower mows the zones through, then goes home. Any task on hold is replaced.",
       "fields": {
         "entity_id": {
           "name": "Mower",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "RTK zone ids, in mowing order, for example [2, 1]. The first id is mowed first."
+          "description": "RTK zone ids, for example [2, 1]. With a fixed order, the first id is mowed first."
         },
-        "runtime": {
-          "name": "Runtime",
-          "description": "How long the job runs, in minutes."
+        "zone_order": {
+          "name": "Zone order",
+          "description": "Fixed mows the zones in the order given, like the app's Special mode. Auto lets the mower choose, like the app's Auto mode."
         },
         "edge_cut": {
           "name": "Edge cutting",
-          "description": "Whether the job starts with an edge cut."
-        },
-        "start_at": {
-          "name": "Start time",
-          "description": "When the job starts. Leave empty to start in two minutes. Within the next six days, because the weekly schedule repeats."
+          "description": "Whether the job includes the edge routine."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Fixed",
+        "auto": "Auto"
       }
     }
   }

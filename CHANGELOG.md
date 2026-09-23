@@ -1,58 +1,31 @@
 # Changelog
 
-## 2.8.4 - 2026-09-23
+## 2.8.0 - 2026-09-23
 
 ### Added
 
-- **A diagnostic action sends a raw command to the mower: `worx_vision_cloud.send_raw_command`.** It takes the `lawn_mower` entity and a JSON object, and publishes that object as is, with pyworxcloud adding the `id`, `uuid` and `tm` envelope as for any other command. The object may be given as a mapping or as JSON text; anything else, an empty object, or an object setting `id`, `uuid` or `tm` is refused before anything is sent. Like the other actions that move the mower, it is restricted to administrators, and each use is written to the log with its body.
-  - It exists to reproduce what the Worx app sends. Watched on 23 September with pyworxcloud's MQTT log at debug level, the app's one-time mowing does not go through the schedule's `once` block, which is what this integration sends: it arrives as a top-level `cut` block (`{"b": 1, "z": [2], "zo": 1}` for zone 2, zone order fixed, edge routine on), carries no duration, and starts a new task that replaces the one the mower had on hold. The echo does not show which `cmd` came with it, and this action is how to find out.
-  - It is not meant for everyday use: nothing is checked beyond the form of the object, so a wrong body can start the blades or send the mower home.
-
-## 2.8.3 - 2026-09-23
-
-### Fixed
-
-- **A schedule write now carries a command, like every other write the mower obeys.** Measured on firmware 3.46.0+47: one-time mowing sends `cmd` 10, the edge cut 101, returning to base 3, and pyworxcloud pairs its party-mode `sc` patch with `cmd` 0. All of them work. The weekly schedule write was the only one published bare, with an `sc` block and nothing else, and it is the only one that never took effect: three attempts on 23 September, mower asleep, mowing, then resting on its base, each time no acknowledgement, no change to the published week, and on the last one the mower simply did not leave its base when the slot was due. It now goes out with `cmd` 0, which is FORCE_REFRESH, so the mower is also asked to report back.
-  - The 2.8.2 note blamed the partial `sc` block. Sending the full block changed nothing, so that was not the cause, although it remains worth keeping for what it could otherwise erase.
-
-## 2.8.2 - 2026-09-23
+- **Send the mower to the zones you pick, the way the Worx app does it.** Watched live on Vision firmware 3.46.0+47 with pyworxcloud's MQTT log at debug level, the app's one-time mowing is `cmd` 1 with a top-level `cut` block: the zones, whether their order is imposed, and the edge routine. The mower answers by creating a new task on those zones, which replaces any task it had on hold, and mows them through before going home. The new `worx_vision_cloud.start_zone_mowing` action sends exactly that: `zones` in mowing order, `zone_order` (`fixed`, the app's Special mode, or `auto`) and `edge_cut`. An automation calling it at a given time is how to schedule a zone job.
+  - There is no duration, as in the app. The mower estimates the time left per zone itself, and a zone it had started keeps its progress: sending it back to a half-mowed zone finishes that zone rather than mowing it again.
+- **A diagnostic action sends a raw command to the mower: `worx_vision_cloud.send_raw_command`.** It publishes a JSON object as is, with pyworxcloud adding the `id`, `uuid` and `tm` envelope. The object must be non-empty and may not set those envelope keys. It is how the command above was found, and it stays for the next one: nothing is checked beyond the form of the object, so it is restricted to administrators and every use is logged with its body.
 
 ### Changed
 
+- **One-time mowing on a Vision mower is now the app's one-time mowing.** The action and the Start one-time mowing button send the command above, with the zones picked, or every zone of the map when none is, and the edge cut setting. Until now they sent the schedule's `once` block with a runtime: the mower turned it into a task that kept the zones of whatever task it had on hold, so a job sent after an interrupted slot mowed the front lawn when the back had been asked for. The runtime is ignored on a Vision mower, as the app no longer offers one; older mowers still run for the chosen time.
+- **On-demand edge cutting on a Vision mower sends `cmd` 101 directly**, instead of going through one-time mowing with a zero runtime.
 - **The weekly schedule sensor is readable at a glance.** A week of ten slots read as `Mon 08:00-12:30, Mon 14:00-18:00, Tue 08:00-12:30, Tue 14:00-18:00, Wed ...`, one entry per slot, with the day repeated every time and nothing to tell one day from the next. It now reads `Mon 08:00-12:30, 14:00-18:00 · Tue 08:00-12:30, 14:00-18:00 · Wed 08:00-12:30`: the day is written once, its time ranges follow, and a middle dot separates the days so the eye finds them without reading the whole line. A day whose slots are scattered through the list is gathered into one block rather than appearing twice.
   - When every slot of a day cuts the edge, the marker is written once for the day instead of after each range, which is what the mower reports in practice since the Worx app sends the same edge value to all slots.
   - Two new attributes carry what a single line never will: `by_day` groups the slots per day, each with its own text and its zones, so a markdown card can lay the week out one day per line; `text` holds the whole week whatever its length. A state is capped at 255 characters, and a long week used to fall back to "10 active slots" and lose the schedule entirely; `text` keeps it.
-
 - **The five capability sensors now read as capabilities.** "Random mowing pattern supported" was read as a setting rather than as what the mower is able to do, which it is: the state comes from the capability list the Worx cloud publishes for the model, and says nothing about the pattern actually in use. They now lead with the support, as Polish and Russian already did: "Supports random mowing pattern", "Supports map training", and so on, in the nine other languages.
 
 ### Fixed
-
-- **A schedule write sent only the slots, dropping everything else the mower had in its `sc` block.** The mower replaces that block whole rather than merging it, so `enabled`, which is the schedule's own on switch, along with the time extension and the one-time job, were left out of every write. pyworxcloud's protocol 1 encoder copies every key but `slots` from the block the mower published, and its decoder reads `enabled` back from that same block, so the payload sent here was not one the library would ever produce. The whole published block is now echoed back with only `slots` replaced, on the temporary slot and on the restore alike.
-  - This does not explain on its own why a schedule write draws no answer: one-time mowing sends a partial `sc` block too, alongside `cmd: 10`, and it does run. So the missing fields are a real defect, worth fixing for what they could erase, but not a proven cure.
-
-- **A zone job was dropped a fraction of a second after being sent, so zone mowing could never work.** Since 2.8.1 an unacknowledged slot is recorded as sent and checked against the week the mower publishes. That check read `device.updated` as proof the mower had spoken again, but that value moves on nearly every message from the cloud: the integration's own "Last update" sensor is deliberately throttled to once a day for exactly that reason. Seen live: a job sent at 08:42:37 was dropped at 08:42:38, 289 milliseconds later, which no mower can answer in. The verdict now rests on the published week alone, and is held until the slot should be running: a mower that got it is mowing it by then, and a week that still does not carry it never got it.
-  - Measured on firmware 3.46.0+47: a Landroid acknowledges **no** schedule write at all, mowing or resting on its base. The 2.8.1 note blamed the missing acknowledgement on the mower being docked, which is wrong, and the log said so too. Silence carries no information about delivery, and the wording no longer pretends otherwise.
-  - Nothing is put back when a job is dropped, since nothing was written. The log now says to check the Worx app if the mower starts a job Home Assistant does not know about.
 
 - **The current zone sensor flickered to `unknown` while the mower was mowing.** An RTK position drifts outside its zone for a few seconds when the mower hugs a contour, and crossing the corridor between two areas takes under a minute; both read `unknown`, which broke the history into unreadable pieces. Seen live on one morning: seven gaps, most of them between four and twenty seconds, in the middle of normal mowing. The last known zone is now held for up to 30 seconds before the sensor gives up, and the `held_last_known` attribute says when the state is held rather than measured.
   - Past those 30 seconds the sensor reads `unknown` again. A real trip between two areas takes minutes, and naming a zone for that long would be worse than saying nothing.
   - Docking needs no special case: a charging station sits inside a mowing zone, so the live lookup names it like any other position.
 
-## 2.8.1 - 2026-09-22
+### Notes
 
-### Fixed
-
-- **A mower resting on its base made zone mowing fail, although the command had most likely reached it.** A Landroid answers nothing for hours once docked, and pyworxcloud treats that silence as a failed command. But one-time jobs sent in exactly that state have run, so the silence says nothing about delivery. A missing acknowledgement no longer fails the job: the slot is recorded as sent but unconfirmed, and checked against the next weekly schedule the mower publishes.
-  - The slot showing up there confirms it, and the job carries on as usual.
-  - A mower that publishes its week **without** the slot never got it: the job is dropped, with the reason in the log, so it cannot block the next one. Nothing has to be put back in that case, since nothing was written.
-
-## 2.8.0 - 2026-09-22
-
-### Added
-
-- **Mow the zones you pick, right now.** Vision firmware ignores the zones of a one-time job but honours the ones carried by a weekly slot, so a zone job is run as a slot starting two minutes from now, added to the week the mower already has. The new `worx_vision_cloud.start_zone_mowing` action takes the zones in mowing order, a runtime, an optional edge cut and an optional start time, so a job can also be booked for later in the week; a Start zone mowing button does the same with the zone picker, runtime and edge cut already used by one-time mowing.
-  - The weekly schedule is saved in Home Assistant before anything is sent, and written back once the mower is home again. A safety deadline, the runtime plus 30 minutes, puts it back even if the mower never makes it home, and a pending job survives a Home Assistant restart. A job booked for later is not ended by the mowing the mower does in the meantime.
-  - The job is refused, with the reason, when the mower is offline or not on protocol 1, when the Worx automatic schedule is on (it rewrites the week by itself), when party mode suspends the schedule, when no zone is given, when the job would run past midnight, when the start time is in the past or more than six days away (the weekly schedule repeats), or when it would overlap a slot the mower already has. Two slots running at once is a shape the Worx app never writes, and nothing says which one the firmware would follow.
+- The 2.8.x test builds that came before this release ran zone jobs as a temporary weekly slot, on the belief that the firmware ignored the zones of a one-time job. It does not: the zones were lost to the task on hold. And the slots never took effect either: a bare schedule write was never applied in three attempts, and the variant sent with `cmd` 0 was never confirmed. That mechanism is gone, and the store it kept in Home Assistant is deleted on setup so no stale schedule can ever be written back.
 
 ## 2.7.2 - 2026-09-22
 

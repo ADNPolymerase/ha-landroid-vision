@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Mäher neu starten"
-      },
-      "start_zone_mowing": {
-        "name": "Zonenmähen starten"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Einmaliges Mähen starten",
-      "description": "Startet eine einmalige Mähsitzung mit gewählter Dauer, optionalem Kantenschnitt und optionaler RTK-Zonenliste.",
+      "description": "Startet einmaliges Mähen. Bei einem Vision-Mäher ist es das einmalige Mähen der Worx-App: Zonen und Kantenroutine optional, ohne Dauer, eine pausierte Aufgabe wird ersetzt. Ältere Mäher mähen die gewählte Zeit.",
       "fields": {
         "entity_id": {
           "name": "Mäher",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Mähdauer",
-          "description": "Dauer des einmaligen Mähens in Minuten. 0 mit aktiviertem Kantenschnitt mäht nur die Kanten."
+          "description": "Mähdauer in Minuten, nur für Mäher ohne RTK. Ein Vision-Mäher mäht seine Zonen fertig und ignoriert sie."
         },
         "edge_cut": {
           "name": "Kantenschnitt",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zonen",
-          "description": "Optionale Liste von RTK-Zonen-IDs in der Mähreihenfolge, z. B. [2, 1]. Leer lassen, um alle Zonen zu mähen. Die Vision-Firmware 3.46.0+47 ignoriert sie bei einem einmaligen Mähauftrag. Um eine bestimmte Zone zu mähen, sie in der Worx-App einem Wochenplan-Zeitfenster zuweisen: Diese werden beachtet, samt Reihenfolge."
+          "description": "Optionale Liste von RTK-Zonen-IDs in Mähreihenfolge, z. B. [2, 1]. Leer lassen, um alle Zonen zu mähen."
         }
       }
     },
@@ -523,7 +520,7 @@
     },
     "start_zone_mowing": {
       "name": "Zonenmähen starten",
-      "description": "Mäht die gewählten RTK-Zonen jetzt, in dieser Reihenfolge, über ein temporäres Zeitfenster im Wochenplan. Die Vision-Firmware ignoriert die Zonen eines einmaligen Auftrags, beachtet aber die eines Zeitfensters. Der Wochenplan wird nach der Rückkehr zur Station wiederhergestellt.",
+      "description": "Schickt den Mäher zum Mähen der gewählten RTK-Zonen, wie das einmalige Mähen der Worx-App. Ohne Dauer: der Mäher mäht die Zonen fertig und fährt dann heim. Eine pausierte Aufgabe wird ersetzt.",
       "fields": {
         "entity_id": {
           "name": "Mäher",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zonen",
-          "description": "RTK-Zonen-IDs in der Mähreihenfolge, z. B. [2, 1]. Die erste wird zuerst gemäht."
+          "description": "RTK-Zonen-IDs, z. B. [2, 1]. Bei fester Reihenfolge wird die erste zuerst gemäht."
         },
-        "runtime": {
-          "name": "Mähdauer",
-          "description": "Dauer des Auftrags in Minuten."
+        "zone_order": {
+          "name": "Zonenreihenfolge",
+          "description": "Fest mäht die Zonen in der angegebenen Reihenfolge, wie der Spezial-Modus der App. Auto lässt den Mäher wählen, wie der Auto-Modus der App."
         },
         "edge_cut": {
           "name": "Kantenschnitt",
-          "description": "Ob der Auftrag mit einem Kantenschnitt beginnt."
-        },
-        "start_at": {
-          "name": "Startzeit",
-          "description": "Wann der Auftrag beginnt. Leer lassen, um in zwei Minuten zu starten. Innerhalb der nächsten sechs Tage, da sich der Wochenplan wiederholt."
+          "description": "Ob die Aufgabe die Kantenroutine enthält."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Fest",
+        "auto": "Auto"
       }
     }
   }

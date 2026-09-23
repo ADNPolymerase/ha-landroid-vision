@@ -38,7 +38,7 @@ from .const import (
     ATTR_MAP_ID,
     ATTR_MOWER_NOTES,
     ATTR_RUNTIME,
-    ATTR_START_AT,
+    ATTR_ZONE_ORDER,
     ATTR_PAYLOAD,
     ATTR_VERSION,
     ATTR_ZONES,
@@ -55,6 +55,8 @@ from .const import (
     SERVICE_START_ONE_TIME_MOWING,
     SERVICE_START_ZONE_MOWING,
     SERVICE_SEND_RAW_COMMAND,
+    ZONE_ORDER_AUTO,
+    ZONE_ORDER_FIXED,
 )
 from .coordinator import WorxVisionCoordinator
 from .helpers import device_entry_by_identifier, raw_command_payload
@@ -72,17 +74,18 @@ START_ONE_TIME_MOWING_SCHEMA = vol.Schema(
     }
 )
 
-# A zone job runs as a temporary weekly slot, so it always needs a runtime
-# and at least one zone: without them it would be a plain one-time job.
+# A zone job is the Worx app's one-time mowing: zones, their order and the
+# edge routine, and no duration, since the mower mows the zones through.
 START_ZONE_MOWING_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-        vol.Required(ATTR_ZONES): lambda value: _service_zone_ids(value),
-        vol.Optional(ATTR_RUNTIME, default=60): vol.All(
-            vol.Coerce(int), vol.Range(min=1, max=360)
+        vol.Required(ATTR_ZONES): vol.All(
+            lambda value: _service_zone_ids(value), vol.Length(min=1)
+        ),
+        vol.Optional(ATTR_ZONE_ORDER, default=ZONE_ORDER_FIXED): vol.In(
+            [ZONE_ORDER_FIXED, ZONE_ORDER_AUTO]
         ),
         vol.Optional(ATTR_EDGE_CUT, default=False): cv.boolean,
-        vol.Optional(ATTR_START_AT): cv.datetime,
     }
 )
 
@@ -317,9 +320,8 @@ def _async_setup_services(hass: HomeAssistant) -> None:
         await runtime_data.coordinator.async_start_zone_mowing(
             serial_number,
             call.data[ATTR_ZONES],
-            call.data[ATTR_RUNTIME],
             call.data[ATTR_EDGE_CUT],
-            call.data.get(ATTR_START_AT),
+            fixed_order=call.data[ATTR_ZONE_ORDER] == ZONE_ORDER_FIXED,
         )
 
     async def async_set_rtk_map_id(call) -> None:

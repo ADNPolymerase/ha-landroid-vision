@@ -51,22 +51,14 @@ from .helpers import (
     device_display_name,
     get_dict_value,
     masked_connectivity,
-    conflicting_schedule_slot,
-    one_time_cut_config,
     smoothed_zone_name,
-    raw_schedule_config,
-    raw_schedule_slots,
     rtk_current_zone_name,
+    rtk_zone_ids,
+    zone_job_command,
     rtk_map_id,
     rtk_position,
     is_firmware_updating,
     is_stopped_away_from_base,
-    schedule_slots_payload,
-    slot_crosses_midnight,
-    temporary_schedule_slot,
-    TEMPORARY_SLOT_LEAD_MINUTES,
-    zone_mowing_restore_reason,
-    zone_slot_verdict,
 )
 from .statistics import DailyStatisticsTracker
 
@@ -95,13 +87,9 @@ RTK_TRAIL_MAX_POINTS_PER_DAY = 4000
 RTK_MAP_ID_STORAGE_VERSION = 1
 STATE_DURATION_STORAGE_VERSION = 1
 FIRMWARE_NOTES_STORAGE_VERSION = 1
+# 2.8.0 test builds kept zone jobs in their own store; nothing reads it now,
+# and it is removed on setup so no stale schedule is ever written back.
 ZONE_MOWING_STORAGE_VERSION = 1
-# A zone job whose mower never comes back still has to give the schedule back.
-ZONE_MOWING_GRACE_MINUTES = 30
-# An unacknowledged slot is only judged once it should be running: the week
-# the integration holds can be minutes old, so an earlier verdict would read
-# a stale schedule rather than the mower's answer.
-ZONE_MOWING_CONFIRM_GRACE_MINUTES = 5
 # Worx only serves release notes while an update is pending: once installed,
 # the firmware-upgrade route answers 404 and the notes are gone for good. They
 # are kept here as they go past, so the notes of the firmware a mower is
@@ -172,8 +160,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             ZONE_MOWING_STORAGE_VERSION,
             f"{DOMAIN}.{config_entry.entry_id}.zone_mowing",
         )
-        # serial -> {"slots": the week to put back, "deadline": iso, "left": bool}
-        self._zone_mowing_jobs: dict[str, dict[str, Any]] = {}
         self._zone_last_known: dict[str, str] = {}
         self._zone_unknown_since: dict[str, datetime] = {}
         self._event_lock = asyncio.Lock()
@@ -274,7 +260,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         await self._load_state_durations()
         await self._load_firmware_notes()
-        await self._load_zone_mowing_jobs()
+        await self._zone_mowing_store.async_remove()
 
         def _on_data_received(name: str, device: DeviceHandler) -> None:
             del name
@@ -692,7 +678,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self._sync_repair_issues(str(serial), device)
             self._note_connectivity(str(serial), device)
             self._note_state_durations(str(serial), device)
-            self._note_zone_mowing_job(str(serial), device)
             self._note_current_zone(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
@@ -942,8 +927,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             serial_number,
             payload,
         )
+        protocol = mower.get("protocol")
+        identifier = mower.get("uuid") if protocol == 1 else serial_number
         await self._async_publish_command(
-            serial_number, command_topic, payload, mower.get("protocol")
+            identifier or serial_number, command_topic, payload, protocol
         )
         await self._async_request_device_update_best_effort(serial_number)
 
@@ -962,7 +949,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             raise HomeAssistantError("Worx command topic is not available")
 
         # On Vision Cloud firmware 3.46.x cmd 101 is the reliable edge-only
-        # command. Full one-time mowing uses cmd 10 instead.
+        # command. A one-time job goes through async_start_zone_mowing.
         if protocol == 0:
             await self._async_publish_command(
                 serial_number,
@@ -971,13 +958,51 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 protocol,
             )
         elif protocol == 1:
-            await self.async_start_one_time_mowing(serial_number, 0, True, [])
-            return
+            await self._async_publish_command(
+                mower.get("uuid") or serial_number, command_topic, {"cmd": 101}, protocol
+            )
         else:
             raise HomeAssistantError(
                 "Edge cutting is not supported for this mower protocol"
             )
 
+        await self._async_request_device_update_best_effort(serial_number)
+
+    async def async_start_zone_mowing(
+        self,
+        serial_number: str,
+        zones: list[int] | None = None,
+        edge_cut: bool = False,
+        fixed_order: bool = True,
+    ) -> None:
+        """Start a one-time job on RTK zones, the way the Worx app does.
+
+        Watched live on Vision firmware 3.46.0+47: the app sends `cmd` 1 with
+        a top-level `cut` block, and the mower creates a new task on those
+        zones, replacing any task it had on hold. That replacement is what the
+        schedule's `once` block never did, and why a job sent that way could
+        end up mowing zones nobody asked for.
+        """
+        self.raise_if_updating(serial_number)
+        mower = self.cloud.get_mower(serial_number)
+        if not mower.get("online"):
+            raise HomeAssistantError(
+                "The device is currently offline, no action was sent"
+            )
+        if mower.get("protocol") != 1:
+            raise HomeAssistantError(
+                "Zone mowing needs a Vision or RTK mower using protocol 1"
+            )
+        command_topic = (mower.get("mqtt_topics") or {}).get("command_in")
+        uuid = mower.get("uuid")
+        if command_topic is None or uuid is None:
+            raise HomeAssistantError("Worx command topic is not available")
+
+        device = (self.data or {}).get(serial_number)
+        command = zone_job_command(
+            _normalize_zone_ids(zones), edge_cut, fixed_order, rtk_zone_ids(device)
+        )
+        await self._async_publish_command(uuid, command_topic, command, 1)
         await self._async_request_device_update_best_effort(serial_number)
 
     async def async_start_one_time_mowing(
@@ -1019,195 +1044,26 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 protocol,
             )
         elif protocol == 1:
-            command_topic = (mower.get("mqtt_topics") or {}).get("command_in")
-            if command_topic is None:
-                raise HomeAssistantError("Worx command topic is not available")
-
-            uuid = mower.get("uuid")
-            if uuid is None:
-                raise HomeAssistantError("Worx mower UUID is not available")
-
-            if edge_cut and runtime == 0 and not zone_ids:
-                await self._async_publish_command(
-                    uuid, command_topic, {"cmd": 101}, protocol
+            # The Worx app's one-time mowing carries no duration: the mower
+            # mows the zones through. Sending the schedule's `once` block with
+            # a runtime instead was merged with whatever task the mower had on
+            # hold, so the runtime is left out here.
+            if runtime:
+                _LOGGER.debug(
+                    "One-time mowing on %s: a Vision mower takes no runtime, "
+                    "it mows the zones through",
+                    serial_number,
                 )
-            else:
-                await self._async_publish_command(
-                    uuid,
-                    command_topic,
-                    {
-                        "cmd": 10,
-                        "sc": {
-                            "once": {
-                                "time": runtime,
-                                "cfg": {
-                                    "cut": one_time_cut_config(
-                                        edge_cut, zone_ids
-                                    )
-                                },
-                            }
-                        },
-                    },
-                    protocol,
-                )
+            await self.async_start_zone_mowing(
+                serial_number, zone_ids, edge_cut, fixed_order=bool(zone_ids)
+            )
+            return
         else:
             raise HomeAssistantError(
                 "One-time mowing is not supported for this mower protocol"
             )
 
         await self._async_request_device_update_best_effort(serial_number)
-
-    async def async_start_zone_mowing(
-        self,
-        serial_number: str,
-        zones: list[int] | None,
-        runtime_minutes: int,
-        edge_cut: bool = False,
-        start_at: datetime | None = None,
-    ) -> None:
-        """Mow the given RTK zones now, through a temporary schedule slot.
-
-        Vision firmware 3.46.0+47 drops the zones of a one-time job but
-        honours the ones carried by a weekly slot, order included, so a zone
-        job is run as a slot starting in a couple of minutes. The week the
-        mower already has is kept: the slot is added to it, and removed again
-        once the mower is back on its base.
-        """
-        self.raise_if_updating(serial_number)
-        mower = self.cloud.get_mower(serial_number)
-        if not mower.get("online"):
-            raise HomeAssistantError(
-                "The device is currently offline, no action was sent"
-            )
-        if mower.get("protocol") != 1:
-            raise HomeAssistantError(
-                "Zone mowing needs a Vision or RTK mower using protocol 1"
-            )
-
-        zone_ids = _normalize_zone_ids(zones)
-        if not zone_ids:
-            raise HomeAssistantError(
-                "Select at least one zone, or use one-time mowing to mow the whole lawn"
-            )
-        runtime = int(runtime_minutes)
-        if runtime <= 0:
-            raise HomeAssistantError("Zone mowing needs a runtime above zero")
-
-        if serial_number in self._zone_mowing_jobs:
-            raise HomeAssistantError(
-                "A zone mowing job is already running; wait for the mower to come "
-                "back before starting another one"
-            )
-
-        device = (self.data or {}).get(serial_number)
-        schedules = getattr(device, "schedules", {}) or {}
-        if get_dict_value(get_dict_value(schedules, "auto_schedule", {}), "enabled"):
-            raise HomeAssistantError(
-                "Turn the Worx automatic schedule off first: it rewrites the weekly "
-                "slots by itself, so a temporary slot would not survive"
-            )
-        if get_dict_value(schedules, "party_mode_enabled") is True:
-            raise HomeAssistantError(
-                "Party mode suspends the schedule, so a temporary slot would not run"
-            )
-
-        current_slots = raw_schedule_slots(device)
-        if not current_slots:
-            raise HomeAssistantError(
-                "The mower has not published its weekly schedule yet, nothing to add "
-                "a temporary slot to"
-            )
-
-        now = dt_util.now()
-        if start_at is None:
-            start = now + timedelta(minutes=TEMPORARY_SLOT_LEAD_MINUTES)
-        else:
-            start = dt_util.as_local(start_at)
-            if start <= now:
-                raise HomeAssistantError("The start time is in the past")
-            if start - now > timedelta(days=6):
-                raise HomeAssistantError(
-                    "A temporary slot can only be booked within the next six days: "
-                    "the weekly schedule repeats, so a later slot would come back "
-                    "every week"
-                )
-        start = start.replace(second=0, microsecond=0)
-        slot = temporary_schedule_slot(start, runtime, zone_ids, edge_cut)
-        if slot_crosses_midnight(slot):
-            raise HomeAssistantError(
-                "This job would run past midnight; start it earlier in the day"
-            )
-        conflict = conflicting_schedule_slot(current_slots, slot)
-        if conflict is not None:
-            raise HomeAssistantError(
-                "The mower already has a slot running at that time "
-                f"(day {conflict.get('d')}, minute {conflict.get('s')}); "
-                "wait for it or move it in the Worx app"
-            )
-
-        command_topic = (mower.get("mqtt_topics") or {}).get("command_in")
-        uuid = mower.get("uuid")
-        if command_topic is None or uuid is None:
-            raise HomeAssistantError("Worx command topic is not available")
-
-        confirmed = True
-        try:
-            await self._async_publish_command(
-                uuid,
-                command_topic,
-                schedule_slots_payload(
-                    raw_schedule_config(device), [*current_slots, slot]
-                ),
-                1,
-            )
-        except TimeoutException:
-            # Measured on firmware 3.46.0+47: a Landroid acknowledges no
-            # schedule write at all, mowing or docked. So silence carries no
-            # information about delivery, and treating it as a failure would
-            # reject every zone job. The write is recorded as unconfirmed and
-            # judged later, on the week the mower publishes.
-            confirmed = False
-            _LOGGER.warning(
-                "Zone mowing: %s did not acknowledge the temporary slot, which "
-                "is what a Landroid does with every schedule write and says "
-                "nothing about delivery. The slot is treated as sent and "
-                "checked once it should have started",
-                serial_number,
-            )
-
-        deadline = start + timedelta(minutes=runtime + ZONE_MOWING_GRACE_MINUTES)
-        self._zone_mowing_jobs[serial_number] = {
-            "slots": current_slots,
-            "slot": slot,
-            "confirmed": confirmed,
-            "sent_at": now.isoformat(),
-            "start": start.isoformat(),
-            "deadline": deadline.isoformat(),
-            "left": False,
-        }
-        await self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
-        _LOGGER.info(
-            "Zone mowing: temporary slot added for %s at %s for %s minutes, zones %s",
-            serial_number,
-            start.strftime("%H:%M"),
-            runtime,
-            zone_ids,
-        )
-        await self._async_request_device_update_best_effort(serial_number)
-
-    def zone_mowing_running(self, serial_number: str) -> bool:
-        """Return whether a temporary zone slot is currently in place."""
-        return serial_number in self._zone_mowing_jobs
-
-    async def _load_zone_mowing_jobs(self) -> None:
-        """Restore pending zone jobs so a restart cannot lose a schedule."""
-        stored = await self._zone_mowing_store.async_load()
-        if isinstance(stored, dict):
-            self._zone_mowing_jobs = {
-                str(serial): dict(job)
-                for serial, job in stored.items()
-                if isinstance(job, dict) and isinstance(job.get("slots"), list)
-            }
 
     def _note_current_zone(self, serial_number: str, device: DeviceHandler) -> None:
         """Hold the last known zone through a short gap in the RTK position.
@@ -1232,122 +1088,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         if shown is None:
             self._zone_last_known.pop(serial_number, None)
         setattr(device, "_worx_vision_zone_smoothed", shown)
-
-    def _note_zone_mowing_job(self, serial_number: str, device: DeviceHandler) -> None:
-        """Put the weekly schedule back once a zone job is over."""
-        job = self._zone_mowing_jobs.get(serial_number)
-        if job is None:
-            return
-
-        now = dt_util.now()
-        if not job.get("confirmed", True) and not self._confirm_zone_slot(job, device):
-            return
-
-        start = dt_util.parse_datetime(str(job.get("start") or ""))
-        docked = self._is_docked(device)
-        if not docked and (start is None or now >= start):
-            # The mower has to leave before coming back can mean anything,
-            # and only once its own slot has started.
-            job["left"] = True
-
-        reason = zone_mowing_restore_reason(job, docked, now)
-        if reason is not None:
-            self.hass.async_create_task(
-                self._async_restore_schedule(serial_number, reason == "deadline")
-            )
-
-    def _confirm_zone_slot(
-        self, job: dict[str, Any], device: DeviceHandler
-    ) -> bool:
-        """Check an unacknowledged slot against what the mower publishes.
-
-        Returns whether the job is still live. The only usable evidence is
-        the week the mower publishes, and the integration holds whatever it
-        last received, which may be minutes old. So the verdict waits until
-        the slot should be running: a mower that got it is mowing it by
-        then, and a week that still does not carry it never got it.
-        """
-        verdict = zone_slot_verdict(
-            job,
-            raw_schedule_slots(device),
-            dt_util.now(),
-            ZONE_MOWING_CONFIRM_GRACE_MINUTES,
-        )
-        if verdict == "confirmed":
-            job["confirmed"] = True
-            _LOGGER.info("Zone mowing: the mower confirmed the temporary slot")
-            self.hass.async_create_task(
-                self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
-            )
-            return True
-        if verdict == "waiting":
-            return False
-
-        serial_number = str(getattr(device, "serial_number", ""))
-        self._zone_mowing_jobs.pop(serial_number, None)
-        _LOGGER.warning(
-            "Zone mowing: the temporary slot for %s should be running by now "
-            "and the schedule the mower publishes still does not carry it, so "
-            "it never arrived and the job was dropped. Nothing was put back, "
-            "since nothing was written; check the Worx app if the mower does "
-            "start a job that Home Assistant does not know about",
-            serial_number,
-        )
-        self.hass.async_create_task(
-            self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
-        )
-        return False
-
-    async def _async_restore_schedule(
-        self, serial_number: str, expired: bool = False
-    ) -> None:
-        """Write the saved weekly schedule back and forget the job."""
-        job = self._zone_mowing_jobs.get(serial_number)
-        if job is None:
-            return
-        # Dropped first: the update loop runs again while this is awaited.
-        del self._zone_mowing_jobs[serial_number]
-
-        try:
-            mower = self.cloud.get_mower(serial_number)
-            command_topic = (mower.get("mqtt_topics") or {}).get("command_in")
-            uuid = mower.get("uuid")
-            if command_topic is None or uuid is None:
-                raise HomeAssistantError("Worx command topic is not available")
-            device = (self.data or {}).get(serial_number)
-            await self._async_publish_command(
-                uuid,
-                command_topic,
-                schedule_slots_payload(raw_schedule_config(device), job["slots"]),
-                1,
-            )
-        except Exception:  # noqa: BLE001
-            # Keep the job so the next update, or the next restart, tries again.
-            self._zone_mowing_jobs[serial_number] = job
-            _LOGGER.exception(
-                "Zone mowing: could not put the weekly schedule of %s back, "
-                "will retry on the next update",
-                serial_number,
-            )
-        else:
-            _LOGGER.info(
-                "Zone mowing: weekly schedule of %s restored%s",
-                serial_number,
-                " after the safety deadline" if expired else "",
-            )
-        await self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
-
-    async def async_start_configured_zone_mowing(
-        self, serial_number: str, start_at: datetime | None = None
-    ) -> None:
-        """Start zone mowing with the options the one-time controls carry."""
-        await self.async_start_zone_mowing(
-            serial_number,
-            self.one_time_mowing_zones(serial_number),
-            self.one_time_mowing_runtime(serial_number),
-            self.one_time_mowing_edge_cut(serial_number),
-            start_at,
-        )
 
     def _one_time_options(self, serial_number: str) -> dict[str, Any]:
         """Return local one-time mowing options for a mower."""

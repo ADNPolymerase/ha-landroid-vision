@@ -348,9 +348,6 @@
       },
       "restart": {
         "name": "Maaier herstarten"
-      },
-      "start_zone_mowing": {
-        "name": "Zone maaien starten"
       }
     },
     "number": {
@@ -447,7 +444,7 @@
   "services": {
     "start_one_time_mowing": {
       "name": "Eenmalig maaien starten",
-      "description": "Start een eenmalige maaisessie met gekozen duur, optioneel randen maaien en een optionele RTK-zonelijst.",
+      "description": "Start eenmalig maaien. Op een Vision is het eenmalig maaien van de Worx-app: zones en randroutine optioneel, zonder duur, en een gepauzeerde taak wordt vervangen. Oudere maaiers maaien de gekozen tijd.",
       "fields": {
         "entity_id": {
           "name": "Maaier",
@@ -455,7 +452,7 @@
         },
         "runtime": {
           "name": "Maaitijd",
-          "description": "Duur van het eenmalige maaien in minuten. Zet 0 met randen maaien aan om alleen randen te maaien."
+          "description": "Maaitijd in minuten, alleen gebruikt door maaiers zonder RTK. Een Vision maait zijn zones af en negeert die."
         },
         "edge_cut": {
           "name": "Randen maaien",
@@ -463,7 +460,7 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "Optionele lijst met RTK-zone-id's, in maaivolgorde, bijvoorbeeld [2, 1]. Leeg laten om alle zones te maaien. Vision-firmware 3.46.0+47 negeert deze bij een eenmalige maaibeurt. Om een bepaalde zone te maaien, stel die in op een tijdvak van het weekschema in de Worx-app: die zones worden gerespecteerd, inclusief volgorde."
+          "description": "Optionele lijst van RTK-zone-ID's in maaivolgorde, bijvoorbeeld [2, 1]. Leeg laten om alle zones te maaien."
         }
       }
     },
@@ -522,8 +519,8 @@
       }
     },
     "start_zone_mowing": {
-      "name": "Zone maaien starten",
-      "description": "Maait de gekozen RTK-zones nu, in volgorde, door een tijdelijk tijdvak aan het weekschema toe te voegen. De Vision-firmware negeert de zones van een eenmalige beurt maar respecteert die van een tijdvak. Het schema wordt hersteld zodra de maaier terug is.",
+      "name": "Zonemaaien starten",
+      "description": "Stuurt de maaier om de gekozen RTK-zones te maaien, zoals het eenmalig maaien van de Worx-app. Zonder duur: de maaier maait de zones af en gaat dan naar huis. Een gepauzeerde taak wordt vervangen.",
       "fields": {
         "entity_id": {
           "name": "Maaier",
@@ -531,20 +528,24 @@
         },
         "zones": {
           "name": "Zones",
-          "description": "RTK-zone-id's in maaivolgorde, bijvoorbeeld [2, 1]. De eerste wordt als eerste gemaaid."
+          "description": "RTK-zone-ID's, bijvoorbeeld [2, 1]. Bij een vaste volgorde wordt de eerste eerst gemaaid."
         },
-        "runtime": {
-          "name": "Maaiduur",
-          "description": "Hoe lang de beurt duurt, in minuten."
+        "zone_order": {
+          "name": "Zonevolgorde",
+          "description": "Vast maait de zones in de opgegeven volgorde, zoals de Speciaal-modus van de app. Auto laat de maaier kiezen, zoals de Auto-modus van de app."
         },
         "edge_cut": {
           "name": "Randmaaien",
-          "description": "Of de beurt begint met randmaaien."
-        },
-        "start_at": {
-          "name": "Starttijd",
-          "description": "Wanneer de beurt begint. Leeg laten om over twee minuten te starten. Binnen de komende zes dagen, omdat het weekschema zich herhaalt."
+          "description": "Of de taak de randroutine bevat."
         }
+      }
+    }
+  },
+  "selector": {
+    "zone_order": {
+      "options": {
+        "fixed": "Vast",
+        "auto": "Auto"
       }
     }
   }
