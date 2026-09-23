@@ -286,19 +286,19 @@
         "name": "Pausläge aktiverat"
       },
       "pin_setting_supported": {
-        "name": "PIN-inställning stöds"
+        "name": "Stöder PIN-inställning"
       },
       "vision_disable_supported": {
-        "name": "Avaktivering av Vision stöds"
+        "name": "Stöder avaktivering av Vision"
       },
       "random_pattern_supported": {
-        "name": "Slumpmässigt klippmönster stöds"
+        "name": "Stöder slumpmässigt klippmönster"
       },
       "map_training_supported": {
-        "name": "Kartträning stöds"
+        "name": "Stöder kartträning"
       },
       "diagnostic_upload_supported": {
-        "name": "Diagnostikuppladdning stöds"
+        "name": "Stöder diagnostikuppladdning"
       }
     },
     "switch": {

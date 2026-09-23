@@ -286,19 +286,19 @@
         "name": "Modalità pausa attiva"
       },
       "pin_setting_supported": {
-        "name": "Impostazione PIN supportata"
+        "name": "Supporta l'impostazione del PIN"
       },
       "vision_disable_supported": {
-        "name": "Disattivazione Vision supportata"
+        "name": "Supporta la disattivazione di Vision"
       },
       "random_pattern_supported": {
-        "name": "Schema di taglio casuale supportato"
+        "name": "Supporta lo schema di taglio casuale"
       },
       "map_training_supported": {
-        "name": "Addestramento mappa supportato"
+        "name": "Supporta l'addestramento della mappa"
       },
       "diagnostic_upload_supported": {
-        "name": "Caricamento diagnostica supportato"
+        "name": "Supporta il caricamento della diagnostica"
       }
     },
     "switch": {

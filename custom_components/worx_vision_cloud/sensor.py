@@ -287,6 +287,18 @@ def _has_rtk_map(device) -> bool:
     )
 
 
+def _smoothed_zone_name(device) -> str | None:
+    """Return the zone name the coordinator settled on for this update.
+
+    Falls back to the live lookup for the first update after a restart,
+    before the coordinator has had a chance to compute it.
+    """
+    smoothed = getattr(device, "_worx_vision_zone_smoothed", None)
+    if smoothed is not None:
+        return str(smoothed)
+    return rtk_current_zone_name(device)
+
+
 def _zone_current_state(device) -> Any:
     """Return the live RTK zone when available, else the legacy zone value.
 
@@ -297,7 +309,7 @@ def _zone_current_state(device) -> Any:
     """
     legacy_value = _zone(device, "current")
     if _has_rtk_map(device):
-        rtk_value = rtk_current_zone_name(device)
+        rtk_value = _smoothed_zone_name(device)
         if rtk_value is not None:
             return rtk_value
         if legacy_value in (None, "", 0, "0"):
@@ -309,7 +321,7 @@ def _zone_current_attributes(device) -> dict[str, Any]:
     """Return current-zone diagnostic attributes for legacy and RTK mowers."""
     current_zone = rtk_current_zone(device)
     legacy_value = _zone(device, "current")
-    if _has_rtk_map(device) and rtk_current_zone_name(device) is not None:
+    if _has_rtk_map(device) and _smoothed_zone_name(device) is not None:
         source = "rtk_map"
     elif legacy_value not in (None, "") and not (
         _has_rtk_map(device) and legacy_value in (0, "0")
@@ -323,6 +335,10 @@ def _zone_current_attributes(device) -> dict[str, Any]:
         "source": source,
         "zone_id": get_dict_value(current_zone or {}, "id"),
         "zone_name": get_dict_value(current_zone or {}, "name"),
+        # True while the last known zone is held through a short gap in the
+        # RTK position, so the state is not the live lookup.
+        "held_last_known": current_zone is None
+        and _smoothed_zone_name(device) is not None,
         "legacy_index": _zone(device, "index"),
         "legacy_ids": _zone(device, "ids"),
         "legacy_starting_point": _zone(device, "starting_point"),

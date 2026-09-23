@@ -286,19 +286,19 @@
         "name": "Pausemodus aktivert"
       },
       "pin_setting_supported": {
-        "name": "PIN-innstilling støttes"
+        "name": "Støtter PIN-innstilling"
       },
       "vision_disable_supported": {
-        "name": "Deaktivering av Vision støttes"
+        "name": "Støtter deaktivering av Vision"
       },
       "random_pattern_supported": {
-        "name": "Tilfeldig klippemønster støttes"
+        "name": "Støtter tilfeldig klippemønster"
       },
       "map_training_supported": {
-        "name": "Karttrening støttes"
+        "name": "Støtter karttrening"
       },
       "diagnostic_upload_supported": {
-        "name": "Diagnostikkopplasting støttes"
+        "name": "Støtter diagnostikkopplasting"
       }
     },
     "switch": {

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime as dt
+
 import importlib.util
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -108,3 +110,43 @@ class RtkCurrentZoneTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ZoneSmoothingTests(unittest.TestCase):
+    """Short gaps in the RTK position keep the last known zone."""
+
+    NOW = dt.datetime(2026, 9, 22, 8, 4, tzinfo=dt.UTC)
+
+    def test_a_live_zone_passes_through(self) -> None:
+        self.assertEqual(
+            HELPERS.smoothed_zone_name("Back lawn", "Front lawn", self.NOW, self.NOW),
+            "Back lawn",
+        )
+
+    def test_a_short_gap_holds_the_last_zone(self) -> None:
+        since = self.NOW - dt.timedelta(seconds=20)
+        self.assertEqual(
+            HELPERS.smoothed_zone_name(None, "Back lawn", since, self.NOW), "Back lawn"
+        )
+
+    def test_a_long_gap_gives_up(self) -> None:
+        since = self.NOW - dt.timedelta(seconds=31)
+        self.assertIsNone(
+            HELPERS.smoothed_zone_name(None, "Back lawn", since, self.NOW)
+        )
+
+    def test_the_grace_boundary_is_not_held(self) -> None:
+        since = self.NOW - dt.timedelta(seconds=HELPERS.ZONE_SMOOTHING_SECONDS)
+        self.assertIsNone(
+            HELPERS.smoothed_zone_name(None, "Back lawn", since, self.NOW)
+        )
+
+    def test_the_grace_is_thirty_seconds(self) -> None:
+        # A trip between two areas lasts minutes, so the hold stays short.
+        self.assertEqual(HELPERS.ZONE_SMOOTHING_SECONDS, 30)
+
+    def test_nothing_known_stays_unknown(self) -> None:
+        self.assertIsNone(HELPERS.smoothed_zone_name(None, None, self.NOW, self.NOW))
+        self.assertIsNone(
+            HELPERS.smoothed_zone_name(None, "Back lawn", None, self.NOW)
+        )

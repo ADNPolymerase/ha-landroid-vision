@@ -286,19 +286,19 @@
         "name": "Pausenmodus aktiviert"
       },
       "pin_setting_supported": {
-        "name": "PIN-Einstellung unterstützt"
+        "name": "Unterstützt PIN-Einstellung"
       },
       "vision_disable_supported": {
-        "name": "Vision-Deaktivierung unterstützt"
+        "name": "Unterstützt Vision-Deaktivierung"
       },
       "random_pattern_supported": {
-        "name": "Zufälliges Mähmuster unterstützt"
+        "name": "Unterstützt zufälliges Mähmuster"
       },
       "map_training_supported": {
-        "name": "Kartentraining unterstützt"
+        "name": "Unterstützt Kartentraining"
       },
       "diagnostic_upload_supported": {
-        "name": "Diagnose-Upload unterstützt"
+        "name": "Unterstützt Diagnose-Upload"
       }
     },
     "switch": {

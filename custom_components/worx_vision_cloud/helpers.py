@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from copy import deepcopy
 from datetime import date, datetime, time, timedelta
 from enum import Enum
 import json
@@ -170,6 +171,12 @@ SCHEDULE_TEXT_LABELS = {
     "da": {"none": "ingen aktive tidsrum", "count": "{count} aktive tidsrum", "edge": "+ kant"},
     "ru": {"none": "нет активных интервалов", "count": "активных интервалов: {count}", "edge": "+ кромка"},
 }
+
+
+# The day label is written once, then its time ranges. The two levels need
+# clearly different separators or the line blurs back into one long list.
+SCHEDULE_SLOT_SEPARATOR = ", "
+SCHEDULE_DAY_SEPARATOR = " · "
 
 
 def schedule_language(language: Any) -> str:
@@ -544,9 +551,69 @@ def zone_mowing_restore_reason(
     return None
 
 
-def schedule_slots_payload(slots: list[dict[str, Any]]) -> dict[str, Any]:
-    """Return the MQTT payload writing a whole week of slots."""
-    return {"sc": {"slots": slots}}
+# A slot the mower never acknowledged is only judged once it should be
+# running: the published week the integration holds can be minutes old, so
+# an earlier verdict reads a stale schedule rather than the mower's answer.
+ZONE_SLOT_CONFIRM_GRACE_MINUTES = 5
+
+
+def zone_slot_verdict(
+    job: dict[str, Any],
+    slots: Any,
+    now: datetime,
+    grace_minutes: int = ZONE_SLOT_CONFIRM_GRACE_MINUTES,
+) -> str:
+    """Return what to make of a temporary slot the mower never acknowledged.
+
+    "confirmed" once the slot shows up in the week the mower publishes,
+    "dropped" once the slot should be running and the week still does not
+    carry it, and "waiting" in between. Measured on firmware 3.46.0+47: a
+    Landroid acknowledges no schedule write at all, mowing or docked, so
+    silence says nothing about delivery and only the published week can
+    settle it.
+    """
+    slot = job.get("slot")
+    if not isinstance(slot, dict):
+        return "confirmed"
+    if slot_in_schedule(slots, slot):
+        return "confirmed"
+
+    start = job.get("start")
+    if isinstance(start, str) and start:
+        try:
+            starts_at = datetime.fromisoformat(start)
+        except ValueError:
+            starts_at = None
+        if starts_at is not None and now < starts_at + timedelta(
+            minutes=grace_minutes
+        ):
+            return "waiting"
+    return "dropped"
+
+
+def schedule_slots_payload(
+    current_schedule: Any, slots: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Return the MQTT payload writing a whole week of slots.
+
+    The `sc` block is replaced whole, not merged, so everything the mower
+    published beside `slots` has to be echoed back: `enabled` says whether
+    the schedule runs at all, `p` carries the time extension and `once` the
+    one-time job. pyworxcloud's own encoder copies every key but `slots`
+    for protocol 1, and its decoder reads `sc.enabled` from the same block,
+    so a bare `{"slots": ...}` is a schedule with no on switch. Sent to
+    Vision firmware 3.46.0+47, such a block draws no answer and changes
+    nothing.
+    """
+    payload = {
+        key: deepcopy(value)
+        for key, value in (
+            current_schedule.items() if isinstance(current_schedule, dict) else ()
+        )
+        if key != "slots"
+    }
+    payload["slots"] = slots
+    return {"sc": payload}
 
 
 
@@ -782,6 +849,37 @@ def rtk_current_zone_name(device: Any) -> str | None:
 
     zone_id = get_dict_value(zone, "id")
     return f"Zone {zone_id}" if zone_id not in (None, "") else None
+
+
+# An RTK position drifts out of its zone for a few seconds when the mower
+# hugs a contour, and crossing the corridor between two areas takes a few
+# tens of seconds. Both used to read unknown, which made the history
+# unreadable. Kept short on purpose: a real trip between two areas can last
+# minutes, and inventing a zone for that long would be worse than saying
+# nothing.
+ZONE_SMOOTHING_SECONDS = 30
+
+
+def smoothed_zone_name(
+    current: str | None,
+    last_known: str | None,
+    unknown_since: datetime | None,
+    now: datetime,
+    grace_seconds: int = ZONE_SMOOTHING_SECONDS,
+) -> str | None:
+    """Return the zone to show, holding the last one through a short gap.
+
+    A position outside every mowing zone is only honest for so long: past
+    the grace period the sensor says unknown again, so a mower genuinely
+    parked or off the map is never reported as still mowing somewhere.
+    """
+    if current is not None:
+        return current
+    if last_known is None or unknown_since is None:
+        return None
+    if (now - unknown_since).total_seconds() < grace_seconds:
+        return last_known
+    return None
 
 
 def masked_connectivity(
@@ -1065,10 +1163,9 @@ def schedule_day_label(day: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> s
     return labels.get(str(day).lower(), str(day))
 
 
-def schedule_slot_summary(slot: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> str:
-    """Return one compact, localized schedule slot line."""
+def schedule_slot_time(slot: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> str:
+    """Return one slot's time range, without the day label."""
     lang = schedule_language(language)
-    day = schedule_day_label(get_dict_value(slot, "day"), lang)
     start = get_dict_value(slot, "start")
     end = get_dict_value(slot, "end")
     duration = get_dict_value(slot, "duration_extended")
@@ -1076,15 +1173,87 @@ def schedule_slot_summary(slot: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) 
         duration = get_dict_value(slot, "duration")
 
     if start and end:
-        text = f"{day} {start}-{end}"
+        text = f"{start}-{end}"
     elif start and duration is not None:
-        text = f"{day} {start} ({duration} min)"
+        text = f"{start} ({duration} min)"
     else:
-        text = day or "slot"
+        return ""
 
     if get_dict_value(slot, "boundary"):
         text = f"{text} {SCHEDULE_TEXT_LABELS[lang]['edge']}"
     return text
+
+
+def schedule_slot_summary(slot: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> str:
+    """Return one compact, localized schedule slot line, day label included."""
+    lang = schedule_language(language)
+    day = schedule_day_label(get_dict_value(slot, "day"), lang)
+    time_text = schedule_slot_time(slot, lang)
+    if not time_text:
+        return day or "slot"
+    return f"{day} {time_text}".strip()
+
+
+def schedule_slots_by_day(slots: Any) -> list[tuple[Any, list[Any]]]:
+    """Group slots by day, keeping the order the mower reports them in.
+
+    A day appears once even when its slots are not contiguous in the raw
+    list, so the summary never repeats a day label.
+    """
+    days: dict[str, Any] = {}
+    grouped: dict[str, list[Any]] = {}
+    for slot in slots or []:
+        day = get_dict_value(slot, "day")
+        key = str(day).lower()
+        if key not in grouped:
+            days[key] = day
+            grouped[key] = []
+        grouped[key].append(slot)
+    return [(days[key], day_slots) for key, day_slots in grouped.items()]
+
+
+def schedule_day_summary(
+    day: Any, slots: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE
+) -> str:
+    """Return one day of the schedule: its label, then its time ranges.
+
+    When every slot of the day cuts the edge, the marker is written once
+    at the end instead of after each range. The Worx app sets the edge
+    per slot but sends the same value to all of them, so in practice this
+    is what the mower reports and it keeps the line inside the 255
+    characters a Home Assistant state allows. A mixed day keeps the
+    marker on each range that carries it, which reads like a factored day
+    when only the last range is edged; the mower never reports that.
+    """
+    lang = schedule_language(language)
+    label = schedule_day_label(day, lang)
+    times = [
+        text
+        for text in (schedule_slot_time(slot, lang) for slot in slots or [])
+        if text
+    ]
+    if not times:
+        return label or "slot"
+
+    edge = SCHEDULE_TEXT_LABELS[lang]["edge"]
+    suffix = f" {edge}"
+    if len(times) > 1 and all(text.endswith(suffix) for text in times):
+        times = [text[: -len(suffix)] for text in times]
+        ranges = f"{SCHEDULE_SLOT_SEPARATOR.join(times)}{suffix}"
+    else:
+        ranges = SCHEDULE_SLOT_SEPARATOR.join(times)
+    return f"{label} {ranges}".strip()
+
+
+def schedule_summary_text(
+    device: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE
+) -> str:
+    """Return the whole week, one block per day, whatever its length."""
+    lang = schedule_language(language)
+    return SCHEDULE_DAY_SEPARATOR.join(
+        schedule_day_summary(day, day_slots, lang)
+        for day, day_slots in schedule_slots_by_day(schedule_slots(device))
+    )
 
 
 def schedule_summary(device: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> str | None:
@@ -1094,10 +1263,27 @@ def schedule_summary(device: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE) -> 
     if not slots:
         return SCHEDULE_TEXT_LABELS[lang]["none"]
 
-    summary = ", ".join(schedule_slot_summary(slot, lang) for slot in slots)
+    summary = schedule_summary_text(device, lang)
     if len(summary) <= MAX_STRING_STATE_LENGTH:
         return summary
     return SCHEDULE_TEXT_LABELS[lang]["count"].format(count=len(slots))
+
+
+def schedule_slot_attributes(
+    device: Any, slot: Any, language: str = SCHEDULE_DEFAULT_LANGUAGE
+) -> dict[str, Any]:
+    """Return one slot as cards and templates consume it."""
+    return {
+        "day": get_dict_value(slot, "day"),
+        "day_label": schedule_day_label(get_dict_value(slot, "day"), language),
+        "start": get_dict_value(slot, "start"),
+        "end": get_dict_value(slot, "end"),
+        "duration": get_dict_value(slot, "duration"),
+        "duration_extended": get_dict_value(slot, "duration_extended"),
+        "boundary": get_dict_value(slot, "boundary"),
+        "source": get_dict_value(slot, "source"),
+        **schedule_slot_zones(device, slot),
+    }
 
 
 def schedule_attributes(
@@ -1107,22 +1293,25 @@ def schedule_attributes(
     schedules = getattr(device, "schedules", {}) or {}
     slots = schedule_slots(device)
     auto_schedule = get_dict_value(schedules, "auto_schedule", {}) or {}
+    lang = schedule_language(language)
 
     return {
         "active_slots": len(slots),
-        "slots": [
+        # The state is capped at 255 characters and falls back to a count
+        # when the week is too long to fit; this one never is.
+        "text": schedule_summary_text(device, lang),
+        "slots": [schedule_slot_attributes(device, slot, lang) for slot in slots],
+        "by_day": [
             {
-                "day": get_dict_value(slot, "day"),
-                "day_label": schedule_day_label(get_dict_value(slot, "day"), language),
-                "start": get_dict_value(slot, "start"),
-                "end": get_dict_value(slot, "end"),
-                "duration": get_dict_value(slot, "duration"),
-                "duration_extended": get_dict_value(slot, "duration_extended"),
-                "boundary": get_dict_value(slot, "boundary"),
-                "source": get_dict_value(slot, "source"),
-                **schedule_slot_zones(device, slot),
+                "day": day,
+                "day_label": schedule_day_label(day, lang),
+                "text": schedule_day_summary(day, day_slots, lang),
+                "slots": [
+                    schedule_slot_attributes(device, slot, lang)
+                    for slot in day_slots
+                ],
             }
-            for slot in slots
+            for day, day_slots in schedule_slots_by_day(slots)
         ],
         "auto_schedule_enabled": get_dict_value(auto_schedule, "enabled"),
         "one_time_schedule": get_dict_value(schedules, "one_time_schedule"),

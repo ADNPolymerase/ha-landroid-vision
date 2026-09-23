@@ -286,19 +286,19 @@
         "name": "Pauzemodus ingeschakeld"
       },
       "pin_setting_supported": {
-        "name": "PIN-instelling ondersteund"
+        "name": "Ondersteunt PIN-instelling"
       },
       "vision_disable_supported": {
-        "name": "Vision uitschakelen ondersteund"
+        "name": "Ondersteunt Vision uitschakelen"
       },
       "random_pattern_supported": {
-        "name": "Willekeurig maaipatroon ondersteund"
+        "name": "Ondersteunt willekeurig maaipatroon"
       },
       "map_training_supported": {
-        "name": "Kaarttraining ondersteund"
+        "name": "Ondersteunt kaarttraining"
       },
       "diagnostic_upload_supported": {
-        "name": "Diagnose-upload ondersteund"
+        "name": "Ondersteunt diagnose-upload"
       }
     },
     "switch": {

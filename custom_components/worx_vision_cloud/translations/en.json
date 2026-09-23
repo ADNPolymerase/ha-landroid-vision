@@ -286,19 +286,19 @@
         "name": "Pause mode enabled"
       },
       "pin_setting_supported": {
-        "name": "PIN setting supported"
+        "name": "Supports PIN setting"
       },
       "vision_disable_supported": {
-        "name": "Vision disable supported"
+        "name": "Supports disabling Vision"
       },
       "random_pattern_supported": {
-        "name": "Random mowing pattern supported"
+        "name": "Supports random mowing pattern"
       },
       "map_training_supported": {
-        "name": "Map training supported"
+        "name": "Supports map training"
       },
       "diagnostic_upload_supported": {
-        "name": "Diagnostic upload supported"
+        "name": "Supports diagnostic upload"
       }
     },
     "switch": {

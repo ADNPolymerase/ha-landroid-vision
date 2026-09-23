@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.8.2 - 2026-09-23
+
+### Changed
+
+- **The weekly schedule sensor is readable at a glance.** A week of ten slots read as `Mon 08:00-12:30, Mon 14:00-18:00, Tue 08:00-12:30, Tue 14:00-18:00, Wed ...`, one entry per slot, with the day repeated every time and nothing to tell one day from the next. It now reads `Mon 08:00-12:30, 14:00-18:00 · Tue 08:00-12:30, 14:00-18:00 · Wed 08:00-12:30`: the day is written once, its time ranges follow, and a middle dot separates the days so the eye finds them without reading the whole line. A day whose slots are scattered through the list is gathered into one block rather than appearing twice.
+  - When every slot of a day cuts the edge, the marker is written once for the day instead of after each range, which is what the mower reports in practice since the Worx app sends the same edge value to all slots.
+  - Two new attributes carry what a single line never will: `by_day` groups the slots per day, each with its own text and its zones, so a markdown card can lay the week out one day per line; `text` holds the whole week whatever its length. A state is capped at 255 characters, and a long week used to fall back to "10 active slots" and lose the schedule entirely; `text` keeps it.
+
+- **The five capability sensors now read as capabilities.** "Random mowing pattern supported" was read as a setting rather than as what the mower is able to do, which it is: the state comes from the capability list the Worx cloud publishes for the model, and says nothing about the pattern actually in use. They now lead with the support, as Polish and Russian already did: "Supports random mowing pattern", "Supports map training", and so on, in the nine other languages.
+
+### Fixed
+
+- **A schedule write sent only the slots, dropping everything else the mower had in its `sc` block.** The mower replaces that block whole rather than merging it, so `enabled`, which is the schedule's own on switch, along with the time extension and the one-time job, were left out of every write. pyworxcloud's protocol 1 encoder copies every key but `slots` from the block the mower published, and its decoder reads `enabled` back from that same block, so the payload sent here was not one the library would ever produce. The whole published block is now echoed back with only `slots` replaced, on the temporary slot and on the restore alike.
+  - This does not explain on its own why a schedule write draws no answer: one-time mowing sends a partial `sc` block too, alongside `cmd: 10`, and it does run. So the missing fields are a real defect, worth fixing for what they could erase, but not a proven cure.
+
+- **A zone job was dropped a fraction of a second after being sent, so zone mowing could never work.** Since 2.8.1 an unacknowledged slot is recorded as sent and checked against the week the mower publishes. That check read `device.updated` as proof the mower had spoken again, but that value moves on nearly every message from the cloud: the integration's own "Last update" sensor is deliberately throttled to once a day for exactly that reason. Seen live: a job sent at 08:42:37 was dropped at 08:42:38, 289 milliseconds later, which no mower can answer in. The verdict now rests on the published week alone, and is held until the slot should be running: a mower that got it is mowing it by then, and a week that still does not carry it never got it.
+  - Measured on firmware 3.46.0+47: a Landroid acknowledges **no** schedule write at all, mowing or resting on its base. The 2.8.1 note blamed the missing acknowledgement on the mower being docked, which is wrong, and the log said so too. Silence carries no information about delivery, and the wording no longer pretends otherwise.
+  - Nothing is put back when a job is dropped, since nothing was written. The log now says to check the Worx app if the mower starts a job Home Assistant does not know about.
+
+- **The current zone sensor flickered to `unknown` while the mower was mowing.** An RTK position drifts outside its zone for a few seconds when the mower hugs a contour, and crossing the corridor between two areas takes under a minute; both read `unknown`, which broke the history into unreadable pieces. Seen live on one morning: seven gaps, most of them between four and twenty seconds, in the middle of normal mowing. The last known zone is now held for up to 30 seconds before the sensor gives up, and the `held_last_known` attribute says when the state is held rather than measured.
+  - Past those 30 seconds the sensor reads `unknown` again. A real trip between two areas takes minutes, and naming a zone for that long would be worse than saying nothing.
+  - Docking needs no special case: a charging station sits inside a mowing zone, so the live lookup names it like any other position.
+
 ## 2.8.1 - 2026-09-22
 
 ### Fixed

@@ -53,8 +53,10 @@ from .helpers import (
     masked_connectivity,
     conflicting_schedule_slot,
     one_time_cut_config,
-    slot_in_schedule,
+    smoothed_zone_name,
+    raw_schedule_config,
     raw_schedule_slots,
+    rtk_current_zone_name,
     rtk_map_id,
     rtk_position,
     is_firmware_updating,
@@ -64,6 +66,7 @@ from .helpers import (
     temporary_schedule_slot,
     TEMPORARY_SLOT_LEAD_MINUTES,
     zone_mowing_restore_reason,
+    zone_slot_verdict,
 )
 from .statistics import DailyStatisticsTracker
 
@@ -95,6 +98,10 @@ FIRMWARE_NOTES_STORAGE_VERSION = 1
 ZONE_MOWING_STORAGE_VERSION = 1
 # A zone job whose mower never comes back still has to give the schedule back.
 ZONE_MOWING_GRACE_MINUTES = 30
+# An unacknowledged slot is only judged once it should be running: the week
+# the integration holds can be minutes old, so an earlier verdict would read
+# a stale schedule rather than the mower's answer.
+ZONE_MOWING_CONFIRM_GRACE_MINUTES = 5
 # Worx only serves release notes while an update is pending: once installed,
 # the firmware-upgrade route answers 404 and the notes are gone for good. They
 # are kept here as they go past, so the notes of the firmware a mower is
@@ -167,6 +174,8 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         )
         # serial -> {"slots": the week to put back, "deadline": iso, "left": bool}
         self._zone_mowing_jobs: dict[str, dict[str, Any]] = {}
+        self._zone_last_known: dict[str, str] = {}
+        self._zone_unknown_since: dict[str, datetime] = {}
         self._event_lock = asyncio.Lock()
         self._rtk_address_lock = asyncio.Lock()
         self._last_rtk_address_lookup: datetime | None = None
@@ -684,6 +693,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             self._note_connectivity(str(serial), device)
             self._note_state_durations(str(serial), device)
             self._note_zone_mowing_job(str(serial), device)
+            self._note_current_zone(str(serial), device)
             data = dict(self.data or {})
             data[str(serial)] = device
             self.async_set_updated_data(data)
@@ -1116,20 +1126,23 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             await self._async_publish_command(
                 uuid,
                 command_topic,
-                schedule_slots_payload([*current_slots, slot]),
+                schedule_slots_payload(
+                    raw_schedule_config(device), [*current_slots, slot]
+                ),
                 1,
             )
         except TimeoutException:
-            # A mower resting on its base answers nothing for hours, but the
-            # command still reaches it: one-time jobs sent in that state have
-            # run. So a missing acknowledgement is not a failure here, it is
-            # an unconfirmed write, checked against the next week the mower
-            # publishes.
+            # Measured on firmware 3.46.0+47: a Landroid acknowledges no
+            # schedule write at all, mowing or docked. So silence carries no
+            # information about delivery, and treating it as a failure would
+            # reject every zone job. The write is recorded as unconfirmed and
+            # judged later, on the week the mower publishes.
             confirmed = False
             _LOGGER.warning(
-                "Zone mowing: %s did not acknowledge the temporary slot; it is "
-                "probably resting on its base. The slot is treated as sent and "
-                "checked against the next schedule the mower publishes",
+                "Zone mowing: %s did not acknowledge the temporary slot, which "
+                "is what a Landroid does with every schedule write and says "
+                "nothing about delivery. The slot is treated as sent and "
+                "checked once it should have started",
                 serial_number,
             )
 
@@ -1167,6 +1180,30 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 if isinstance(job, dict) and isinstance(job.get("slots"), list)
             }
 
+    def _note_current_zone(self, serial_number: str, device: DeviceHandler) -> None:
+        """Hold the last known zone through a short gap in the RTK position.
+
+        Hugging a contour or crossing the corridor between two areas puts the
+        mower outside every mowing zone for a few seconds, which used to read
+        unknown. Docking needs no special case: a charging station sits inside
+        a mowing zone, so the live lookup names it like any other position.
+        """
+        now = datetime.now(UTC)
+        current = rtk_current_zone_name(device)
+        if current is not None:
+            self._zone_last_known[serial_number] = current
+            self._zone_unknown_since.pop(serial_number, None)
+            setattr(device, "_worx_vision_zone_smoothed", current)
+            return
+
+        since = self._zone_unknown_since.setdefault(serial_number, now)
+        shown = smoothed_zone_name(
+            None, self._zone_last_known.get(serial_number), since, now
+        )
+        if shown is None:
+            self._zone_last_known.pop(serial_number, None)
+        setattr(device, "_worx_vision_zone_smoothed", shown)
+
     def _note_zone_mowing_job(self, serial_number: str, device: DeviceHandler) -> None:
         """Put the weekly schedule back once a zone job is over."""
         job = self._zone_mowing_jobs.get(serial_number)
@@ -1195,43 +1232,41 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
     ) -> bool:
         """Check an unacknowledged slot against what the mower publishes.
 
-        Returns whether the job is still live. A mower that has spoken again
-        without carrying the slot never got it, so the job is dropped: there
-        is nothing to put back, and leaving it would block the next one.
+        Returns whether the job is still live. The only usable evidence is
+        the week the mower publishes, and the integration holds whatever it
+        last received, which may be minutes old. So the verdict waits until
+        the slot should be running: a mower that got it is mowing it by
+        then, and a week that still does not carry it never got it.
         """
-        slot = job.get("slot")
-        if not isinstance(slot, dict):
-            job["confirmed"] = True
-            return True
-
-        if slot_in_schedule(raw_schedule_slots(device), slot):
+        verdict = zone_slot_verdict(
+            job,
+            raw_schedule_slots(device),
+            dt_util.now(),
+            ZONE_MOWING_CONFIRM_GRACE_MINUTES,
+        )
+        if verdict == "confirmed":
             job["confirmed"] = True
             _LOGGER.info("Zone mowing: the mower confirmed the temporary slot")
             self.hass.async_create_task(
                 self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
             )
             return True
-
-        reported = getattr(device, "updated", None)
-        sent_at = dt_util.parse_datetime(str(job.get("sent_at") or ""))
-        if (
-            isinstance(reported, datetime)
-            and sent_at is not None
-            and dt_util.as_utc(reported) > dt_util.as_utc(sent_at)
-        ):
-            serial_number = str(getattr(device, "serial_number", ""))
-            self._zone_mowing_jobs.pop(serial_number, None)
-            _LOGGER.warning(
-                "Zone mowing: %s published its schedule without the temporary "
-                "slot, so the job never reached it and was dropped",
-                serial_number,
-            )
-            self.hass.async_create_task(
-                self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
-            )
+        if verdict == "waiting":
             return False
 
-        # Nothing new from the mower yet: keep waiting.
+        serial_number = str(getattr(device, "serial_number", ""))
+        self._zone_mowing_jobs.pop(serial_number, None)
+        _LOGGER.warning(
+            "Zone mowing: the temporary slot for %s should be running by now "
+            "and the schedule the mower publishes still does not carry it, so "
+            "it never arrived and the job was dropped. Nothing was put back, "
+            "since nothing was written; check the Worx app if the mower does "
+            "start a job that Home Assistant does not know about",
+            serial_number,
+        )
+        self.hass.async_create_task(
+            self._zone_mowing_store.async_save(dict(self._zone_mowing_jobs))
+        )
         return False
 
     async def _async_restore_schedule(
@@ -1250,8 +1285,12 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             uuid = mower.get("uuid")
             if command_topic is None or uuid is None:
                 raise HomeAssistantError("Worx command topic is not available")
+            device = (self.data or {}).get(serial_number)
             await self._async_publish_command(
-                uuid, command_topic, schedule_slots_payload(job["slots"]), 1
+                uuid,
+                command_topic,
+                schedule_slots_payload(raw_schedule_config(device), job["slots"]),
+                1,
             )
         except Exception:  # noqa: BLE001
             # Keep the job so the next update, or the next restart, tries again.
