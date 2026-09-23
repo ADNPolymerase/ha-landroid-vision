@@ -12,6 +12,7 @@ from homeassistant.components.number import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfArea, UnitOfLength, UnitOfTime
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from pyworxcloud import DeviceCapability
@@ -289,10 +290,20 @@ async def async_setup_entry(
         for serial_number in runtime.coordinator.data
         for description in NUMBERS
     ]
-    entities.extend(
-        OneTimeMowingRuntimeNumber(runtime.coordinator, entry, serial_number)
-        for serial_number in runtime.coordinator.data
-    )
+    entity_registry = er.async_get(hass)
+    for serial_number, device in runtime.coordinator.data.items():
+        if getattr(device, "protocol", 0) != 1:
+            entities.append(
+                OneTimeMowingRuntimeNumber(runtime.coordinator, entry, serial_number)
+            )
+            continue
+        # A Vision mower takes no runtime for a one-time job (2.8.0), so the
+        # runtime number did nothing there. Drop it from older setups.
+        stale = entity_registry.async_get_entity_id(
+            "number", DOMAIN, f"{serial_number}_one_time_mowing_runtime"
+        )
+        if stale is not None:
+            entity_registry.async_remove(stale)
     async_add_entities(entities)
 
 

@@ -12,6 +12,7 @@ from homeassistant.components.button import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -122,6 +123,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up buttons."""
     runtime = hass.data[DOMAIN][entry.entry_id]
+    # 2.8.0 removed the Start zone mowing button, a duplicate of Start
+    # one-time mowing. Drop the leftover entry so it does not stay greyed out.
+    entity_registry = er.async_get(hass)
+    for serial_number in runtime.coordinator.data:
+        stale = entity_registry.async_get_entity_id(
+            "button", DOMAIN, f"{serial_number}_start_zone_mowing"
+        )
+        if stale is not None:
+            entity_registry.async_remove(stale)
     async_add_entities(
         [
             WorxVisionButton(runtime.coordinator, entry, serial_number, description)

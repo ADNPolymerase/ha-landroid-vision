@@ -8,7 +8,12 @@
 
 ### Changed
 
+- **No One-time mowing runtime on a Vision mower.** Since 2.8.0 a Vision mower's one-time job carries no duration, as in the Worx app, so the runtime number did nothing there. It is no longer created for a Vision mower, and removed from an existing setup. Older mowers keep it.
 - **Diagnostics show how the RTK map identifies its zones**, without any of its geometry. Each zone now includes the plain fields of its `summary`, and a new `rtk_map_layout` section describes the map's structure: identifiers, types and names are kept, lists of points are reduced to their length, and any key naming a position is redacted.
+
+### Fixed
+
+- **The Start zone mowing button stayed on the device page, greyed out, after 2.8.0 removed it.** Its leftover registry entry is now removed on setup. Start one-time mowing does the same job.
 
 ## 2.8.0 - 2026-09-23
 
