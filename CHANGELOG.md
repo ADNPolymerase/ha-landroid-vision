@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.3 - 2026-09-24
+
+### Changed
+
+- **No mowing readiness chip in the card.** Everything it could say is already on the card: the state under the title, the error and rain banners, the battery colour and its lightning bolt. It even read "ready" while the mower was searching a zone or leaving its base. The card is one line shorter. The Mowing readiness sensor stays in the integration, for automations. The `show_info` switch now reads "Wi-Fi, errors and rain".
+
 ## 3.0.2 - 2026-09-24
 
 ### Changed

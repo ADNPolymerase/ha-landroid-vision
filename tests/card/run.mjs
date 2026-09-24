@@ -267,8 +267,7 @@ const flush = () => new Promise((r) => setImmediate(r));
   contains("weak wifi in red", html, 'class="wifi link lvl-bad" title="Wi-Fi -81 dBm"');
   contains("wifi sits in the corner with the battery", html, '<div class="corner"><div class="wifi link lvl-bad"');
   check("wifi is no longer a chip", html.includes('class="chip warn" title="Wi-Fi"'), false);
-  contains("readiness shown, translated", html, "F(ready)");
-  contains("ready is green", html, 'class="chip link good"');
+  check("no readiness chip: the state and the banners say it", html.includes("F(ready)"), false);
   check("no error chip without an error", html.includes("chip bad"), false);
   contains("schedule header", html, "Schedule");
   contains("next mowing in the header", html, "Next : F(2026-01-01T06:00:00+00:00)");
@@ -304,7 +303,7 @@ const flush = () => new Promise((r) => setImmediate(r));
   contains("error banner when there is one", html, 'class="error-banner link"');
   contains("error translated in the banner", html, '<div class="error-title">F(lifted)</div>');
   check("no error chip any more", html.includes("chip link bad"), false);
-  contains("not ready is orange", html, 'class="chip link warn" data-action="more-info" data-entity="sensor.robot_apte" role="button" tabindex="0"><ha-icon icon="mdi:alert-outline"');
+  check("no readiness chip even when not ready", html.includes("F(battery_low)"), false);
   contains("strong wifi", html, "mdi:wifi-strength-4");
 }
 
@@ -440,8 +439,6 @@ const flush = () => new Promise((r) => setImmediate(r));
   dup.states["sensor.robot_apte"] = st("error");
   const dupHtml = markup(make({ entity: "lawn_mower.robot" }, dup));
   check("readiness 'error' not repeated under the banner", dupHtml.includes("F(error)"), false);
-  dup.states["sensor.robot_apte"] = st("battery_low");
-  contains("another readiness still shows with the banner", markup(make({ entity: "lawn_mower.robot" }, dup)), "F(battery_low)");
   check("no banner when the error sensor is unavailable", markup(make({ entity: "lawn_mower.robot" }, off)).includes('class="error-banner'), false);
 }
 
@@ -541,7 +538,6 @@ const flush = () => new Promise((r) => setImmediate(r));
   opens("current zone", "sensor.robot_ici");
   opens("battery", "sensor.robot_bat");
   opens("wifi", "sensor.robot_wifi");
-  opens("readiness", "sensor.robot_apte");
   opens("map", "camera.robot_carte");
   check("next mowing is not clickable", html.includes('data-entity="sensor.robot_next"'), false);
 
@@ -892,23 +888,15 @@ function rainy(extra = {}) {
   contains("smaller icons", markup(make({ entity: "lawn_mower.robot" })), ".battery ha-icon, .wifi ha-icon { --mdc-icon-size: 18px;");
 }
 
-// ── readiness chip not repeating the state ──────────────────────────────────
+// ── no readiness chip ───────────────────────────────────────────────────────
 
 {
-  const mowing = makeHass();
-  mowing.states["sensor.robot_apte"] = st("mowing");
-  check("no 'mowing' chip while the state says it", markup(make({ entity: "lawn_mower.robot" }, mowing)).includes("F(mowing)"), false);
-
-  const same = makeHass();
-  same.states["sensor.robot_etat"] = st("charging");
-  same.states["sensor.robot_apte"] = st("charging");
-  check("no chip reading like the state", markup(make({ entity: "lawn_mower.robot" }, same)).includes('class="chip link'), false);
-
-  const ready = markup(make({ entity: "lawn_mower.robot" }));
-  contains("'ready' chip still shown", ready, 'class="chip link good"');
-  const low = makeHass();
-  low.states["sensor.robot_apte"] = st("battery_low");
-  contains("a blocking reason is still shown", markup(make({ entity: "lawn_mower.robot" }, low)), "F(battery_low)");
+  for (const state of ["ready", "mowing", "charging", "battery_low", "locked", "offline"]) {
+    const hass = makeHass();
+    hass.states["sensor.robot_apte"] = st(state);
+    check(`no readiness chip for ${state}`, markup(make({ entity: "lawn_mower.robot" }, hass)).includes(`F(${state})`), false);
+  }
+  check("no chip style left", markup(make({ entity: "lawn_mower.robot" })).includes(".chips {"), false);
 }
 
 // ── translations ────────────────────────────────────────────────────────────

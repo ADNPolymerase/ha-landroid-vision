@@ -21,7 +21,7 @@ const I18N = {
     rain_banner: "Rain detected", rain_resume: "Can resume in {d}", rain_delay_of: "{d} rain delay", rain_wait: "The mower waits for the rain to stop",
     now_slot: "Current slot: {range}",
     blades: "Blades", reset: "Reset", reset_title: "Reset the blade time to zero?", reset_body: "Only after replacing the blades. The current {time} will be lost.", cancel: "Cancel", of_threshold: "{pct} % of the service threshold ({h} h)", replaced_on: "replaced {date}", since: "Since {time}", ago: "{d} ago", ed_show_blades: "Blades", ed_show_values: "Values (battery %, Wi-Fi dBm)",
-    schedule: "Schedule", next: "Next", no_slots: "No mowing slot", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, readiness and errors", ed_show_schedule: "Schedule",
+    schedule: "Schedule", next: "Next", no_slots: "No mowing slot", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, errors and rain", ed_show_schedule: "Schedule",
     start: "Start", pause: "Pause", dock: "Dock", zones: "Zones", zone: "Zone",
     one_time: "One-time mowing", order: "Order", order_fixed: "Special",
     order_auto: "Auto", edge: "Edge cut", go: "Start", pick: "Tick at least one zone",
@@ -36,7 +36,7 @@ const I18N = {
     rain_banner: "Pluie détectée", rain_resume: "Reprise possible dans {d}", rain_delay_of: "délai pluie de {d}", rain_wait: "La tondeuse attend la fin de la pluie",
     now_slot: "Créneau en cours : {range}",
     blades: "Lames", reset: "Réinitialiser", reset_title: "Remettre le temps des lames à zéro ?", reset_body: "À faire seulement après avoir changé les lames. Les {time} actuelles seront perdues.", cancel: "Annuler", of_threshold: "{pct} % du seuil d'entretien ({h} h)", replaced_on: "changées le {date}", since: "Depuis {time}", ago: "il y a {d}", ed_show_blades: "Lames", ed_show_values: "Valeurs (batterie %, Wi-Fi dBm)",
-    schedule: "Programme", next: "Prochaine", no_slots: "Aucun créneau de tonte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, aptitude et erreurs", ed_show_schedule: "Programme",
+    schedule: "Programme", next: "Prochaine", no_slots: "Aucun créneau de tonte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, erreurs et pluie", ed_show_schedule: "Programme",
     start: "Démarrer", pause: "Pause", dock: "Maison", zones: "Zones", zone: "Zone",
     one_time: "Tonte unique", order: "Ordre", order_fixed: "Spécial",
     order_auto: "Auto", edge: "Bordure", go: "Démarrer", pick: "Cochez au moins une zone",
@@ -51,7 +51,7 @@ const I18N = {
     rain_banner: "Regen erkannt", rain_resume: "Weiter möglich in {d}", rain_delay_of: "Regenverzögerung {d}", rain_wait: "Der Mäher wartet, bis der Regen aufhört",
     now_slot: "Aktuelles Zeitfenster: {range}",
     blades: "Messer", reset: "Zurücksetzen", reset_title: "Messerzeit auf null setzen?", reset_body: "Nur nach dem Messerwechsel. Die aktuellen {time} gehen verloren.", cancel: "Abbrechen", of_threshold: "{pct} % der Wartungsschwelle ({h} h)", replaced_on: "gewechselt am {date}", since: "Seit {time}", ago: "vor {d}", ed_show_blades: "Messer", ed_show_values: "Werte (Akku %, WLAN dBm)",
-    schedule: "Zeitplan", next: "Nächste", no_slots: "Kein Mähzeitraum", wifi: "WLAN", ed_show_info: "WLAN, Mähbereitschaft und Fehler", ed_show_schedule: "Zeitplan",
+    schedule: "Zeitplan", next: "Nächste", no_slots: "Kein Mähzeitraum", wifi: "WLAN", ed_show_info: "WLAN, Fehler und Regen", ed_show_schedule: "Zeitplan",
     start: "Starten", pause: "Pause", dock: "Zur Station", zones: "Zonen", zone: "Zone",
     one_time: "Einmaliges Mähen", order: "Reihenfolge", order_fixed: "Speziell",
     order_auto: "Auto", edge: "Kantenschnitt", go: "Starten", pick: "Mindestens eine Zone auswählen",
@@ -66,7 +66,7 @@ const I18N = {
     rain_banner: "Lluvia detectada", rain_resume: "Puede reanudar en {d}", rain_delay_of: "retraso por lluvia de {d}", rain_wait: "El cortacésped espera a que pare la lluvia",
     now_slot: "Franja actual: {range}",
     blades: "Cuchillas", reset: "Restablecer", reset_title: "¿Poner a cero el tiempo de las cuchillas?", reset_body: "Solo tras cambiar las cuchillas. Se perderán las {time} actuales.", cancel: "Cancelar", of_threshold: "{pct} % del umbral de mantenimiento ({h} h)", replaced_on: "cambiadas el {date}", since: "Desde {time}", ago: "hace {d}", ed_show_blades: "Cuchillas", ed_show_values: "Valores (batería %, Wi-Fi dBm)",
-    schedule: "Programa", next: "Próximo", no_slots: "Ningún tramo de corte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, disponibilidad y errores", ed_show_schedule: "Programa",
+    schedule: "Programa", next: "Próximo", no_slots: "Ningún tramo de corte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, errores y lluvia", ed_show_schedule: "Programa",
     start: "Iniciar", pause: "Pausa", dock: "A la base", zones: "Zonas", zone: "Zona",
     one_time: "Corte único", order: "Orden", order_fixed: "Especial",
     order_auto: "Auto", edge: "Corte de bordes", go: "Iniciar", pick: "Marca al menos una zona",
@@ -81,7 +81,7 @@ const I18N = {
     rain_banner: "Pioggia rilevata", rain_resume: "Può ripartire tra {d}", rain_delay_of: "ritardo pioggia di {d}", rain_wait: "Il robot aspetta che smetta di piovere",
     now_slot: "Fascia in corso: {range}",
     blades: "Lame", reset: "Azzera", reset_title: "Azzerare il tempo delle lame?", reset_body: "Solo dopo aver cambiato le lame. Le {time} attuali andranno perse.", cancel: "Annulla", of_threshold: "{pct} % della soglia di manutenzione ({h} h)", replaced_on: "cambiate il {date}", since: "Dalle {time}", ago: "{d} fa", ed_show_blades: "Lame", ed_show_values: "Valori (batteria %, Wi-Fi dBm)",
-    schedule: "Programma", next: "Prossimo", no_slots: "Nessuna fascia di taglio", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, disponibilità ed errori", ed_show_schedule: "Programma",
+    schedule: "Programma", next: "Prossimo", no_slots: "Nessuna fascia di taglio", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, errori e pioggia", ed_show_schedule: "Programma",
     start: "Avvia", pause: "Pausa", dock: "Alla base", zones: "Zone", zone: "Zona",
     one_time: "Taglio singolo", order: "Ordine", order_fixed: "Speciale",
     order_auto: "Auto", edge: "Taglio bordi", go: "Avvia", pick: "Seleziona almeno una zona",
@@ -96,7 +96,7 @@ const I18N = {
     rain_banner: "Regen gedetecteerd", rain_resume: "Kan hervatten over {d}", rain_delay_of: "regenvertraging van {d}", rain_wait: "De maaier wacht tot de regen stopt",
     now_slot: "Huidige periode: {range}",
     blades: "Messen", reset: "Resetten", reset_title: "Messentijd op nul zetten?", reset_body: "Alleen na het vervangen van de messen. De huidige {time} gaan verloren.", cancel: "Annuleren", of_threshold: "{pct} % van de onderhoudsdrempel ({h} u)", replaced_on: "vervangen op {date}", since: "Sinds {time}", ago: "{d} geleden", ed_show_blades: "Messen", ed_show_values: "Waarden (accu %, wifi dBm)",
-    schedule: "Schema", next: "Volgende", no_slots: "Geen maaiperiode", wifi: "Wifi", ed_show_info: "Wifi, maaigereedheid en fouten", ed_show_schedule: "Schema",
+    schedule: "Schema", next: "Volgende", no_slots: "Geen maaiperiode", wifi: "Wifi", ed_show_info: "Wifi, fouten en regen", ed_show_schedule: "Schema",
     start: "Starten", pause: "Pauze", dock: "Naar basis", zones: "Zones", zone: "Zone",
     one_time: "Eenmalig maaien", order: "Volgorde", order_fixed: "Speciaal",
     order_auto: "Auto", edge: "Randen maaien", go: "Starten", pick: "Vink minstens één zone aan",
@@ -111,7 +111,7 @@ const I18N = {
     rain_banner: "Wykryto deszcz", rain_resume: "Wznowienie możliwe za {d}", rain_delay_of: "opóźnienie deszczowe {d}", rain_wait: "Kosiarka czeka, aż przestanie padać",
     now_slot: "Bieżące okno: {range}",
     blades: "Noże", reset: "Resetuj", reset_title: "Wyzerować czas pracy noży?", reset_body: "Tylko po wymianie noży. Obecne {time} zostaną utracone.", cancel: "Anuluj", of_threshold: "{pct} % progu serwisowego ({h} h)", replaced_on: "wymienione {date}", since: "Od {time}", ago: "{d} temu", ed_show_blades: "Noże", ed_show_values: "Wartości (bateria %, Wi-Fi dBm)",
-    schedule: "Harmonogram", next: "Następne", no_slots: "Brak okien koszenia", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, gotowość i błędy", ed_show_schedule: "Harmonogram",
+    schedule: "Harmonogram", next: "Następne", no_slots: "Brak okien koszenia", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, błędy i deszcz", ed_show_schedule: "Harmonogram",
     start: "Start", pause: "Pauza", dock: "Do bazy", zones: "Strefy", zone: "Strefa",
     one_time: "Koszenie jednorazowe", order: "Kolejność", order_fixed: "Specjalna",
     order_auto: "Auto", edge: "Koszenie krawędzi", go: "Start", pick: "Zaznacz co najmniej jedną strefę",
@@ -126,7 +126,7 @@ const I18N = {
     rain_banner: "Обнаружен дождь", rain_resume: "Возобновление через {d}", rain_delay_of: "задержка из-за дождя {d}", rain_wait: "Косилка ждёт, пока закончится дождь",
     now_slot: "Текущий интервал: {range}",
     blades: "Ножи", reset: "Сбросить", reset_title: "Обнулить время работы ножей?", reset_body: "Только после замены ножей. Текущие {time} будут потеряны.", cancel: "Отмена", of_threshold: "{pct} % порога обслуживания ({h} ч)", replaced_on: "заменены {date}", since: "С {time}", ago: "{d} назад", ed_show_blades: "Ножи", ed_show_values: "Значения (батарея %, Wi-Fi дБм)",
-    schedule: "Расписание", next: "Следующее", no_slots: "Нет интервалов кошения", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, готовность и ошибки", ed_show_schedule: "Расписание",
+    schedule: "Расписание", next: "Следующее", no_slots: "Нет интервалов кошения", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, ошибки и дождь", ed_show_schedule: "Расписание",
     start: "Старт", pause: "Пауза", dock: "На базу", zones: "Зоны", zone: "Зона",
     one_time: "Разовое кошение", order: "Порядок", order_fixed: "Особый",
     order_auto: "Авто", edge: "Стрижка кромки", go: "Старт", pick: "Отметьте хотя бы одну зону",
@@ -141,7 +141,7 @@ const I18N = {
     rain_banner: "Regn upptäckt", rain_resume: "Kan återuppta om {d}", rain_delay_of: "regnfördröjning {d}", rain_wait: "Klipparen väntar tills regnet slutar",
     now_slot: "Pågående tid: {range}",
     blades: "Knivar", reset: "Återställ", reset_title: "Nollställa knivtiden?", reset_body: "Bara efter knivbyte. Nuvarande {time} går förlorade.", cancel: "Avbryt", of_threshold: "{pct} % av servicegränsen ({h} h)", replaced_on: "bytta {date}", since: "Sedan {time}", ago: "för {d} sedan", ed_show_blades: "Knivar", ed_show_values: "Värden (batteri %, wifi dBm)",
-    schedule: "Schema", next: "Nästa", no_slots: "Inga klipptider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, klippberedskap och fel", ed_show_schedule: "Schema",
+    schedule: "Schema", next: "Nästa", no_slots: "Inga klipptider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, fel och regn", ed_show_schedule: "Schema",
     start: "Starta", pause: "Paus", dock: "Till basen", zones: "Zoner", zone: "Zon",
     one_time: "Engångsklippning", order: "Ordning", order_fixed: "Special",
     order_auto: "Auto", edge: "Kantklippning", go: "Starta", pick: "Markera minst en zon",
@@ -156,7 +156,7 @@ const I18N = {
     rain_banner: "Regn oppdaget", rain_resume: "Kan fortsette om {d}", rain_delay_of: "regnforsinkelse {d}", rain_wait: "Klipperen venter til regnet stopper",
     now_slot: "Pågående tid: {range}",
     blades: "Kniver", reset: "Tilbakestill", reset_title: "Nullstille knivtiden?", reset_body: "Bare etter knivbytte. Nåværende {time} går tapt.", cancel: "Avbryt", of_threshold: "{pct} % av servicegrensen ({h} t)", replaced_on: "byttet {date}", since: "Siden {time}", ago: "for {d} siden", ed_show_blades: "Kniver", ed_show_values: "Verdier (batteri %, wifi dBm)",
-    schedule: "Tidsplan", next: "Neste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, klarhet og feil", ed_show_schedule: "Tidsplan",
+    schedule: "Tidsplan", next: "Neste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, feil og regn", ed_show_schedule: "Tidsplan",
     start: "Start", pause: "Pause", dock: "Til basen", zones: "Soner", zone: "Sone",
     one_time: "Engangsklipping", order: "Rekkefølge", order_fixed: "Spesial",
     order_auto: "Auto", edge: "Kantklipping", go: "Start", pick: "Kryss av minst én sone",
@@ -171,7 +171,7 @@ const I18N = {
     rain_banner: "Regn registreret", rain_resume: "Kan genoptage om {d}", rain_delay_of: "regnforsinkelse {d}", rain_wait: "Robotten venter, til regnen stopper",
     now_slot: "Igangværende tid: {range}",
     blades: "Knive", reset: "Nulstil", reset_title: "Nulstille knivtiden?", reset_body: "Kun efter knivskift. De nuværende {time} går tabt.", cancel: "Annuller", of_threshold: "{pct} % af servicegrænsen ({h} t)", replaced_on: "skiftet {date}", since: "Siden {time}", ago: "for {d} siden", ed_show_blades: "Knive", ed_show_values: "Værdier (batteri %, wifi dBm)",
-    schedule: "Tidsplan", next: "Næste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, klarhed og fejl", ed_show_schedule: "Tidsplan",
+    schedule: "Tidsplan", next: "Næste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, fejl og regn", ed_show_schedule: "Tidsplan",
     start: "Start", pause: "Pause", dock: "Til basen", zones: "Zoner", zone: "Zone",
     one_time: "Engangsklipning", order: "Rækkefølge", order_fixed: "Speciel",
     order_auto: "Auto", edge: "Kantklipning", go: "Start", pick: "Markér mindst én zone",
@@ -302,7 +302,6 @@ function resolveEntities(hass, entityId) {
     battery: find("sensor", "battery_percent"),
     zoneCurrent: find("sensor", "zone_current"),
     rssi: find("sensor", "rssi"),
-    readiness: find("sensor", "mowing_readiness"),
     error: find("sensor", "error"),
     schedule: find("sensor", "schedule"),
     nextSchedule: find("sensor", "next_schedule"),
@@ -488,7 +487,7 @@ class WorxVisionCard extends HTMLElement {
     const states = this._hass?.states || {};
     const ids = ents
       ? [ents.mower, ents.status, ents.battery, ents.zoneCurrent, ents.camera, ents.zoneSelect,
-        ents.rssi, ents.readiness, ents.error, ents.schedule, ents.nextSchedule,
+        ents.rssi, ents.error, ents.schedule, ents.nextSchedule,
         ents.maintenance, ents.bladeReset, ents.calendar, ents.party, ents.bladeCurrent,
         ents.rainRemaining, ents.rainDelay, ents.progress,
         ...ents.zones.flatMap((z) => [z.pattern, z.angle])]
@@ -538,7 +537,6 @@ class WorxVisionCard extends HTMLElement {
       ents.mower && this._show("show_info") ? this._errorBanner(ents) : "",
       ents.mower && this._show("show_info") ? this._rainBanner(ents) : "",
       ents.mower && this._show("show_info") ? this._partyBanner(ents) : "",
-      ents.mower && this._show("show_info") ? this._info(ents) : "",
       ents.mower && this._show("show_controls") ? this._controls(ents) : "",
       this._show("show_map") ? this._map(ents) : "",
       this._show("show_zones") ? this._zones(ents) : "",
@@ -639,30 +637,6 @@ class WorxVisionCard extends HTMLElement {
       + `<ha-icon icon="mdi:wifi-strength-${bars}"></ha-icon>`
       + (this._show("show_values") ? `<span>${escapeHtml(dbm)} dBm</span>` : "")
       + `</div>`;
-  }
-
-  _info(ents) {
-    const hass = this._hass;
-    const chips = [];
-    const readyObj = hass.states[ents.readiness];
-    const errorObj = hass.states[ents.error];
-    const bannerShown = usable(errorObj) && errorObj.state !== "no_error" && errorObj.state !== "rain_delay";
-    const raining = this._raining(ents);
-    const statusObj = hass.states[ents.status];
-    const status = usable(statusObj) ? formatState(hass, statusObj) : formatState(hass, hass.states[ents.mower]);
-    // Shown elsewhere already: "error" and "rain_delay" by their banners,
-    // "mowing" and anything reading like the state under the title by that state.
-    const repeated = (bannerShown && readyObj?.state === "error")
-      || (raining && readyObj?.state === "rain_delay")
-      || readyObj?.state === "mowing"
-      || (usable(readyObj) && formatState(hass, readyObj) === status);
-    if (usable(readyObj) && !repeated) {
-      const ok = readyObj.state === "ready" || readyObj.state === "mowing" || readyObj.state === "charging";
-      chips.push(`<span class="chip link ${ok ? "good" : "warn"}"${moreInfo(ents.readiness)}>`
-        + `<ha-icon icon="${ok ? "mdi:check-circle-outline" : "mdi:alert-outline"}"></ha-icon>`
-        + `${escapeHtml(formatState(hass, readyObj))}</span>`);
-    }
-    return chips.length ? `<div class="chips">${chips.join("")}</div>` : "";
   }
 
   _errorBanner(ents) {
@@ -1031,7 +1005,7 @@ const STYLES = `
   .status { color: var(--secondary-text-color); margin-top: 2px; }
   .link { cursor: pointer; }
   .link:hover { text-decoration: underline; text-underline-offset: 2px; }
-  img.link:hover, .chip.link:hover, .battery.link:hover, .wifi.link:hover { text-decoration: none; filter: brightness(1.08); }
+  img.link:hover, .battery.link:hover, .wifi.link:hover { text-decoration: none; filter: brightness(1.08); }
   .error-banner { display: flex; gap: 10px; align-items: center; margin: 0 16px 10px; padding: 10px 12px;
     border-radius: 10px; background: rgba(219, 68, 55, 0.12); color: var(--error-color, #db4437);
     border: 1px solid var(--error-color, #db4437); }
@@ -1112,13 +1086,6 @@ const STYLES = `
   .notice { margin-top: 8px; color: var(--secondary-text-color); font-size: 0.9em; }
   .notice.ok { color: var(--success-color, #43a047); }
   .notice.error { color: var(--error-color, #db4437); }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px; }
-  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px;
-    font-size: 0.85em; background: var(--secondary-background-color); color: var(--primary-text-color); }
-  .chip ha-icon { --mdc-icon-size: 16px; width: 16px; height: 16px; }
-  .chip.good ha-icon { color: var(--success-color, #43a047); }
-  .chip.warn ha-icon { color: var(--warning-color, #ff9800); }
-  .chip.bad { color: var(--error-color, #db4437); }
   .schedule { padding: 0 16px 12px; }
   .sched-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 0;
     background: transparent; color: var(--primary-text-color); border-top: 1px solid var(--divider-color); text-align: left; }
