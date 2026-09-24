@@ -183,7 +183,8 @@ const flush = () => new Promise((r) => setImmediate(r));
   contains("current zone next to it", html, 'F(searching_zone)</span> · <span class="link" data-action="more-info" data-entity="sensor.robot_ici" role="button" tabindex="0">Front lawn</span>');
   check("status of another integration ignored", html.includes("WRONG_STATUS"), false);
   contains("battery shown", html, "80 %");
-  contains("charging shown", html, "charging");
+  contains("charging shown by the icon", html, "mdi:battery-charging-80");
+  check("no charging text", html.includes(">charging<"), false);
   check("zone pattern no longer shown", html.includes("F(parallel)"), false);
   check("zone angle no longer shown", html.includes("314°"), false);
   check("one-time mowing folded by default", html.includes('class="zone-chips"'), false);
@@ -886,7 +887,7 @@ function rainy(extra = {}) {
   contains("wifi icon kept, value as a tooltip", hidden, 'class="wifi link lvl-good" title="Wi-Fi -45 dBm"');
   const charging = makeHass();
   const noText = markup(make({ entity: "lawn_mower.robot", show_values: false }, charging));
-  check("no charging text without values", noText.includes(">charging<"), false);
+  check("no charging text without values", noText.includes("charging<"), false);
   contains("charging icon kept without values", noText, "mdi:battery-charging-80");
   contains("smaller icons", markup(make({ entity: "lawn_mower.robot" })), ".battery ha-icon, .wifi ha-icon { --mdc-icon-size: 18px;");
 }
