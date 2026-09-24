@@ -892,6 +892,25 @@ function rainy(extra = {}) {
   contains("smaller icons", markup(make({ entity: "lawn_mower.robot" })), ".battery ha-icon, .wifi ha-icon { --mdc-icon-size: 18px;");
 }
 
+// ── readiness chip not repeating the state ──────────────────────────────────
+
+{
+  const mowing = makeHass();
+  mowing.states["sensor.robot_apte"] = st("mowing");
+  check("no 'mowing' chip while the state says it", markup(make({ entity: "lawn_mower.robot" }, mowing)).includes("F(mowing)"), false);
+
+  const same = makeHass();
+  same.states["sensor.robot_etat"] = st("charging");
+  same.states["sensor.robot_apte"] = st("charging");
+  check("no chip reading like the state", markup(make({ entity: "lawn_mower.robot" }, same)).includes('class="chip link'), false);
+
+  const ready = markup(make({ entity: "lawn_mower.robot" }));
+  contains("'ready' chip still shown", ready, 'class="chip link good"');
+  const low = makeHass();
+  low.states["sensor.robot_apte"] = st("battery_low");
+  contains("a blocking reason is still shown", markup(make({ entity: "lawn_mower.robot" }, low)), "F(battery_low)");
+}
+
 // ── translations ────────────────────────────────────────────────────────────
 
 {

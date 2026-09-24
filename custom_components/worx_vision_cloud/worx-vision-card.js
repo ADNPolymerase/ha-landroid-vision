@@ -648,9 +648,15 @@ class WorxVisionCard extends HTMLElement {
     const errorObj = hass.states[ents.error];
     const bannerShown = usable(errorObj) && errorObj.state !== "no_error" && errorObj.state !== "rain_delay";
     const raining = this._raining(ents);
-    // A banner already says it: a readiness of "error" or "rain_delay" would repeat it.
-    if (usable(readyObj) && !(bannerShown && readyObj.state === "error")
-      && !(raining && readyObj.state === "rain_delay")) {
+    const statusObj = hass.states[ents.status];
+    const status = usable(statusObj) ? formatState(hass, statusObj) : formatState(hass, hass.states[ents.mower]);
+    // Shown elsewhere already: "error" and "rain_delay" by their banners,
+    // "mowing" and anything reading like the state under the title by that state.
+    const repeated = (bannerShown && readyObj?.state === "error")
+      || (raining && readyObj?.state === "rain_delay")
+      || readyObj?.state === "mowing"
+      || (usable(readyObj) && formatState(hass, readyObj) === status);
+    if (usable(readyObj) && !repeated) {
       const ok = readyObj.state === "ready" || readyObj.state === "mowing" || readyObj.state === "charging";
       chips.push(`<span class="chip link ${ok ? "good" : "warn"}"${moreInfo(ents.readiness)}>`
         + `<ha-icon icon="${ok ? "mdi:check-circle-outline" : "mdi:alert-outline"}"></ha-icon>`
