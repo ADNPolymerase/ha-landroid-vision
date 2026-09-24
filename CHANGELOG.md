@@ -6,12 +6,6 @@
 
 - **Two clicks to send a command from the card.** Start, Pause, Dock and the one-time mowing Start now turn orange and read "Confirm?" on the first click; only the second click sends. Any other click, or 5 seconds without one, puts the button back, so a stray tap on a phone no longer sends the mower out.
 - **No mowing readiness chip in the card.** Everything it could say is already on the card: the state under the title, the error and rain banners, the battery colour and its lightning bolt. It even read "ready" while the mower was searching a zone or leaving its base. The card is one line shorter. The Mowing readiness sensor stays in the integration, for automations. The `show_info` switch now reads "Wi-Fi, errors and rain".
-
-## 3.0.2 - 2026-09-24
-
-### Changed
-
-- **No readiness chip repeating the state.** While mowing, the card said "mowing" twice, under the title and in the chip. The chip now only shows when it adds something (ready, battery low, locked...), not when it reads like the state already shown.
 - **Battery and Wi-Fi in colour.** Green, orange or red with their level: the battery from 50 % and from 20 %, the Wi-Fi from -65 dBm and from -75 dBm. The colours come from the Home Assistant theme, so they follow dark mode. Their icons are a little smaller. The "charging" text next to the battery is gone: the lightning bolt in its icon already says it.
 - **A switch to hide the values.** `show_values`, on by default, shows the battery percentage and the Wi-Fi dBm next to their icons. Off, only the coloured icons stay, with the value as a tooltip.
 - **One-time mowing takes a single line in the card.** It stays folded, with its settings summed up (zones, order, edge cut) and Start on the right, so the card is shorter. A click on the line unfolds the zones, the order and the edge cut. Start stays greyed out until a zone is ticked.
