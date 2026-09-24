@@ -14,6 +14,8 @@ const FEATURE_START = 1;
 const FEATURE_PAUSE = 2;
 const FEATURE_DOCK = 4;
 const UNUSABLE = ["unknown", "unavailable"];
+// How long a command waits for its confirming second click.
+const ARM_SECONDS = 5;
 
 const I18N = {
   en: {
@@ -22,7 +24,7 @@ const I18N = {
     now_slot: "Current slot: {range}",
     blades: "Blades", reset: "Reset", reset_title: "Reset the blade time to zero?", reset_body: "Only after replacing the blades. The current {time} will be lost.", cancel: "Cancel", of_threshold: "{pct} % of the service threshold ({h} h)", replaced_on: "replaced {date}", since: "Since {time}", ago: "{d} ago", ed_show_blades: "Blades", ed_show_values: "Values (battery %, Wi-Fi dBm)",
     schedule: "Schedule", next: "Next", no_slots: "No mowing slot", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, errors and rain", ed_show_schedule: "Schedule",
-    start: "Start", pause: "Pause", dock: "Dock", zones: "Zones", zone: "Zone",
+    start: "Start", confirm: "Confirm?", pause: "Pause", dock: "Dock", zones: "Zones", zone: "Zone",
     one_time: "One-time mowing", order: "Order", order_fixed: "Special",
     order_auto: "Auto", edge: "Edge cut", go: "Start", pick: "Tick at least one zone",
     sent: "Sent to the mower", failed: "Failed", map_unavailable: "RTK map unavailable",
@@ -37,7 +39,7 @@ const I18N = {
     now_slot: "Créneau en cours : {range}",
     blades: "Lames", reset: "Réinitialiser", reset_title: "Remettre le temps des lames à zéro ?", reset_body: "À faire seulement après avoir changé les lames. Les {time} actuelles seront perdues.", cancel: "Annuler", of_threshold: "{pct} % du seuil d'entretien ({h} h)", replaced_on: "changées le {date}", since: "Depuis {time}", ago: "il y a {d}", ed_show_blades: "Lames", ed_show_values: "Valeurs (batterie %, Wi-Fi dBm)",
     schedule: "Programme", next: "Prochaine", no_slots: "Aucun créneau de tonte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, erreurs et pluie", ed_show_schedule: "Programme",
-    start: "Démarrer", pause: "Pause", dock: "Maison", zones: "Zones", zone: "Zone",
+    start: "Démarrer", confirm: "Confirmer\u00a0?", pause: "Pause", dock: "Maison", zones: "Zones", zone: "Zone",
     one_time: "Tonte unique", order: "Ordre", order_fixed: "Spécial",
     order_auto: "Auto", edge: "Bordure", go: "Démarrer", pick: "Cochez au moins une zone",
     sent: "Envoyé à la tondeuse", failed: "Échec", map_unavailable: "Carte RTK indisponible",
@@ -52,7 +54,7 @@ const I18N = {
     now_slot: "Aktuelles Zeitfenster: {range}",
     blades: "Messer", reset: "Zurücksetzen", reset_title: "Messerzeit auf null setzen?", reset_body: "Nur nach dem Messerwechsel. Die aktuellen {time} gehen verloren.", cancel: "Abbrechen", of_threshold: "{pct} % der Wartungsschwelle ({h} h)", replaced_on: "gewechselt am {date}", since: "Seit {time}", ago: "vor {d}", ed_show_blades: "Messer", ed_show_values: "Werte (Akku %, WLAN dBm)",
     schedule: "Zeitplan", next: "Nächste", no_slots: "Kein Mähzeitraum", wifi: "WLAN", ed_show_info: "WLAN, Fehler und Regen", ed_show_schedule: "Zeitplan",
-    start: "Starten", pause: "Pause", dock: "Zur Station", zones: "Zonen", zone: "Zone",
+    start: "Starten", confirm: "Bestätigen?", pause: "Pause", dock: "Zur Station", zones: "Zonen", zone: "Zone",
     one_time: "Einmaliges Mähen", order: "Reihenfolge", order_fixed: "Speziell",
     order_auto: "Auto", edge: "Kantenschnitt", go: "Starten", pick: "Mindestens eine Zone auswählen",
     sent: "An den Mäher gesendet", failed: "Fehlgeschlagen", map_unavailable: "RTK-Karte nicht verfügbar",
@@ -67,7 +69,7 @@ const I18N = {
     now_slot: "Franja actual: {range}",
     blades: "Cuchillas", reset: "Restablecer", reset_title: "¿Poner a cero el tiempo de las cuchillas?", reset_body: "Solo tras cambiar las cuchillas. Se perderán las {time} actuales.", cancel: "Cancelar", of_threshold: "{pct} % del umbral de mantenimiento ({h} h)", replaced_on: "cambiadas el {date}", since: "Desde {time}", ago: "hace {d}", ed_show_blades: "Cuchillas", ed_show_values: "Valores (batería %, Wi-Fi dBm)",
     schedule: "Programa", next: "Próximo", no_slots: "Ningún tramo de corte", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, errores y lluvia", ed_show_schedule: "Programa",
-    start: "Iniciar", pause: "Pausa", dock: "A la base", zones: "Zonas", zone: "Zona",
+    start: "Iniciar", confirm: "¿Confirmar?", pause: "Pausa", dock: "A la base", zones: "Zonas", zone: "Zona",
     one_time: "Corte único", order: "Orden", order_fixed: "Especial",
     order_auto: "Auto", edge: "Corte de bordes", go: "Iniciar", pick: "Marca al menos una zona",
     sent: "Enviado al cortacésped", failed: "Error", map_unavailable: "Mapa RTK no disponible",
@@ -82,7 +84,7 @@ const I18N = {
     now_slot: "Fascia in corso: {range}",
     blades: "Lame", reset: "Azzera", reset_title: "Azzerare il tempo delle lame?", reset_body: "Solo dopo aver cambiato le lame. Le {time} attuali andranno perse.", cancel: "Annulla", of_threshold: "{pct} % della soglia di manutenzione ({h} h)", replaced_on: "cambiate il {date}", since: "Dalle {time}", ago: "{d} fa", ed_show_blades: "Lame", ed_show_values: "Valori (batteria %, Wi-Fi dBm)",
     schedule: "Programma", next: "Prossimo", no_slots: "Nessuna fascia di taglio", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, errori e pioggia", ed_show_schedule: "Programma",
-    start: "Avvia", pause: "Pausa", dock: "Alla base", zones: "Zone", zone: "Zona",
+    start: "Avvia", confirm: "Confermare?", pause: "Pausa", dock: "Alla base", zones: "Zone", zone: "Zona",
     one_time: "Taglio singolo", order: "Ordine", order_fixed: "Speciale",
     order_auto: "Auto", edge: "Taglio bordi", go: "Avvia", pick: "Seleziona almeno una zona",
     sent: "Inviato al robot", failed: "Errore", map_unavailable: "Mappa RTK non disponibile",
@@ -97,7 +99,7 @@ const I18N = {
     now_slot: "Huidige periode: {range}",
     blades: "Messen", reset: "Resetten", reset_title: "Messentijd op nul zetten?", reset_body: "Alleen na het vervangen van de messen. De huidige {time} gaan verloren.", cancel: "Annuleren", of_threshold: "{pct} % van de onderhoudsdrempel ({h} u)", replaced_on: "vervangen op {date}", since: "Sinds {time}", ago: "{d} geleden", ed_show_blades: "Messen", ed_show_values: "Waarden (accu %, wifi dBm)",
     schedule: "Schema", next: "Volgende", no_slots: "Geen maaiperiode", wifi: "Wifi", ed_show_info: "Wifi, fouten en regen", ed_show_schedule: "Schema",
-    start: "Starten", pause: "Pauze", dock: "Naar basis", zones: "Zones", zone: "Zone",
+    start: "Starten", confirm: "Bevestigen?", pause: "Pauze", dock: "Naar basis", zones: "Zones", zone: "Zone",
     one_time: "Eenmalig maaien", order: "Volgorde", order_fixed: "Speciaal",
     order_auto: "Auto", edge: "Randen maaien", go: "Starten", pick: "Vink minstens één zone aan",
     sent: "Naar de maaier gestuurd", failed: "Mislukt", map_unavailable: "RTK-kaart niet beschikbaar",
@@ -112,7 +114,7 @@ const I18N = {
     now_slot: "Bieżące okno: {range}",
     blades: "Noże", reset: "Resetuj", reset_title: "Wyzerować czas pracy noży?", reset_body: "Tylko po wymianie noży. Obecne {time} zostaną utracone.", cancel: "Anuluj", of_threshold: "{pct} % progu serwisowego ({h} h)", replaced_on: "wymienione {date}", since: "Od {time}", ago: "{d} temu", ed_show_blades: "Noże", ed_show_values: "Wartości (bateria %, Wi-Fi dBm)",
     schedule: "Harmonogram", next: "Następne", no_slots: "Brak okien koszenia", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, błędy i deszcz", ed_show_schedule: "Harmonogram",
-    start: "Start", pause: "Pauza", dock: "Do bazy", zones: "Strefy", zone: "Strefa",
+    start: "Start", confirm: "Potwierdzić?", pause: "Pauza", dock: "Do bazy", zones: "Strefy", zone: "Strefa",
     one_time: "Koszenie jednorazowe", order: "Kolejność", order_fixed: "Specjalna",
     order_auto: "Auto", edge: "Koszenie krawędzi", go: "Start", pick: "Zaznacz co najmniej jedną strefę",
     sent: "Wysłano do kosiarki", failed: "Błąd", map_unavailable: "Mapa RTK niedostępna",
@@ -127,7 +129,7 @@ const I18N = {
     now_slot: "Текущий интервал: {range}",
     blades: "Ножи", reset: "Сбросить", reset_title: "Обнулить время работы ножей?", reset_body: "Только после замены ножей. Текущие {time} будут потеряны.", cancel: "Отмена", of_threshold: "{pct} % порога обслуживания ({h} ч)", replaced_on: "заменены {date}", since: "С {time}", ago: "{d} назад", ed_show_blades: "Ножи", ed_show_values: "Значения (батарея %, Wi-Fi дБм)",
     schedule: "Расписание", next: "Следующее", no_slots: "Нет интервалов кошения", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, ошибки и дождь", ed_show_schedule: "Расписание",
-    start: "Старт", pause: "Пауза", dock: "На базу", zones: "Зоны", zone: "Зона",
+    start: "Старт", confirm: "Подтвердить?", pause: "Пауза", dock: "На базу", zones: "Зоны", zone: "Зона",
     one_time: "Разовое кошение", order: "Порядок", order_fixed: "Особый",
     order_auto: "Авто", edge: "Стрижка кромки", go: "Старт", pick: "Отметьте хотя бы одну зону",
     sent: "Отправлено косилке", failed: "Ошибка", map_unavailable: "Карта RTK недоступна",
@@ -142,7 +144,7 @@ const I18N = {
     now_slot: "Pågående tid: {range}",
     blades: "Knivar", reset: "Återställ", reset_title: "Nollställa knivtiden?", reset_body: "Bara efter knivbyte. Nuvarande {time} går förlorade.", cancel: "Avbryt", of_threshold: "{pct} % av servicegränsen ({h} h)", replaced_on: "bytta {date}", since: "Sedan {time}", ago: "för {d} sedan", ed_show_blades: "Knivar", ed_show_values: "Värden (batteri %, wifi dBm)",
     schedule: "Schema", next: "Nästa", no_slots: "Inga klipptider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, fel och regn", ed_show_schedule: "Schema",
-    start: "Starta", pause: "Paus", dock: "Till basen", zones: "Zoner", zone: "Zon",
+    start: "Starta", confirm: "Bekräfta?", pause: "Paus", dock: "Till basen", zones: "Zoner", zone: "Zon",
     one_time: "Engångsklippning", order: "Ordning", order_fixed: "Special",
     order_auto: "Auto", edge: "Kantklippning", go: "Starta", pick: "Markera minst en zon",
     sent: "Skickat till klipparen", failed: "Misslyckades", map_unavailable: "RTK-karta ej tillgänglig",
@@ -157,7 +159,7 @@ const I18N = {
     now_slot: "Pågående tid: {range}",
     blades: "Kniver", reset: "Tilbakestill", reset_title: "Nullstille knivtiden?", reset_body: "Bare etter knivbytte. Nåværende {time} går tapt.", cancel: "Avbryt", of_threshold: "{pct} % av servicegrensen ({h} t)", replaced_on: "byttet {date}", since: "Siden {time}", ago: "for {d} siden", ed_show_blades: "Kniver", ed_show_values: "Verdier (batteri %, wifi dBm)",
     schedule: "Tidsplan", next: "Neste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, feil og regn", ed_show_schedule: "Tidsplan",
-    start: "Start", pause: "Pause", dock: "Til basen", zones: "Soner", zone: "Sone",
+    start: "Start", confirm: "Bekrefte?", pause: "Pause", dock: "Til basen", zones: "Soner", zone: "Sone",
     one_time: "Engangsklipping", order: "Rekkefølge", order_fixed: "Spesial",
     order_auto: "Auto", edge: "Kantklipping", go: "Start", pick: "Kryss av minst én sone",
     sent: "Sendt til klipperen", failed: "Mislyktes", map_unavailable: "RTK-kart utilgjengelig",
@@ -172,7 +174,7 @@ const I18N = {
     now_slot: "Igangværende tid: {range}",
     blades: "Knive", reset: "Nulstil", reset_title: "Nulstille knivtiden?", reset_body: "Kun efter knivskift. De nuværende {time} går tabt.", cancel: "Annuller", of_threshold: "{pct} % af servicegrænsen ({h} t)", replaced_on: "skiftet {date}", since: "Siden {time}", ago: "for {d} siden", ed_show_blades: "Knive", ed_show_values: "Værdier (batteri %, wifi dBm)",
     schedule: "Tidsplan", next: "Næste", no_slots: "Ingen klippetider", wifi: "Wi-Fi", ed_show_info: "Wi-Fi, fejl og regn", ed_show_schedule: "Tidsplan",
-    start: "Start", pause: "Pause", dock: "Til basen", zones: "Zoner", zone: "Zone",
+    start: "Start", confirm: "Bekræft?", pause: "Pause", dock: "Til basen", zones: "Zoner", zone: "Zone",
     one_time: "Engangsklipning", order: "Rækkefølge", order_fixed: "Speciel",
     order_auto: "Auto", edge: "Kantklipning", go: "Start", pick: "Markér mindst én zone",
     sent: "Sendt til robotten", failed: "Mislykkedes", map_unavailable: "RTK-kort utilgængeligt",
@@ -394,6 +396,7 @@ class WorxVisionCard extends HTMLElement {
     this._confirmReset = false;
     this._zonesOpen = false;
     this._settingsKey = null;
+    this._armed = null;
   }
 
   setConfig(config) {
@@ -501,7 +504,7 @@ class WorxVisionCard extends HTMLElement {
         s.last_changed] : [id];
     });
     return stableStringify([snap, this._selected, this._order, this._edge, this._busy,
-      this._notice, this._scheduleOpen, this._confirmReset, this._zonesOpen, language(this._hass), this._config]);
+      this._notice, this._scheduleOpen, this._confirmReset, this._zonesOpen, this._armed, language(this._hass), this._config]);
   }
 
   _render() {
@@ -790,9 +793,11 @@ class WorxVisionCard extends HTMLElement {
       ["dock", FEATURE_DOCK, "mdi:home-import-outline", "dock", state !== "docked" && state !== "returning"],
     ].filter(([, bit]) => features & bit);
     if (!buttons.length) return "";
-    return `<div class="controls">${buttons.map(([service, , icon, label, enabled]) =>
-      `<button class="control" data-action="mower" data-service="${service}"${alive && enabled ? "" : " disabled"}>`
-      + `<ha-icon icon="${icon}"></ha-icon><span>${escapeHtml(t(hass, label))}</span></button>`).join("")}</div>`;
+    return `<div class="controls">${buttons.map(([service, , icon, label, enabled]) => {
+      const armed = this._armed === `mower:${service}`;
+      return `<button class="control${armed ? " armed" : ""}" data-action="mower" data-service="${service}"${alive && enabled ? "" : " disabled"}>`
+        + `<ha-icon icon="${icon}"></ha-icon><span>${escapeHtml(t(hass, armed ? "confirm" : label))}</span></button>`;
+    }).join("")}</div>`;
   }
 
   _map(ents) {
@@ -839,8 +844,9 @@ class WorxVisionCard extends HTMLElement {
     const notice = this._notice
       ? `<div class="notice ${this._notice.ok ? "ok" : "error"}">${escapeHtml(this._notice.text)}</div>`
       : "";
-    const go = `<button class="go" data-action="go" title="${escapeHtml(this._selected.length ? t(hass, "go") : t(hass, "pick"))}"${ready ? "" : " disabled"}>`
-      + `<ha-icon icon="mdi:play"></ha-icon><span>${escapeHtml(t(hass, "go"))}</span></button>`;
+    const armed = this._armed === "go" && ready;
+    const go = `<button class="go${armed ? " armed" : ""}" data-action="go" title="${escapeHtml(this._selected.length ? t(hass, "go") : t(hass, "pick"))}"${ready ? "" : " disabled"}>`
+      + `<ha-icon icon="mdi:play"></ha-icon><span>${escapeHtml(t(hass, armed ? "confirm" : "go"))}</span></button>`;
     const open = this._zonesOpen;
     const head = `<div class="zones-head">`
       + `<button class="zones-toggle" data-action="zones-toggle" aria-expanded="${open}">`
@@ -904,6 +910,14 @@ class WorxVisionCard extends HTMLElement {
     const target = path.find((node) => node?.dataset?.action);
     if (!target || target.disabled) return;
     const { action } = target.dataset;
+    // Mower commands take two clicks: the first turns the button into
+    // "Confirm?", the second sends. Any other click puts it back.
+    if (action === "mower" || action === "go") {
+      const key = action === "go" ? "go" : `mower:${target.dataset.service}`;
+      if (!this._confirmed(key)) return;
+    } else if (this._armed) {
+      this._disarm();
+    }
     if (action === "more-info") this._moreInfo(target.dataset.entity);
     else if (action === "mower") this._callMower(target.dataset.service);
     else if (action === "zone") this._toggleZone(Number(target.dataset.zone));
@@ -916,6 +930,28 @@ class WorxVisionCard extends HTMLElement {
     else if (action === "reset-ask") this._askReset();
     else if (action === "reset-cancel") this._cancelReset();
     else if (action === "reset-confirm") this._confirmBladeReset();
+  }
+
+  /** True on the second click on the same command; the first one only arms it. */
+  _confirmed(key) {
+    if (this._armed === key) {
+      this._disarm();
+      return true;
+    }
+    this._armed = key;
+    if (this._armTimer) clearTimeout(this._armTimer);
+    if (typeof setTimeout === "function") {
+      this._armTimer = setTimeout(() => this._disarm(), ARM_SECONDS * 1000);
+    }
+    this._render();
+    return false;
+  }
+
+  _disarm() {
+    if (this._armTimer) clearTimeout(this._armTimer);
+    this._armTimer = null;
+    this._armed = null;
+    this._render();
   }
 
   _moreInfo(entityId) {
@@ -1082,6 +1118,9 @@ const STYLES = `
   .segmented { display: inline-flex; border-radius: 18px; overflow: hidden; background: var(--secondary-background-color); }
   .segmented button { padding: 8px 12px; background: transparent; color: var(--primary-text-color); }
   .segmented button.on, .toggle.on { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .control.armed, .go.armed { background: var(--warning-color, #ff9800); color: #fff; }
+  .control span, .go span { white-space: nowrap; }
+  .control.armed ha-icon { display: none; }
   .go { flex: none; margin-left: auto; background: var(--primary-color); color: var(--text-primary-color, #fff); }
   .notice { margin-top: 8px; color: var(--secondary-text-color); font-size: 0.9em; }
   .notice.ok { color: var(--success-color, #43a047); }

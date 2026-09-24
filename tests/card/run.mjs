@@ -594,6 +594,7 @@ const flush = () => new Promise((r) => setImmediate(r));
   click(card, { action: "zones-toggle" });
   contains("auto order shown", markup(card), 'aria-pressed="true" class="on">Auto');
   click(card, { action: "go" });
+  click(card, { action: "go" });
   await flush();
   const call = hass.calls[0];
   check("auto sends ids ascending", JSON.stringify(call?.data?.zones), "[1,2]");
@@ -653,9 +654,11 @@ const flush = () => new Promise((r) => setImmediate(r));
   const hass = makeHass();
   const card = make({ entity: "lawn_mower.robot" }, hass);
   click(card, { action: "mower", service: "start_mowing" });
+  click(card, { action: "mower", service: "start_mowing" });
   await flush();
   check("start uses the lawn_mower service", `${hass.calls[0]?.domain}.${hass.calls[0]?.service}`, "lawn_mower.start_mowing");
   check("start targets the mower", hass.calls[0]?.target?.entity_id, "lawn_mower.robot");
+  click(card, { action: "mower", service: "send_raw_command" });
   click(card, { action: "mower", service: "send_raw_command" });
   await flush();
   check("no free-form command reaches HA", hass.calls.length, 1);
@@ -897,6 +900,60 @@ function rainy(extra = {}) {
     check(`no readiness chip for ${state}`, markup(make({ entity: "lawn_mower.robot" }, hass)).includes(`F(${state})`), false);
   }
   check("no chip style left", markup(make({ entity: "lawn_mower.robot" })).includes(".chips {"), false);
+}
+
+// ── two clicks to send a command ────────────────────────────────────────────
+
+{
+  const hass = makeHass();
+  const card = make({ entity: "lawn_mower.robot" }, hass);
+  click(card, { action: "mower", service: "start_mowing" });
+  await flush();
+  check("first click sends nothing", hass.calls.length, 0);
+  let html = markup(card);
+  contains("first click asks to confirm", html, 'class="control armed" data-action="mower" data-service="start_mowing"><ha-icon icon="mdi:play"></ha-icon><span>Confirm?</span>');
+  contains("other buttons keep their label", html, "<span>Pause</span>");
+  click(card, { action: "mower", service: "start_mowing" });
+  await flush();
+  check("second click sends", hass.calls.length, 1);
+  check("button back to its label after sending", markup(card).includes("Confirm?"), false);
+
+  const mowing = makeHass();
+  mowing.states["lawn_mower.robot"] = st("mowing", { supported_features: 7 });
+  const mcard = make({ entity: "lawn_mower.robot" }, mowing);
+  click(mcard, { action: "mower", service: "pause" });
+  click(mcard, { action: "mower", service: "dock" });
+  await flush();
+  check("a click on another command does not confirm the first", mowing.calls.length, 0);
+  contains("that other command is armed instead", markup(mcard), 'data-service="dock"><ha-icon icon="mdi:home-import-outline"></ha-icon><span>Confirm?</span>');
+  check("and the first is back to its label", markup(mcard).includes("<span>Pause</span>"), true);
+  click(mcard, { action: "schedule" });
+  check("any other click disarms", markup(mcard).includes("Confirm?"), false);
+  click(mcard, { action: "mower", service: "dock" });
+  await flush();
+  check("disarmed: the next click only arms again", mowing.calls.length, 0);
+
+  const zones = makeHass();
+  const zcard = make({ entity: "lawn_mower.robot" }, zones);
+  click(zcard, { action: "zone", zone: "2" });
+  click(zcard, { action: "go" });
+  await flush();
+  check("one-time: first click sends nothing", zones.calls.length, 0);
+  contains("one-time start asks to confirm", markup(zcard), 'class="go armed" data-action="go"');
+  contains("with the confirm text", markup(zcard), "<span>Confirm?</span>");
+  click(zcard, { action: "go" });
+  await flush();
+  check("one-time: second click sends the zone job", zones.calls[0]?.service, "start_zone_mowing");
+
+  const fr = makeHass({ language: "fr", locale: { language: "fr" } });
+  const frCard = make({ entity: "lawn_mower.robot" }, fr);
+  click(frCard, { action: "mower", service: "start_mowing" });
+  contains("confirm text in French, kept on one line", markup(frCard), "<span>Confirmer\u00a0?</span>");
+
+  const later = make({ entity: "lawn_mower.robot" }, makeHass());
+  click(later, { action: "mower", service: "start_mowing" });
+  later._disarm();
+  check("the wait runs out: back to the label", markup(later).includes("Confirm?"), false);
 }
 
 // ── translations ────────────────────────────────────────────────────────────

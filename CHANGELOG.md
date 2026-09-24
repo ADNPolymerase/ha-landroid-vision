@@ -4,6 +4,7 @@
 
 ### Changed
 
+- **Two clicks to send a command from the card.** Start, Pause, Dock and the one-time mowing Start now turn orange and read "Confirm?" on the first click; only the second click sends. Any other click, or 5 seconds without one, puts the button back, so a stray tap on a phone no longer sends the mower out.
 - **No mowing readiness chip in the card.** Everything it could say is already on the card: the state under the title, the error and rain banners, the battery colour and its lightning bolt. It even read "ready" while the mower was searching a zone or leaving its base. The card is one line shorter. The Mowing readiness sensor stays in the integration, for automations. The `show_info` switch now reads "Wi-Fi, errors and rain".
 
 ## 3.0.2 - 2026-09-24
