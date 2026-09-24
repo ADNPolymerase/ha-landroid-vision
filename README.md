@@ -59,7 +59,7 @@ It shows the detailed state (searching a zone, crossing a border...), battery an
 
 - The RTK map and coordinates are precise: don't publish dumps or screenshots showing them. The address sensor is off by default. See [SECURITY.md](SECURITY.md).
 - Mowed area is covered area, so overlapping passes can exceed the lawn size. The cloud publishes a session late, sometimes the next day: the estimate sensors follow the current day.
-- A Vision one-time job takes no duration. Start resumes every unfinished zone, like the app's play button. A command sent while the mower sleeps is lost: a zone job is checked and sent once more, and a Repairs alert says so if it still does not start.
+- A Vision one-time job takes no duration. Start resumes every unfinished zone, like the app's play button. If the mower does not acknowledge a zone job, the integration checks its task list, sends the job once more if needed, and a Repairs alert says so if it still does not start.
 - The Worx cloud API is not public and can change without notice. This is not official Worx software.
 
 ## Credits

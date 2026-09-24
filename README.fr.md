@@ -59,7 +59,7 @@ La [landroid-card](https://github.com/Barma-lej/landroid-card) de Barma-lej fonc
 
 - La carte RTK et les coordonnées sont précises : ne publiez pas de journaux ni de captures d'écran qui les montrent. Le capteur d'adresse est désactivé par défaut. Voir [SECURITY.md](SECURITY.md).
 - La surface tondue est une surface parcourue : avec les passages qui se chevauchent, elle peut dépasser celle de la pelouse. Le cloud publie une session en retard, parfois le lendemain : les capteurs estimés suivent la journée en cours.
-- Sur une Vision, la tonte unique ne prend pas de durée. Démarrer reprend toutes les zones inachevées, comme le bouton lecture de l'app. Une commande envoyée pendant que la tondeuse dort est perdue : une tonte de zone est vérifiée puis renvoyée une fois, et une alerte dans Réparations le signale si elle ne démarre toujours pas.
+- Sur une Vision, la tonte unique ne prend pas de durée. Démarrer reprend toutes les zones inachevées, comme le bouton lecture de l'app. Si la tondeuse n'accuse pas réception d'une tonte de zone, l'intégration vérifie sa liste de tâches, la renvoie une fois si besoin, et une alerte dans Réparations le signale si elle ne démarre toujours pas.
 - L'API cloud de Worx n'est pas publique et peut changer sans prévenir. Ce n'est pas un logiciel officiel Worx.
 
 ## Remerciements
