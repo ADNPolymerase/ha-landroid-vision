@@ -215,7 +215,7 @@ const flush = () => new Promise((r) => setImmediate(r));
   check("old mower: no zone section", html.includes('class="zones"'), false);
   check("old mower: no zone list", html.includes("One-time mowing"), false);
   contains("old mower: map unavailable text", html, "RTK map unavailable");
-  contains("old mower: low battery flagged", html, "battery link low");
+  contains("old mower: low battery in red", html, 'class="battery link lvl-bad"');
   contains("old mower: pause enabled while mowing", html, 'data-service="pause">');
   check("old mower: no undefined", html.includes("undefined"), false);
 }
@@ -263,8 +263,8 @@ const flush = () => new Promise((r) => setImmediate(r));
   const card = make({ entity: "lawn_mower.robot" }, hass);
   let html = markup(card);
   contains("wifi shown in dBm", html, "-81 dBm");
-  contains("weak wifi flagged", html, 'class="wifi link weak" title="Wi-Fi"');
-  contains("wifi sits in the corner with the battery", html, '<div class="corner"><div class="wifi link weak"');
+  contains("weak wifi in red", html, 'class="wifi link lvl-bad" title="Wi-Fi -81 dBm"');
+  contains("wifi sits in the corner with the battery", html, '<div class="corner"><div class="wifi link lvl-bad"');
   check("wifi is no longer a chip", html.includes('class="chip warn" title="Wi-Fi"'), false);
   contains("readiness shown, translated", html, "F(ready)");
   contains("ready is green", html, 'class="chip link good"');
@@ -858,6 +858,39 @@ function rainy(extra = {}) {
   delete globalThis.localStorage;
 }
 
+// ── battery and Wi-Fi colours ───────────────────────────────────────────────
+
+{
+  const level = (bat, rssi, config = {}) => {
+    const hass = makeHass();
+    hass.states["sensor.robot_bat"] = st(String(bat), { charging: false });
+    hass.states["sensor.robot_wifi"] = st(String(rssi));
+    return markup(make({ entity: "lawn_mower.robot", ...config }, hass));
+  };
+  contains("battery 50 % is green", level(50, -40), 'class="battery link lvl-good"');
+  contains("battery 49 % is orange", level(49, -40), 'class="battery link lvl-warn"');
+  contains("battery 20 % is orange", level(20, -40), 'class="battery link lvl-warn"');
+  contains("battery 19 % is red", level(19, -40), 'class="battery link lvl-bad"');
+  contains("wifi -65 dBm is green", level(80, -65), 'class="wifi link lvl-good"');
+  contains("wifi -66 dBm is orange", level(80, -66), 'class="wifi link lvl-warn"');
+  contains("wifi -75 dBm is orange", level(80, -75), 'class="wifi link lvl-warn"');
+  contains("wifi -76 dBm is red", level(80, -76), 'class="wifi link lvl-bad"');
+
+  const shown = level(94, -45);
+  contains("battery value shown by default", shown, "<span>94 %</span>");
+  contains("wifi value shown by default", shown, "<span>-45 dBm</span>");
+  const hidden = level(94, -45, { show_values: false });
+  check("battery value hidden", hidden.includes("<span>94 %</span>"), false);
+  check("wifi value hidden", hidden.includes("<span>-45 dBm</span>"), false);
+  contains("battery icon kept, value as a tooltip", hidden, 'class="battery link lvl-good" title="94 %"');
+  contains("wifi icon kept, value as a tooltip", hidden, 'class="wifi link lvl-good" title="Wi-Fi -45 dBm"');
+  const charging = makeHass();
+  const noText = markup(make({ entity: "lawn_mower.robot", show_values: false }, charging));
+  check("no charging text without values", noText.includes(">charging<"), false);
+  contains("charging icon kept without values", noText, "mdi:battery-charging-80");
+  contains("smaller icons", markup(make({ entity: "lawn_mower.robot" })), ".battery ha-icon, .wifi ha-icon { --mdc-icon-size: 18px;");
+}
+
 // ── translations ────────────────────────────────────────────────────────────
 
 {
@@ -900,7 +933,8 @@ function rainy(extra = {}) {
 
   const schema = editor._form?.schema || [];
   const grid = schema.find((item) => item.type === "grid");
-  check("switches grouped in a grid to shorten the editor", grid?.schema?.length, 6);
+  check("switches grouped in a grid to shorten the editor", grid?.schema?.length, 7);
+  check("values switch in the editor", grid?.schema?.some((item) => item.name === "show_values"), true);
   check("grid adds no key of its own to the config", grid?.name === "" && grid?.flatten === true, true);
   check("every switch is in the grid", schema.filter((item) => item.selector?.boolean).length, 0);
   const frEditor = new Editor();

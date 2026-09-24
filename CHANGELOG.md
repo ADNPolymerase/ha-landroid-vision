@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## 3.0.2 - 2026-09-24
 
 ### Changed
 
+- **Battery and Wi-Fi in colour.** Green, orange or red with their level: the battery from 50 % and from 20 %, the Wi-Fi from -65 dBm and from -75 dBm. The colours come from the Home Assistant theme, so they follow dark mode. Their icons are a little smaller.
+- **A switch to hide the values.** `show_values`, on by default, shows the battery percentage and the Wi-Fi dBm next to their icons. Off, only the coloured icons stay, with the value as a tooltip.
 - **One-time mowing takes a single line in the card.** It stays folded, with its settings summed up (zones, order, edge cut) and Start on the right, so the card is shorter. A click on the line unfolds the zones, the order and the edge cut. Start stays greyed out until a zone is ticked.
 - **The card remembers the last one-time settings.** Zones, order and edge cut are kept after a start and after a reload, per mower, in the browser: each device keeps its own. Nothing breaks when the browser blocks storage, the settings then only last until the page is reloaded.
 
