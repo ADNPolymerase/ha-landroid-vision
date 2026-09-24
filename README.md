@@ -42,6 +42,8 @@ Without HACS, copy `custom_components/worx_vision_cloud` into `/config/custom_co
 
 The integration ships the **Worx Landroid Vision** card and registers it itself: reload the browser and pick it in the card list.
 
+![Worx Landroid Vision card](https://raw.githubusercontent.com/ADNPolymerase/ha-landroid-vision/main/docs/card.png)
+
 ```yaml
 type: custom:worx-vision-card
 entity: lawn_mower.your_mower

@@ -11,6 +11,7 @@
 
 ### Added
 
+- **A screenshot of the card in both READMEs**, drawn from a made-up garden.
 - **The day's progress under the RTK map**, as a thin bar with nothing else: the locally estimated progress, which follows the day as it goes rather than waiting for the Worx statistics. A click opens its history.
 
 ## 3.0.1 - 2026-09-24

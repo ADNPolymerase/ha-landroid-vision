@@ -42,6 +42,8 @@ Sans HACS, copiez `custom_components/worx_vision_cloud` dans `/config/custom_com
 
 L'intégration fournit la card **Worx Landroid Vision** et l'enregistre elle-même : rechargez le navigateur et choisissez-la dans la liste des cards.
 
+![Card Worx Landroid Vision](https://raw.githubusercontent.com/ADNPolymerase/ha-landroid-vision/main/docs/card.fr.png)
+
 ```yaml
 type: custom:worx-vision-card
 entity: lawn_mower.votre_tondeuse
