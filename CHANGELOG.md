@@ -26,7 +26,7 @@ A pre-release to try what is left of a task on the card before 3.1.0. It replace
 
 ## 3.0.4 - 2026-09-27
 
-Fixes brought over from the upstream integration, [SmartServicePL/worx_landroid_vision_cloud](https://github.com/SmartServicePL/worx_landroid_vision_cloud) 1.4.1.
+Fixes brought over from the upstream integration, [SmartServicePL/worx_vision_cloud_plus_github](https://github.com/SmartServicePL/worx_vision_cloud_plus_github) 1.4.1.
 
 ### Fixed
 
