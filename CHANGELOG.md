@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.8 - 2026-09-27 (pre-release)
+
+### Changed
+
+- **The task banner goes away once the task is finished or stopped.** The mower keeps a finished or stopped task in its list, so the banner stayed on it. The task's own status now tells them apart, as checked on real tasks: running (including a recharge in the middle of it), finished, or stopped from the app or replaced by a new start. The Task remaining sensor reads unknown when no task runs, and gains an `active` attribute.
+- **The remaining time says what it is: mowing time.** It stands still while the mower recharges, so the banner now reads "262.7 m² left · 3h23 of mowing" rather than suggesting a time of arrival.
+- **Start is greyed out while the mower recharges in the middle of a task.** It goes back to the task by itself; Start would replace that task with a new one on every zone, as seen on a real mower. A tooltip says so, and Start is back as soon as charging stops or the task is stopped.
+
+### Removed
+
+- **The raw `raw_a` field of the task zones**, which switched between two values from one message to the next.
+
 ## 3.0.7 - 2026-09-27 (pre-release)
 
 ### Added

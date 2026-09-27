@@ -81,6 +81,20 @@ class TaskProgressTest(unittest.TestCase):
         self.assertEqual(zone["remaining_time_s"], 12180)
         self.assertEqual(task["remaining_pct"], 86)
         self.assertEqual(task["trigger"], "manual")
+        self.assertTrue(task["active"])
+        self.assertNotIn("raw_a", zone)
+
+    def test_a_stopped_task_is_listed_but_not_active(self) -> None:
+        stopped = {**_task("2026-06-01T10:00:00.000Z", [{"id": 1, "p": 14}]), "st": 3}
+        task = HELPERS.current_task_progress(_device([stopped]))
+        self.assertFalse(task["active"])
+        self.assertEqual(task["remaining_pct"], 86)
+
+    def test_a_finished_task_is_not_active(self) -> None:
+        done = {**_task("2026-06-01T10:00:00.000Z", [{"id": 2, "p": 100, "rtg": 0}]), "st": 2}
+        task = HELPERS.current_task_progress(_device([done]))
+        self.assertFalse(task["active"])
+        self.assertEqual(task["remaining_pct"], 0)
 
     def test_remaining_share_is_weighted_by_area(self) -> None:
         device = _device(

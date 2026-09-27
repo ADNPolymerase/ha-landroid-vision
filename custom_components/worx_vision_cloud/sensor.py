@@ -1766,9 +1766,11 @@ class WorxTaskRemainingSensor(WorxVisionEntity, SensorEntity):
 
     @property
     def native_value(self) -> float | None:
-        """Return the remaining share of the task in percent."""
+        """Return the remaining share of the task in percent, if it runs."""
         task = current_task_progress(self.device)
-        return None if task is None else task["remaining_pct"]
+        if task is None or not task["active"]:
+            return None
+        return task["remaining_pct"]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

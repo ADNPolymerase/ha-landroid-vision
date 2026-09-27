@@ -1156,9 +1156,14 @@ def current_task_progress(device: Any) -> dict[str, Any] | None:
     The mower lists its tasks under `cut.tsk`, each zone with `p`, the
     percentage already mowed, which starts at 0 and only goes up. The Worx
     app shows its complement as "remaining", and the remaining area as that
-    share of the zone. `rtg` looks like the remaining time in seconds (it
-    matched the app once, at 3 h 23); it and the other raw fields are kept
-    as-is until confirmed.
+    share of the zone; `rtg` is the remaining time in seconds, as in the app.
+    `p` belongs to the zone: a new task on the same zone starts from it.
+
+    `st` is 0 while the task runs, including while the mower recharges
+    between two sessions of it, 2 once it finished and 3 once it was stopped
+    (sent home) or replaced by another start. A finished or stopped task
+    stays listed, so `active` is what tells it apart. At the end, `p` jumps
+    to 100 even when the estimate still had a few minutes to go.
     """
     tasks = get_nested_value(_raw_dat(device), "cut", "tsk", default=[]) or []
     if not isinstance(tasks, list):
@@ -1201,7 +1206,6 @@ def current_task_progress(device: Any) -> dict[str, Any] | None:
                     None if remaining_time is None else int(remaining_time)
                 ),
                 "raw_rtn": zone.get("rtn"),
-                "raw_a": zone.get("a"),
             }
         )
     if not zones:
@@ -1217,6 +1221,7 @@ def current_task_progress(device: Any) -> dict[str, Any] | None:
 
     return {
         "remaining_pct": remaining_pct,
+        "active": task.get("st") == 0,
         "started_at": task.get("tm"),
         "trigger": TASK_TRIGGERS.get(task.get("tr"), task.get("tr")),
         "raw_st": task.get("st"),

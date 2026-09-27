@@ -791,7 +791,7 @@ function rainy(extra = {}) {
   const one = [{ id: 1, name: "Front <b>lawn</b>", remaining_pct: 86, remaining_m2: 262.7, remaining_time_s: 12190 }];
 
   const html = markup(make({ entity: "lawn_mower.robot" }, task(one)));
-  contains("banner with the three figures", html, "86% · 262.7 m² · 3h23 left");
+  contains("banner with the three figures", html, "86% · 262.7 m² left · 3h23 of mowing");
   contains("zone name escaped", html, "Front &lt;b&gt;lawn&lt;/b&gt;");
   contains("bar filled with what is done", html, '<div class="task-fill" style="width:14%"></div>');
   check("banner right above the map", html.indexOf('class="task"') < html.indexOf('class="map-wrap"'), true);
@@ -801,14 +801,14 @@ function rainy(extra = {}) {
   const fr = task(one);
   fr.language = "fr";
   fr.locale = { language: "fr" };
-  contains("French figures", markup(make({ entity: "lawn_mower.robot" }, fr)), "86\u00a0% · 262,7 m² · 3h23 restant");
+  contains("French figures", markup(make({ entity: "lawn_mower.robot" }, fr)), "86\u00a0% · 262,7 m² restant · 3h23 de tonte");
 
   const two = markup(make({ entity: "lawn_mower.robot" }, task([
     { id: 1, name: "A", remaining_pct: 40, remaining_m2: 122.2, remaining_time_s: 5400 },
     { id: 2, name: "B", remaining_pct: 100, remaining_m2: null, remaining_time_s: 2460 },
   ])));
   check("one line per zone", (two.match(/class="task-row"/gu) || []).length, 2);
-  contains("short time in minutes", two, "100% · 41 min left");
+  contains("short time in minutes", two, "100% left · 41 min of mowing");
 
   const noTime = markup(make({ entity: "lawn_mower.robot" }, task([{ id: 3, remaining_pct: 50 }])));
   contains("id when the zone has no name, figures that exist only", noTime, "#3</span><span class=\"task-values\">50% left");
@@ -820,9 +820,27 @@ function rainy(extra = {}) {
   check("hidden when nothing is left", markup(make({ entity: "lawn_mower.robot" }, task([{ id: 1, name: "A", remaining_pct: 0 }]))).includes('class="task"'), false);
   check("old mower without the sensor has no banner", markup(make({ entity: "lawn_mower.old" })).includes('class="task"'), false);
 
+  const stopped = task(one);
+  stopped.states["sensor.robot_tache"] = st("unknown", { active: false, zones: one });
+  check("hidden once the task was stopped", markup(make({ entity: "lawn_mower.robot" }, stopped)).includes('class="task"'), false);
+  const stillListed = task(one);
+  stillListed.states["sensor.robot_tache"].attributes.active = false;
+  check("hidden when inactive even with a state", markup(make({ entity: "lawn_mower.robot" }, stillListed)).includes('class="task"'), false);
+
+  const startButton = (h) => (markup(make({ entity: "lawn_mower.robot" }, h)).match(/<button[^>]*data-service="start_mowing"[^>]*>/u) || [""])[0];
+  // The default mower is docked and charging.
+  const charging = startButton(task(one));
+  check("Start greyed while charging in the middle of a task", charging.includes(" disabled"), true);
+  contains("with the reason as a tooltip", charging, 'title="Resumes by itself after charging"');
+  const full = task(one);
+  full.states["sensor.robot_bat"] = st("100", { charging: false });
+  check("Start back once charging stops", startButton(full).includes(" disabled"), false);
+  check("Start back once the task was stopped", startButton(stopped).includes(" disabled"), false);
+  check("Start free without a task", startButton(makeHass()).includes(" disabled"), false);
+
   const live = make({ entity: "lawn_mower.robot" }, task(one));
   live.hass = task([{ ...one[0], remaining_pct: 50, remaining_m2: 152.7, remaining_time_s: 7200 }]);
-  contains("banner follows the task", markup(live), "50% · 152.7 m² · 2h00 left");
+  contains("banner follows the task", markup(live), "50% · 152.7 m² left · 2h00 of mowing");
 }
 
 // ── one-time settings remembered ────────────────────────────────────────────
