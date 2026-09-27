@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.0.4 - 2026-09-27
+
+Fixes brought over from the upstream integration, [SmartServicePL/worx_landroid_vision_cloud](https://github.com/SmartServicePL/worx_landroid_vision_cloud) 1.4.1.
+
+### Fixed
+
+- **A wrong password no longer means deleting the integration.** When Worx refuses the saved credentials, Home Assistant now asks for the password again, from the integrations page. The account email stays, and the integration reloads once the new password is accepted.
+- **No more Worx connections left open after a failed start.** If the first refresh fails, the connection opened for it is closed before Home Assistant retries, instead of piling up one more on every attempt.
+- **The raw data option survives a restart.** "Expose raw data" was switched back off at every start; it now keeps the value set in the options.
+- **Unloading the integration keeps its data when a platform refuses to unload.** The mower stays usable instead of losing its connection while some of its entities are still there.
+- **Less precise position sent for the address lookup.** The coordinates sent to OpenStreetMap Nominatim are now rounded to 4 decimal places, about 11 m, instead of 7. Enough for a street address, without giving the mower's exact spot.
+
+### Changed
+
+- **One-time mowing settings are kept across restarts.** The runtime, the edge cut and the zones set on the integration's one-time mowing entities are saved per mower and come back after Home Assistant restarts.
+
+### Not brought over
+
+- **The upstream refresh change**, which stops polling from starving MQTT updates: this integration does not poll, it only listens to MQTT.
+- **The upstream refusal of a zero runtime**: a Vision zone job carries no runtime, so it would block zone mowing here.
+
 ## 3.0.3 - 2026-09-24
 
 ### Changed

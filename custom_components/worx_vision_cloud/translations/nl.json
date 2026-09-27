@@ -12,6 +12,13 @@
           "verify_ssl": "SSL verifiëren",
           "expose_raw_entities": "Alle ruwe payloadvelden als entiteiten weergeven"
         }
+      },
+      "reauth_confirm": {
+        "title": "Opnieuw aanmelden",
+        "description": "Worx heeft de opgeslagen gegevens voor {email} geweigerd. Voer het huidige wachtwoord van dit Worx Landroid-account in.",
+        "data": {
+          "password": "Wachtwoord"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Snelheidslimiet van Worx Cloud bereikt. Probeer het later opnieuw."
     },
     "abort": {
-      "already_configured": "Dit account is al geconfigureerd."
+      "already_configured": "Dit account is al geconfigureerd.",
+      "reauth_successful": "Het nieuwe wachtwoord is opgeslagen."
     }
   },
   "entity": {

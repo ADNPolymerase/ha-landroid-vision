@@ -67,7 +67,9 @@ _LOGGER = logging.getLogger(__name__)
 
 RTK_MAP_CACHE_TTL = timedelta(minutes=30)
 RTK_ADDRESS_CACHE_TTL = timedelta(hours=24)
-RTK_ADDRESS_COORD_PRECISION = 7
+# Four decimal places is about 11 m: enough for a street address, without
+# sending the mower's exact position, and the cache stays put while it mows.
+RTK_ADDRESS_COORD_PRECISION = 4
 RTK_ADDRESS_ENDPOINT = "https://nominatim.openstreetmap.org/reverse"
 RTK_ADDRESS_USER_AGENT = (
     "Worx Landroid Vision PLUS Home Assistant custom integration "
@@ -83,6 +85,8 @@ FIRMWARE_UPGRADE_CACHE_TTL = timedelta(minutes=30)
 STATISTICS_STORAGE_VERSION = 1
 STATISTICS_SAVE_DELAY = 60
 LOCAL_OPTIONS_STORAGE_VERSION = 1
+ONE_TIME_MOWING_STORAGE_VERSION = 1
+ONE_TIME_MOWING_SAVE_DELAY = 5
 RTK_TRAIL_STORAGE_VERSION = 1
 RTK_TRAIL_SAVE_DELAY = 60
 # A generous per-day safety cap, not a rolling window: the trail is reset at
@@ -204,6 +208,11 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             f"{DOMAIN}.{config_entry.entry_id}.rtk_map_id",
         )
         self._one_time_mowing_options: dict[str, dict[str, Any]] = {}
+        self._one_time_mowing_store = Store[dict[str, Any]](
+            hass,
+            ONE_TIME_MOWING_STORAGE_VERSION,
+            f"{DOMAIN}.{config_entry.entry_id}.one_time_mowing",
+        )
         self._unsub_periodic_refresh: Callable[[], None] | None = None
         # First observed moment of an ongoing disconnection, per
         # (serial_number, kind) with kind in ("online", "mqtt"). Used to hide
@@ -256,6 +265,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 for serial, options in stored_options.items()
                 if isinstance(options, dict)
             }
+
+        self._restore_one_time_options(
+            await self._one_time_mowing_store.async_load()
+        )
 
         await self._load_rtk_trail()
 
@@ -326,6 +339,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             )
             await self._firmware_notes_store.async_save(
                 {"notes": self._firmware_notes}
+            )
+            await self._one_time_mowing_store.async_save(
+                self._one_time_options_data()
             )
         finally:
             await super().async_shutdown()
@@ -1202,6 +1218,44 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             },
         )
 
+    def _one_time_options_data(self) -> dict[str, dict[str, Any]]:
+        """Return a copy of the one-time mowing options to store."""
+        return {
+            serial: {
+                "runtime": int(options.get("runtime", DEFAULT_ONE_TIME_MOWING_RUNTIME)),
+                "edge_cut": bool(
+                    options.get("edge_cut", DEFAULT_ONE_TIME_MOWING_EDGE_CUT)
+                ),
+                "zones": list(options.get("zones", [])),
+            }
+            for serial, options in self._one_time_mowing_options.items()
+        }
+
+    def _schedule_one_time_options_save(self) -> None:
+        """Store the one-time mowing options shortly after a change."""
+        self._one_time_mowing_store.async_delay_save(
+            self._one_time_options_data, ONE_TIME_MOWING_SAVE_DELAY
+        )
+
+    def _restore_one_time_options(self, stored: Any) -> None:
+        """Restore the one-time mowing options saved before a restart."""
+        if not isinstance(stored, dict):
+            return
+        for serial_number, options in stored.items():
+            if not isinstance(options, dict):
+                continue
+            restored = self._one_time_options(str(serial_number))
+            try:
+                restored["runtime"] = max(
+                    10, min(120, int(options.get("runtime", restored["runtime"])))
+                )
+                restored["edge_cut"] = bool(
+                    options.get("edge_cut", restored["edge_cut"])
+                )
+                restored["zones"] = _normalize_zone_ids(options.get("zones") or [])
+            except (TypeError, ValueError):
+                _LOGGER.debug("Ignoring invalid stored one-time mowing options")
+
     def one_time_mowing_runtime(self, serial_number: str) -> int:
         """Return configured one-time mowing runtime."""
         return int(
@@ -1229,6 +1283,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self.raise_if_updating(serial_number)
         runtime = max(10, min(120, int(runtime_minutes)))
         self._one_time_options(serial_number)["runtime"] = runtime
+        self._schedule_one_time_options_save()
         self.async_set_updated_data(self.data or {})
 
     async def async_set_one_time_mowing_edge_cut(
@@ -1237,6 +1292,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         """Set whether local one-time mowing starts with edge cutting."""
         self.raise_if_updating(serial_number)
         self._one_time_options(serial_number)["edge_cut"] = bool(enabled)
+        self._schedule_one_time_options_save()
         self.async_set_updated_data(self.data or {})
 
     async def async_set_one_time_mowing_zones(
@@ -1245,6 +1301,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         """Set local one-time mowing RTK zones."""
         self.raise_if_updating(serial_number)
         self._one_time_options(serial_number)["zones"] = _normalize_zone_ids(zones)
+        self._schedule_one_time_options_save()
         self.async_set_updated_data(self.data or {})
 
     async def async_start_configured_one_time_mowing(self, serial_number: str) -> None:

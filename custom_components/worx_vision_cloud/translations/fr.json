@@ -12,6 +12,13 @@
           "verify_ssl": "Vérifier le certificat SSL",
           "expose_raw_entities": "Exposer tous les champs bruts du payload en tant qu'entités"
         }
+      },
+      "reauth_confirm": {
+        "title": "Se reconnecter",
+        "description": "Worx a refusé les identifiants enregistrés pour {email}. Saisissez le mot de passe actuel de ce compte Worx Landroid.",
+        "data": {
+          "password": "Mot de passe"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Limite de requêtes du Cloud Worx atteinte. Réessayez plus tard."
     },
     "abort": {
-      "already_configured": "Ce compte est déjà configuré."
+      "already_configured": "Ce compte est déjà configuré.",
+      "reauth_successful": "Le nouveau mot de passe est enregistré."
     }
   },
   "entity": {

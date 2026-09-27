@@ -12,6 +12,13 @@
           "verify_ssl": "Bekræft SSL",
           "expose_raw_entities": "Vis alle rå datafelter som enheder"
         }
+      },
+      "reauth_confirm": {
+        "title": "Log ind igen",
+        "description": "Worx afviste de gemte loginoplysninger for {email}. Indtast den aktuelle adgangskode til denne Worx Landroid-konto.",
+        "data": {
+          "password": "Adgangskode"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Worx Cloud-anmodningsgrænse nået. Prøv igen senere."
     },
     "abort": {
-      "already_configured": "Denne konto er allerede konfigureret."
+      "already_configured": "Denne konto er allerede konfigureret.",
+      "reauth_successful": "Den nye adgangskode er gemt."
     }
   },
   "entity": {

@@ -12,6 +12,13 @@
           "verify_ssl": "Verifiera SSL",
           "expose_raw_entities": "Exponera alla råa payload-fält som entiteter"
         }
+      },
+      "reauth_confirm": {
+        "title": "Logga in igen",
+        "description": "Worx avvisade de sparade inloggningsuppgifterna för {email}. Ange det aktuella lösenordet för detta Worx Landroid-konto.",
+        "data": {
+          "password": "Lösenord"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Gränsen för Worx Cloud-förfrågningar nådd. Försök igen senare."
     },
     "abort": {
-      "already_configured": "Det här kontot är redan konfigurerat."
+      "already_configured": "Det här kontot är redan konfigurerat.",
+      "reauth_successful": "Det nya lösenordet har sparats."
     }
   },
   "entity": {

@@ -12,6 +12,13 @@
           "verify_ssl": "Weryfikuj SSL",
           "expose_raw_entities": "Wystaw wszystkie surowe pola payload jako encje"
         }
+      },
+      "reauth_confirm": {
+        "title": "Zaloguj się ponownie",
+        "description": "Worx odrzucił zapisane dane logowania dla {email}. Wpisz aktualne hasło do tego konta Worx Landroid.",
+        "data": {
+          "password": "Hasło"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Limit zapytań Worx Cloud. Spróbuj później."
     },
     "abort": {
-      "already_configured": "To konto jest już skonfigurowane."
+      "already_configured": "To konto jest już skonfigurowane.",
+      "reauth_successful": "Nowe hasło zostało zapisane."
     }
   },
   "entity": {

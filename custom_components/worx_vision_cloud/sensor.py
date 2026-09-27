@@ -825,7 +825,7 @@ def _rtk_address_attributes(
         "country_code": _first_address_text(address, "country_code"),
         "attribution": address_data.get("licence"),
         "lookup_time": lookup_time.isoformat() if lookup_time else None,
-        "privacy_note": "Entity disabled by default; enabling it sends RTK coordinates rounded to 7 decimal places to Nominatim.",
+        "privacy_note": "Entity disabled by default; enabling it sends RTK coordinates rounded to 4 decimal places (about 11 m) to Nominatim.",
     }
     return {key: value for key, value in attrs.items() if value is not None}
 

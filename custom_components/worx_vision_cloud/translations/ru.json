@@ -12,6 +12,13 @@
           "verify_ssl": "Проверять SSL",
           "expose_raw_entities": "Отображать все сырые поля как отдельные сущности"
         }
+      },
+      "reauth_confirm": {
+        "title": "Войти снова",
+        "description": "Worx отклонил сохранённые данные входа для {email}. Введите текущий пароль этой учётной записи Worx Landroid.",
+        "data": {
+          "password": "Пароль"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Превышен лимит запросов Worx Cloud. Повторите попытку позже."
     },
     "abort": {
-      "already_configured": "Эта учётная запись уже настроена."
+      "already_configured": "Эта учётная запись уже настроена.",
+      "reauth_successful": "Новый пароль сохранён."
     }
   },
   "entity": {

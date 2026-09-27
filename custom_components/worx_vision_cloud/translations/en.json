@@ -12,6 +12,13 @@
           "verify_ssl": "Verify SSL",
           "expose_raw_entities": "Expose all raw payload fields as entities"
         }
+      },
+      "reauth_confirm": {
+        "title": "Sign in again",
+        "description": "Worx rejected the saved login for {email}. Enter the current password of this Worx Landroid account.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Worx Cloud rate limit. Try again later."
     },
     "abort": {
-      "already_configured": "This account is already configured."
+      "already_configured": "This account is already configured.",
+      "reauth_successful": "The new password is saved."
     }
   },
   "entity": {

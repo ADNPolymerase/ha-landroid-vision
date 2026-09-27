@@ -12,6 +12,13 @@
           "verify_ssl": "Bekreft SSL",
           "expose_raw_entities": "Eksponer alle rå datafelt som enheter"
         }
+      },
+      "reauth_confirm": {
+        "title": "Logg inn på nytt",
+        "description": "Worx avviste de lagrede påloggingsopplysningene for {email}. Skriv inn gjeldende passord for denne Worx Landroid-kontoen.",
+        "data": {
+          "password": "Passord"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Worx Cloud-forespørselsgrense nådd. Prøv igjen senere."
     },
     "abort": {
-      "already_configured": "Denne kontoen er allerede konfigurert."
+      "already_configured": "Denne kontoen er allerede konfigurert.",
+      "reauth_successful": "Det nye passordet er lagret."
     }
   },
   "entity": {

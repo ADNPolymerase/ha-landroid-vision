@@ -168,8 +168,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         raise ConfigEntryNotReady(f"Could not connect to Worx Cloud: {err}") from err
 
     coordinator = WorxVisionCoordinator(hass, cloud, entry)
-    await coordinator.async_setup()
-    await coordinator.async_config_entry_first_refresh()
+    try:
+        await coordinator.async_setup()
+        await coordinator.async_config_entry_first_refresh()
+    except BaseException:
+        # Close the Worx connection opened above, or every setup retry
+        # leaves one more session behind.
+        await coordinator.async_shutdown()
+        await _safe_disconnect(cloud)
+        raise
 
     if not coordinator.data:
         await coordinator.async_shutdown()
@@ -193,11 +200,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     _async_setup_services(hass)
 
-    if entry.data.get(CONF_EXPOSE_RAW, DEFAULT_EXPOSE_RAW):
-        hass.config_entries.async_update_entry(
-            entry, data={**entry.data, CONF_EXPOSE_RAW: False}
-        )
-    elif CONF_EXPOSE_RAW not in entry.data:
+    if CONF_EXPOSE_RAW not in entry.data:
         hass.config_entries.async_update_entry(
             entry, data={**entry.data, CONF_EXPOSE_RAW: DEFAULT_EXPOSE_RAW}
         )
@@ -215,6 +218,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if not unload_ok:
+        # Platforms are still loaded: keep the cloud and coordinator they use.
+        return False
 
     runtime: WorxVisionRuntimeData | None = hass.data.get(DOMAIN, {}).pop(
         entry.entry_id, None

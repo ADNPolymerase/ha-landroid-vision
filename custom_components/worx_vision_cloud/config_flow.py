@@ -1,6 +1,7 @@
 """Config flow for Worx Vision Cloud Plus."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 import logging
 from typing import Any
 
@@ -159,6 +160,40 @@ class WorxVisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=self._schema(user_input),
+            errors=errors,
+        )
+
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> config_entries.ConfigFlowResult:
+        """Start re-authentication after Worx rejected the stored login."""
+        del entry_data
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Ask for the current password of the configured Worx account."""
+        errors: dict[str, str] = {}
+        entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            data = {**entry.data, CONF_PASSWORD: user_input[CONF_PASSWORD]}
+            try:
+                await _validate_input(data)
+            except AuthorizationError:
+                errors["base"] = "invalid_auth"
+            except RateLimited:
+                errors["base"] = "rate_limited"
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_update_reload_and_abort(entry, data=data)
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            description_placeholders={CONF_EMAIL: entry.data.get(CONF_EMAIL, "")},
             errors=errors,
         )
 

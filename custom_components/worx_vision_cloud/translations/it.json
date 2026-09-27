@@ -12,6 +12,13 @@
           "verify_ssl": "Verifica SSL",
           "expose_raw_entities": "Esponi tutti i campi payload grezzi come entità"
         }
+      },
+      "reauth_confirm": {
+        "title": "Accedi di nuovo",
+        "description": "Worx ha rifiutato le credenziali salvate per {email}. Inserisci la password attuale di questo account Worx Landroid.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -20,7 +27,8 @@
       "rate_limited": "Limite di richieste Worx Cloud raggiunto. Riprova più tardi."
     },
     "abort": {
-      "already_configured": "Questo account è già configurato."
+      "already_configured": "Questo account è già configurato.",
+      "reauth_successful": "La nuova password è stata salvata."
     }
   },
   "entity": {
