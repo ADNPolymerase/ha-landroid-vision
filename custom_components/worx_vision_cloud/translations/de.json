@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Mähmuster {zone} Winkel"
+      },
+      "task_remaining": {
+        "name": "Verbleibende Aufgabe"
       }
     },
     "binary_sensor": {

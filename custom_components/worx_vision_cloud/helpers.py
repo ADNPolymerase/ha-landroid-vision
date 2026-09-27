@@ -1113,6 +1113,118 @@ def rtk_zone_names(device: Any) -> dict[int, str]:
     return names
 
 
+def rtk_zone_areas(device: Any) -> dict[int, float]:
+    """Map RTK zone ids to their area in square metres, from the Worx map.
+
+    The map gives each zone's area in square millimetres under its name, and
+    rtk_zone_names() pairs those names with the ids the mower uses.
+    """
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    if not isinstance(map_data, dict):
+        return {}
+    by_name: dict[str, float] = {}
+    for boundary in get_nested_value(map_data, "layers", "boundaries", default=[]) or []:
+        for zone in get_dict_value(boundary, "zones", []) or []:
+            if not isinstance(zone, dict):
+                continue
+            name = get_dict_value(zone, "name")
+            try:
+                area = float(get_dict_value(zone, "area"))
+            except (TypeError, ValueError):
+                continue
+            if name not in (None, "") and isfinite(area) and area > 0:
+                by_name.setdefault(str(name), area / 1_000_000)
+    return {
+        zone_id: round(by_name[name], 2)
+        for zone_id, name in rtk_zone_names(device).items()
+        if name in by_name
+    }
+
+
+TASK_TRIGGERS = {1: "manual", 2: "schedule"}
+
+
+def _task_number(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    return float(value) if isfinite(value) else None
+
+
+def current_task_progress(device: Any) -> dict[str, Any] | None:
+    """Return the progress of the mower's latest task, zone by zone.
+
+    The mower lists its tasks under `cut.tsk`, each zone with `p`, the
+    percentage already mowed, which starts at 0 and only goes up. The Worx
+    app shows its complement as "remaining", and the remaining area as that
+    share of the zone. `rtg` looks like the remaining time in seconds (it
+    matched the app once, at 3 h 23); it and the other raw fields are kept
+    as-is until confirmed.
+    """
+    tasks = get_nested_value(_raw_dat(device), "cut", "tsk", default=[]) or []
+    if not isinstance(tasks, list):
+        return None
+    tasks = [
+        task for task in tasks if isinstance(task, dict) and isinstance(task.get("z"), list)
+    ]
+    if not tasks:
+        return None
+    task = max(tasks, key=lambda item: str(item.get("tm") or ""))
+
+    names = rtk_zone_names(device)
+    areas = rtk_zone_areas(device)
+    zones: list[dict[str, Any]] = []
+    for zone in task["z"]:
+        if not isinstance(zone, dict):
+            continue
+        try:
+            zone_id = int(zone.get("id"))
+        except (TypeError, ValueError):
+            continue
+        done = _task_number(zone.get("p"))
+        done = None if done is None else max(0.0, min(100.0, done))
+        remaining = None if done is None else round(100 - done, 1)
+        area = areas.get(zone_id)
+        remaining_time = _task_number(zone.get("rtg"))
+        zones.append(
+            {
+                "id": zone_id,
+                "name": names.get(zone_id),
+                "done_pct": done,
+                "remaining_pct": remaining,
+                "area_m2": area,
+                "remaining_m2": (
+                    None
+                    if area is None or remaining is None
+                    else round(area * remaining / 100, 1)
+                ),
+                "remaining_time_s": (
+                    None if remaining_time is None else int(remaining_time)
+                ),
+                "raw_rtn": zone.get("rtn"),
+                "raw_a": zone.get("a"),
+            }
+        )
+    if not zones:
+        return None
+
+    known = [z for z in zones if z["remaining_pct"] is not None]
+    remaining_pct = None
+    if known and all(z["area_m2"] for z in known):
+        total = sum(z["area_m2"] for z in known)
+        remaining_pct = round(sum(z["remaining_m2"] for z in known) / total * 100, 1)
+    elif known:
+        remaining_pct = round(sum(z["remaining_pct"] for z in known) / len(known), 1)
+
+    return {
+        "remaining_pct": remaining_pct,
+        "started_at": task.get("tm"),
+        "trigger": TASK_TRIGGERS.get(task.get("tr"), task.get("tr")),
+        "raw_st": task.get("st"),
+        "task_count": len(tasks),
+        "zones": zones,
+    }
+
+
 # Raw protocol 1 slots number the week from Sunday (0) while pyworxcloud names
 # the days, so a parsed slot is matched to its raw twin on day and start.
 RAW_SCHEDULE_DAY = {name: (index + 1) % 7 for name, index in SCHEDULE_DAY_INDEX.items()}

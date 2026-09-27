@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Motif {zone} angle"
+      },
+      "task_remaining": {
+        "name": "Reste de la tâche"
       }
     },
     "binary_sensor": {

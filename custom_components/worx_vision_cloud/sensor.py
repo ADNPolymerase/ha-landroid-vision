@@ -43,6 +43,7 @@ from .helpers import (
     MAX_STRING_STATE_LENGTH,
     RSSI_DEADBAND_DB,
     STATION_DISTANCE_DEADBAND_M,
+    current_task_progress,
     get_dict_value,
     hold_small_attribute_changes,
     next_schedule_start,
@@ -1217,6 +1218,7 @@ async def async_setup_entry(
         entities.append(WorxRemainingProgressSensor(coordinator, entry, serial_number))
         entities.append(WorxEstimatedAreaTodaySensor(coordinator, entry, serial_number))
         entities.append(WorxEstimatedDailyProgressSensor(coordinator, entry, serial_number))
+        entities.append(WorxTaskRemainingSensor(coordinator, entry, serial_number))
 
     def add_raw_entities() -> None:
         raw_entities: list[SensorEntity] = []
@@ -1738,6 +1740,57 @@ class WorxEstimatedDailyProgressSensor(WorxEstimatedAreaTodaySensor):
             **super().extra_state_attributes,
             "lawn_area": _lawn_area(self.device),
         }
+
+
+# The remaining time estimate ticks by a few seconds even while the mower waits
+# on its station between two sessions of a task.
+TASK_REMAINING_TIME_DEADBAND_S = 60
+
+
+class WorxTaskRemainingSensor(WorxVisionEntity, SensorEntity):
+    """What is left of the mower's current task, as the Worx app shows it.
+
+    The state is the remaining share of the task, weighted by zone area when
+    the map gives the areas. The zones attribute lists, for each zone of the
+    task, the remaining percentage, area and time.
+    """
+
+    _attr_translation_key = "task_remaining"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_icon = "mdi:progress-clock"
+
+    def __init__(self, coordinator, entry, serial_number: str) -> None:
+        """Initialize task remaining."""
+        super().__init__(coordinator, entry, serial_number, "task_remaining")
+        self._published_times: dict[int, int] = {}
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the remaining share of the task in percent."""
+        task = current_task_progress(self.device)
+        return None if task is None else task["remaining_pct"]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the task and its zones."""
+        task = current_task_progress(self.device)
+        if task is None:
+            self._published_times = {}
+            return None
+        published: dict[int, int] = {}
+        for zone in task["zones"]:
+            seconds = zone["remaining_time_s"]
+            previous = self._published_times.get(zone["id"])
+            if (
+                seconds is not None
+                and previous is not None
+                and abs(seconds - previous) < TASK_REMAINING_TIME_DEADBAND_S
+            ):
+                zone["remaining_time_s"] = seconds = previous
+            if seconds is not None:
+                published[zone["id"]] = seconds
+        self._published_times = published
+        return {key: value for key, value in task.items() if key != "remaining_pct"}
 
 
 class WorxVisionAddressSensor(WorxVisionEntity, SensorEntity):

@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Schema di taglio {zone} angolo"
+      },
+      "task_remaining": {
+        "name": "Rimanente dell'attività"
       }
     },
     "binary_sensor": {

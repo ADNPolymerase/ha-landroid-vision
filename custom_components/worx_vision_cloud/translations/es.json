@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Patrón de corte {zone} ángulo"
+      },
+      "task_remaining": {
+        "name": "Restante de la tarea"
       }
     },
     "binary_sensor": {

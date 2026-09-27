@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.6 - 2026-09-27 (pre-release)
+
+A pre-release to check a new reading against the Worx app before the card uses it in 3.1.0.
+
+### Added
+
+- **A Task remaining sensor, the figures of the Worx app's Remaining view.** The mower lists each task with how much of every zone is already mowed. The sensor shows the share of the task still to mow, weighted by zone area, and its `zones` attribute gives for each zone of the task its name, the remaining percentage, the remaining area (that share of the zone's area on the map) and the remaining time. Also listed: when the task started, and whether it came from a one-time mowing or the schedule.
+- **To check:** the remaining time is read from a field that matched the app once. The raw fields `raw_rtn` and `raw_a`, whose meaning is still unknown, are shown as they come, for comparison. Compare these values with the app during a task; the card will only show what is confirmed.
+
 ## 3.0.5 - 2026-09-27
 
 ### Fixed

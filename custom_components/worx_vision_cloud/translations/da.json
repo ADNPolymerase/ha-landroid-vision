@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Klippemønster {zone} vinkel"
+      },
+      "task_remaining": {
+        "name": "Resterende af opgaven"
       }
     },
     "binary_sensor": {

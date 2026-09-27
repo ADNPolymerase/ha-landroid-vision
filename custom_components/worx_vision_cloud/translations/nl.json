@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Maaipatroon {zone} hoek"
+      },
+      "task_remaining": {
+        "name": "Resterend van de taak"
       }
     },
     "binary_sensor": {

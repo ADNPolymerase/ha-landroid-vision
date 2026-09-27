@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Klippmönster {zone} vinkel"
+      },
+      "task_remaining": {
+        "name": "Återstående av uppgiften"
       }
     },
     "binary_sensor": {

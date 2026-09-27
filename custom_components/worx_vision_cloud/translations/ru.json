@@ -276,6 +276,9 @@
       },
       "zone_mowing_angle": {
         "name": "Схема кошения {zone} угол"
+      },
+      "task_remaining": {
+        "name": "Осталось по заданию"
       }
     },
     "binary_sensor": {
