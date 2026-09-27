@@ -104,7 +104,7 @@
           "calibration_needed": "Calibrazione necessaria",
           "insufficient_sensor_data": "Dati dei sensori insufficienti",
           "training_start_disallowed": "Avvio dell'apprendimento non consentito",
-          "camera_error": "Errore fotocamera",
+          "camera_error": "Luce insufficiente (E14)",
           "lawn_exploration_required": "Esplorazione del prato necessaria",
           "mapping_exploration_failed": "Esplorazione della mappa non riuscita",
           "rfid_reader_error": "Errore lettore RFID",

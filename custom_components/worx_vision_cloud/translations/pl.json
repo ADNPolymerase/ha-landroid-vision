@@ -104,7 +104,7 @@
           "calibration_needed": "Wymagana kalibracja",
           "insufficient_sensor_data": "Niewystarczające dane z czujników",
           "training_start_disallowed": "Rozpoczęcie treningu niedozwolone",
-          "camera_error": "Błąd kamery",
+          "camera_error": "Niewystarczające światło (E14)",
           "lawn_exploration_required": "Wymagane rozpoznanie trawnika",
           "mapping_exploration_failed": "Rozpoznanie mapy nie powiodło się",
           "rfid_reader_error": "Błąd czytnika RFID",

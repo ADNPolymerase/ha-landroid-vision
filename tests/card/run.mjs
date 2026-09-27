@@ -441,6 +441,14 @@ const flush = () => new Promise((r) => setImmediate(r));
   const dupHtml = markup(make({ entity: "lawn_mower.robot" }, dup));
   check("readiness 'error' not repeated under the banner", dupHtml.includes("F(error)"), false);
   check("no banner when the error sensor is unavailable", markup(make({ entity: "lawn_mower.robot" }, off)).includes('class="error-banner'), false);
+
+  const dark = makeHass();
+  dark.states["sensor.robot_err"] = { state: "camera_error", attributes: {}, last_changed: "2026-01-15T19:00:00Z" };
+  contains("E14 says to go to the mower", markup(make({ entity: "lawn_mower.robot" }, dark)), '<div class="error-when">Clear it on the mower</div>');
+  const darkFr = makeHass({ language: "fr", locale: { language: "fr" } });
+  darkFr.states["sensor.robot_err"] = dark.states["sensor.robot_err"];
+  contains("in French too", markup(make({ entity: "lawn_mower.robot" }, darkFr)), "À acquitter sur la tondeuse");
+  check("only for E14", html.includes("Clear it on the mower"), false);
 }
 
 // ── blades ──────────────────────────────────────────────────────────────────

@@ -1,36 +1,21 @@
 # Changelog
 
-## 3.0.8 - 2026-09-27 (pre-release)
+## 3.0.10 - 2026-09-27 (pre-release)
 
-### Changed
-
-- **The task banner goes away once the task is finished or stopped.** The mower keeps a finished or stopped task in its list, so the banner stayed on it. The task's own status now tells them apart, as checked on real tasks: running (including a recharge in the middle of it), finished, or stopped from the app or replaced by a new start. The Task remaining sensor reads unknown when no task runs, and gains an `active` attribute.
-- **The remaining time says what it is: mowing time.** It stands still while the mower recharges, so the banner now reads "262.7 m² left · 3h23 of mowing" rather than suggesting a time of arrival.
-- **Start is greyed out while the mower recharges in the middle of a task.** It goes back to the task by itself; Start would replace that task with a new one on every zone, as seen on a real mower. A tooltip says so, and Start is back as soon as charging stops or the task is stopped.
-
-### Removed
-
-- **The raw `raw_a` field of the task zones**, which switched between two values from one message to the next.
-
-## 3.0.7 - 2026-09-27 (pre-release)
+A pre-release to try what is left of a task on the card before 3.1.0. It replaces the 3.0.6 to 3.0.8 pre-releases.
 
 ### Added
 
-- **What is left of the current task, above the RTK map.** One line per zone of the task, with the remaining share, area and time as in the Worx app's Remaining view, and a bar of what is already mowed. The figures come from the Task remaining sensor added in 3.0.6, and matched the app on a real task. The banner stays while the mower recharges between two sessions of a task, and goes away when there is no task or nothing is left.
+- **What is left of the current task, above the RTK map, as in the Worx app's Remaining view.** One line per zone of the task: the remaining share, the remaining area and the mowing time left, with a bar of what is already mowed. The figures come from the mower's own task list and matched the app on real tasks. The banner stays while the mower recharges in the middle of a task, and goes away once the task is finished or stopped, or when there is none.
+- **A Task remaining sensor** with the same figures: the remaining share of the task, weighted by zone area, and a `zones` attribute with each zone's name, remaining share, area and mowing time. It reads unknown when no task runs, and its `active` attribute tells a running task (recharges included) from a finished or stopped one, which the mower keeps in its list.
 
 ### Changed
 
-- **No more daily progress bar under the map.** The task banner says the same thing, from the mower itself rather than an estimate. The Estimated daily progress sensor stays in the integration.
-- **The day's mowed swaths stay visible until the evening on the RTK map.** They faded to 12 % in 6 hours, so a morning's mowing was hard to see at night; they now fade over 12 hours and never below 30 %.
-
-## 3.0.6 - 2026-09-27 (pre-release)
-
-A pre-release to check a new reading against the Worx app before the card uses it in 3.1.0.
-
-### Added
-
-- **A Task remaining sensor, the figures of the Worx app's Remaining view.** The mower lists each task with how much of every zone is already mowed. The sensor shows the share of the task still to mow, weighted by zone area, and its `zones` attribute gives for each zone of the task its name, the remaining percentage, the remaining area (that share of the zone's area on the map) and the remaining time. Also listed: when the task started, and whether it came from a one-time mowing or the schedule.
-- **To check:** the remaining time is read from a field that matched the app once. The raw fields `raw_rtn` and `raw_a`, whose meaning is still unknown, are shown as they come, for comparison. Compare these values with the app during a task; the card will only show what is confirmed.
+- **Start is greyed out while the mower recharges in the middle of a task.** It goes back to the task by itself, while Start would replace that task with a new one on every zone, as seen on a real mower. A tooltip says so, and Start is back as soon as charging stops or the task is stopped.
+- **The remaining time is mowing time.** It stands still while the mower recharges, so the banner reads "3h23 of mowing" rather than suggesting a time of arrival.
+- **Error 110 reads "Insufficient light (E14)"**, as the Worx app names it, instead of "Camera error". The card adds that it has to be cleared on the mower itself: nothing clears it remotely.
+- **No more daily progress bar under the map.** The task banner says the same from the mower itself rather than an estimate. The Estimated daily progress sensor stays in the integration.
+- **The day's mowed swaths stay visible until the evening on the RTK map.** They faded to 12 % in 6 hours; they now fade over 12 hours and never below 30 %.
 
 ## 3.0.5 - 2026-09-27
 

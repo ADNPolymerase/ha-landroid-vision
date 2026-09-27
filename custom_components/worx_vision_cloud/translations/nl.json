@@ -104,7 +104,7 @@
           "calibration_needed": "Kalibratie nodig",
           "insufficient_sensor_data": "Onvoldoende sensorgegevens",
           "training_start_disallowed": "Start van training niet toegestaan",
-          "camera_error": "Camerafout",
+          "camera_error": "Onvoldoende licht (E14)",
           "lawn_exploration_required": "Verkenning van het gazon nodig",
           "mapping_exploration_failed": "Kaartverkenning mislukt",
           "rfid_reader_error": "RFID-lezerfout",

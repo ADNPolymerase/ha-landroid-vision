@@ -104,7 +104,7 @@
           "calibration_needed": "Kalibrering nødvendig",
           "insufficient_sensor_data": "Utilstrækkelige sensordata",
           "training_start_disallowed": "Start af træning ikke tilladt",
-          "camera_error": "Kamerafejl",
+          "camera_error": "Utilstrækkeligt lys (E14)",
           "lawn_exploration_required": "Udforskning af plænen nødvendig",
           "mapping_exploration_failed": "Udforskning af kortet mislykkedes",
           "rfid_reader_error": "RFID-læserfejl",

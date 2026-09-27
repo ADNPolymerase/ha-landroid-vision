@@ -104,7 +104,7 @@
           "calibration_needed": "Требуется калибровка",
           "insufficient_sensor_data": "Недостаточно данных датчиков",
           "training_start_disallowed": "Запуск обучения запрещён",
-          "camera_error": "Ошибка камеры",
+          "camera_error": "Недостаточно света (E14)",
           "lawn_exploration_required": "Требуется исследование газона",
           "mapping_exploration_failed": "Исследование карты не удалось",
           "rfid_reader_error": "Ошибка RFID-считывателя",
