@@ -652,6 +652,75 @@ def distance_meters(
     return hypot(latitude_m, longitude_m)
 
 
+# While the mower sits on its station, RTK and radio readings wobble by a few
+# centimetres or dBm on every report. Each wobble changed an attribute, so Home
+# Assistant stored a new row every few minutes for nothing.
+POSITION_DEADBAND_M = 0.5
+STATION_DISTANCE_DEADBAND_M = 0.5
+RSSI_DEADBAND_DB = 3
+
+
+def _deadband_number(value: Any) -> float | None:
+    """Return a finite number that a deadband can compare, else None."""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    return float(value) if isfinite(value) else None
+
+
+def hold_small_attribute_changes(
+    published: dict[str, Any] | None,
+    current: dict[str, Any],
+    deadbands: dict[str, float],
+    *,
+    position_deadband_m: float | None = None,
+    refresh_keys: Iterable[str] = (),
+) -> dict[str, Any]:
+    """Keep the published value of attributes that only moved a little.
+
+    ``deadbands`` maps an attribute name suffix to the smallest change worth
+    publishing. With ``position_deadband_m``, latitude and longitude are held
+    together while the point stays within that many metres. A change in any
+    ``refresh_keys`` attribute publishes every value as it is, so a new state
+    never shows readings held from the previous one.
+    """
+    result = dict(current)
+    if not published:
+        return result
+    if any(published.get(key) != current.get(key) for key in refresh_keys):
+        return result
+
+    for key, value in current.items():
+        band = next(
+            (band for suffix, band in deadbands.items() if key.endswith(suffix)),
+            None,
+        )
+        if band is None:
+            continue
+        new = _deadband_number(value)
+        old = _deadband_number(published.get(key))
+        if new is not None and old is not None and abs(new - old) < band:
+            result[key] = published[key]
+
+    if position_deadband_m is not None:
+        new_point = (
+            _deadband_number(current.get("latitude")),
+            _deadband_number(current.get("longitude")),
+        )
+        old_point = (
+            _deadband_number(published.get("latitude")),
+            _deadband_number(published.get("longitude")),
+        )
+        if (
+            None not in new_point
+            and None not in old_point
+            and distance_meters(new_point, old_point) < position_deadband_m
+        ):
+            result["latitude"] = published["latitude"]
+            result["longitude"] = published["longitude"]
+
+    return result
+
+
 def rtk_distance_to_station_m(device: Any) -> float | None:
     """Return distance from current RTK position to the station marker."""
     position = rtk_position(device)

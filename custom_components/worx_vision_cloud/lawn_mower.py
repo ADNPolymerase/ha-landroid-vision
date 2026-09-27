@@ -23,8 +23,11 @@ from .helpers import (
     MOWING_STATUS_IDS,
     PAUSED_STATUS_IDS,
     RETURNING_STATUS_IDS,
+    POSITION_DEADBAND_M,
     STARTING_STATUS_IDS,
+    STATION_DISTANCE_DEADBAND_M,
     get_dict_value,
+    hold_small_attribute_changes,
     rtk_at_station,
     rtk_distance_to_station_m,
 )
@@ -92,6 +95,7 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
     def __init__(self, coordinator, entry, serial_number: str) -> None:
         """Initialize mower."""
         super().__init__(coordinator, entry, serial_number, "mower")
+        self._published_attrs: dict[str, object] | None = None
 
     @property
     def available(self) -> bool:
@@ -161,6 +165,14 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
                 attrs["latitude"] = latitude
                 attrs["longitude"] = longitude
 
+        attrs = hold_small_attribute_changes(
+            self._published_attrs,
+            attrs,
+            {"rtk_station_distance_m": STATION_DISTANCE_DEADBAND_M},
+            position_deadband_m=POSITION_DEADBAND_M,
+            refresh_keys=("status_id", "error_id", "rtk_at_station"),
+        )
+        self._published_attrs = attrs
         return attrs
 
     async def async_start_mowing(self) -> None:

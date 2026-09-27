@@ -41,7 +41,10 @@ from .const import (
 from .entity import WorxVisionEntity
 from .helpers import (
     MAX_STRING_STATE_LENGTH,
+    RSSI_DEADBAND_DB,
+    STATION_DISTANCE_DEADBAND_M,
     get_dict_value,
+    hold_small_attribute_changes,
     next_schedule_start,
     raw_entity_path_map,
     raw_entity_values,
@@ -73,6 +76,13 @@ class WorxSensorDescription(SensorEntityDescription):
 
     value_fn: Callable[[Any], Any]
     attrs_fn: Callable[[Any], dict[str, Any] | None] | None = None
+    # (attribute name suffix, smallest change worth publishing) pairs.
+    attr_deadbands: tuple[tuple[str, float], ...] = ()
+    # Attributes whose change publishes every attribute as it is.
+    attr_refresh_keys: tuple[str, ...] = ()
+
+
+_STATION_DISTANCE_DEADBAND = (("rtk_station_distance_m", STATION_DISTANCE_DEADBAND_M),)
 
 
 # Map the raw descriptions reported by Worx to canonical, language-neutral state
@@ -848,6 +858,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         options=STATUS_STATE_OPTIONS,
         value_fn=_status_state,
         attrs_fn=_status_attributes,
+        attr_deadbands=_STATION_DISTANCE_DEADBAND,
+        attr_refresh_keys=("id", "error_id", "rtk_at_station"),
     ),
     WorxSensorDescription(
         key="error",
@@ -881,6 +893,13 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         options=NEARLINK_CONNECTION_OPTIONS,
         value_fn=nearlink_connection_state,
         attrs_fn=nearlink_attributes,
+        attr_deadbands=(("_rssi", RSSI_DEADBAND_DB),),
+        attr_refresh_keys=(
+            "module_status",
+            "active_connection",
+            "connection_count",
+            "robot_wifi_status",
+        ),
     ),
     WorxSensorDescription(
         key="zone_current",
@@ -897,6 +916,8 @@ STANDARD_SENSORS: tuple[WorxSensorDescription, ...] = (
         options=READINESS_STATE_OPTIONS,
         value_fn=_mowing_readiness_state,
         attrs_fn=_mowing_readiness_attributes,
+        attr_deadbands=_STATION_DISTANCE_DEADBAND,
+        attr_refresh_keys=("status_id", "error_id", "readiness_code", "rtk_at_station"),
     ),
     WorxSensorDescription(
         key="cloud_connection",
@@ -1244,6 +1265,7 @@ class WorxVisionSensor(WorxVisionEntity, SensorEntity):
         """Initialize sensor."""
         self.entity_description = description
         super().__init__(coordinator, entry, serial_number, description.key)
+        self._published_attrs: dict[str, Any] | None = None
 
     @property
     def native_value(self) -> Any:
@@ -1253,10 +1275,20 @@ class WorxVisionSensor(WorxVisionEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return extra attributes."""
-        if self.entity_description.attrs_fn is None:
+        description = self.entity_description
+        if description.attrs_fn is None:
             return None
-        attrs = self.entity_description.attrs_fn(self.device)
-        return {key: value for key, value in (attrs or {}).items() if value is not None}
+        attrs = description.attrs_fn(self.device)
+        attrs = {key: value for key, value in (attrs or {}).items() if value is not None}
+        if description.attr_deadbands:
+            attrs = hold_small_attribute_changes(
+                self._published_attrs,
+                attrs,
+                dict(description.attr_deadbands),
+                refresh_keys=description.attr_refresh_keys,
+            )
+            self._published_attrs = attrs
+        return attrs
 
 
 class WorxNextScheduleSensor(WorxVisionEntity, SensorEntity):

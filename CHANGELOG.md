@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.5 - 2026-09-27
+
+### Fixed
+
+- **Far fewer rows in the Home Assistant database while the mower rests on its station.** Docked, the RTK position, the distance to the station and the Wi-Fi signal wobble by a few centimetres or dBm on every report, and each wobble stored a new row: about 290 a day for each of the mower, State, Mowing readiness and NearLink connection entities. These attributes now only change when the value really moves: 0.5 m for the position and the distance to the station, 3 dBm for the NearLink signal readings. A new status or error, or leaving the station, still publishes every value at once. While mowing, the position is updated as before.
+- **A readable warning when the refresh after a command times out.** The log line ended on an empty message; it now names the error.
+
 ## 3.0.4 - 2026-09-27
 
 Fixes brought over from the upstream integration, [SmartServicePL/worx_landroid_vision_cloud](https://github.com/SmartServicePL/worx_landroid_vision_cloud) 1.4.1.

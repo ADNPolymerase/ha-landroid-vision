@@ -927,7 +927,8 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             )
         except (NoConnectionError, TimeoutException, TimeoutError) as err:
             _LOGGER.warning(
-                "Worx command was sent, but state refresh did not finish: %s", err
+                "Worx command was sent, but state refresh did not finish: %s",
+                str(err) or type(err).__name__,
             )
         except Exception:  # noqa: BLE001 - command already succeeded
             _LOGGER.debug(
