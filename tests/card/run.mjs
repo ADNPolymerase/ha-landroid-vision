@@ -74,6 +74,7 @@ function makeHass(overrides = {}) {
       "button.robot_reset_blades": reg("button.robot_reset_blades", "dev1", "reset_blade_counter"),
       "sensor.robot_pluie": reg("sensor.robot_pluie", "dev1", "rain_remaining"),
       "sensor.robot_avance": reg("sensor.robot_avance", "dev1", "estimated_daily_progress"),
+      "sensor.robot_tache": reg("sensor.robot_tache", "dev1", "task_remaining"),
       "number.robot_delai": reg("number.robot_delai", "dev1", "rain_delay_minutes"),
       // Other mower's zone: must not leak into dev1's list.
       "sensor.old_p": reg("sensor.old_p", "dev4", "zone_mowing_pattern"),
@@ -779,37 +780,49 @@ function rainy(extra = {}) {
   contains("French wording", fr, "Reprise possible dans 2 h 35 · délai pluie de 3 h 00");
 }
 
-// ── progress bar under the map ──────────────────────────────────────────────
+// ── task banner above the map ───────────────────────────────────────────────
 
 {
-  const html = markup(make({ entity: "lawn_mower.robot" }));
-  contains("progress bar right under the map", html, '</div><div class="map-progress link" title="F(62.4)" data-action="more-info" data-entity="sensor.robot_avance"');
-  contains("bar filled to the estimate", html, '<div class="map-progress-fill" style="width:62.4%"></div>');
-  check("no text next to the bar", /map-progress[^>]*>[^<]/u.test(html), false);
+  const task = (zones) => {
+    const h = makeHass();
+    h.states["sensor.robot_tache"] = st("86", { zones });
+    return h;
+  };
+  const one = [{ id: 1, name: "Front <b>lawn</b>", remaining_pct: 86, remaining_m2: 262.7, remaining_time_s: 12190 }];
 
-  const over = makeHass();
-  over.states["sensor.robot_avance"] = st("137", { unit_of_measurement: "%" });
-  contains("capped at a full bar", markup(make({ entity: "lawn_mower.robot" }, over)), 'style="width:100%"');
+  const html = markup(make({ entity: "lawn_mower.robot" }, task(one)));
+  contains("banner with the three figures", html, "86% · 262.7 m² · 3h23 left");
+  contains("zone name escaped", html, "Front &lt;b&gt;lawn&lt;/b&gt;");
+  contains("bar filled with what is done", html, '<div class="task-fill" style="width:14%"></div>');
+  check("banner right above the map", html.indexOf('class="task"') < html.indexOf('class="map-wrap"'), true);
+  check("banner is not clickable", /class="task"[^>]*data-action/u.test(html), false);
+  check("no daily bar under the map any more", html.includes("map-progress"), false);
 
-  const down = makeHass();
-  down.states["sensor.robot_avance"] = st("unavailable");
-  check("no bar without an estimate", markup(make({ entity: "lawn_mower.robot" }, down)).includes('class="map-progress'), false);
+  const fr = task(one);
+  fr.language = "fr";
+  fr.locale = { language: "fr" };
+  contains("French figures", markup(make({ entity: "lawn_mower.robot" }, fr)), "86\u00a0% · 262,7 m² · 3h23 restant");
 
-  check("no bar with the map hidden", markup(make({ entity: "lawn_mower.robot", show_map: false })).includes('class="map-progress'), false);
+  const two = markup(make({ entity: "lawn_mower.robot" }, task([
+    { id: 1, name: "A", remaining_pct: 40, remaining_m2: 122.2, remaining_time_s: 5400 },
+    { id: 2, name: "B", remaining_pct: 100, remaining_m2: null, remaining_time_s: 2460 },
+  ])));
+  check("one line per zone", (two.match(/class="task-row"/gu) || []).length, 2);
+  contains("short time in minutes", two, "100% · 41 min left");
 
-  const noMap = makeHass();
-  noMap.states["camera.robot_carte"] = st("unavailable");
-  const noMapHtml = markup(make({ entity: "lawn_mower.robot" }, noMap));
-  contains("bar still under the map placeholder", noMapHtml, 'class="map-empty"');
-  contains("with the estimate", noMapHtml, 'class="map-progress-fill"');
+  const noTime = markup(make({ entity: "lawn_mower.robot" }, task([{ id: 3, remaining_pct: 50 }])));
+  contains("id when the zone has no name, figures that exist only", noTime, "#3</span><span class=\"task-values\">50% left");
 
-  const live = make({ entity: "lawn_mower.robot" });
-  const later = makeHass();
-  later.states["sensor.robot_avance"] = st("80", { unit_of_measurement: "%" });
-  live.hass = later;
-  contains("bar follows the estimate", markup(live), 'style="width:80%"');
+  check("hidden without the sensor state", markup(make({ entity: "lawn_mower.robot" })).includes('class="task"'), false);
+  const unknown = makeHass();
+  unknown.states["sensor.robot_tache"] = st("unknown", {});
+  check("hidden when there is no task", markup(make({ entity: "lawn_mower.robot" }, unknown)).includes('class="task"'), false);
+  check("hidden when nothing is left", markup(make({ entity: "lawn_mower.robot" }, task([{ id: 1, name: "A", remaining_pct: 0 }]))).includes('class="task"'), false);
+  check("old mower without the sensor has no banner", markup(make({ entity: "lawn_mower.old" })).includes('class="task"'), false);
 
-  check("old mower without the sensor has no bar", markup(make({ entity: "lawn_mower.old" })).includes('class="map-progress'), false);
+  const live = make({ entity: "lawn_mower.robot" }, task(one));
+  live.hass = task([{ ...one[0], remaining_pct: 50, remaining_m2: 152.7, remaining_time_s: 7200 }]);
+  contains("banner follows the task", markup(live), "50% · 152.7 m² · 2h00 left");
 }
 
 // ── one-time settings remembered ────────────────────────────────────────────

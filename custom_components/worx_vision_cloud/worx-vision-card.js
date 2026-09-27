@@ -27,7 +27,7 @@ const I18N = {
     start: "Start", confirm: "Confirm?", pause: "Pause", dock: "Dock", zones: "Zones", zone: "Zone",
     one_time: "One-time mowing", order: "Order", order_fixed: "Special",
     order_auto: "Auto", edge: "Edge cut", go: "Start", pick: "Tick at least one zone",
-    sent: "Sent to the mower", failed: "Failed", map_unavailable: "RTK map unavailable",
+    sent: "Sent to the mower", failed: "Failed", map_unavailable: "RTK map unavailable", task_left: "left",
     no_entity: "Entity not found", not_worx: "Pick a Worx Landroid Vision PLUS mower",
     ed_entity: "Mower", ed_title: "Title (optional)",
     ed_show_map: "RTK map", ed_show_zones: "One-time mowing", ed_show_controls: "Controls",
@@ -42,7 +42,7 @@ const I18N = {
     start: "Démarrer", confirm: "Confirmer\u00a0?", pause: "Pause", dock: "Maison", zones: "Zones", zone: "Zone",
     one_time: "Tonte unique", order: "Ordre", order_fixed: "Spécial",
     order_auto: "Auto", edge: "Bordure", go: "Démarrer", pick: "Cochez au moins une zone",
-    sent: "Envoyé à la tondeuse", failed: "Échec", map_unavailable: "Carte RTK indisponible",
+    sent: "Envoyé à la tondeuse", failed: "Échec", map_unavailable: "Carte RTK indisponible", task_left: "restant",
     no_entity: "Entité introuvable", not_worx: "Choisissez une tondeuse Worx Landroid Vision PLUS",
     ed_entity: "Tondeuse", ed_title: "Titre (facultatif)",
     ed_show_map: "Carte RTK", ed_show_zones: "Tonte unique", ed_show_controls: "Commandes",
@@ -57,7 +57,7 @@ const I18N = {
     start: "Starten", confirm: "Bestätigen?", pause: "Pause", dock: "Zur Station", zones: "Zonen", zone: "Zone",
     one_time: "Einmaliges Mähen", order: "Reihenfolge", order_fixed: "Speziell",
     order_auto: "Auto", edge: "Kantenschnitt", go: "Starten", pick: "Mindestens eine Zone auswählen",
-    sent: "An den Mäher gesendet", failed: "Fehlgeschlagen", map_unavailable: "RTK-Karte nicht verfügbar",
+    sent: "An den Mäher gesendet", failed: "Fehlgeschlagen", map_unavailable: "RTK-Karte nicht verfügbar", task_left: "verbleibend",
     no_entity: "Entität nicht gefunden", not_worx: "Einen Worx Landroid Vision PLUS Mäher wählen",
     ed_entity: "Mäher", ed_title: "Titel (optional)",
     ed_show_map: "RTK-Karte", ed_show_zones: "Einmaliges Mähen", ed_show_controls: "Steuerung",
@@ -72,7 +72,7 @@ const I18N = {
     start: "Iniciar", confirm: "¿Confirmar?", pause: "Pausa", dock: "A la base", zones: "Zonas", zone: "Zona",
     one_time: "Corte único", order: "Orden", order_fixed: "Especial",
     order_auto: "Auto", edge: "Corte de bordes", go: "Iniciar", pick: "Marca al menos una zona",
-    sent: "Enviado al cortacésped", failed: "Error", map_unavailable: "Mapa RTK no disponible",
+    sent: "Enviado al cortacésped", failed: "Error", map_unavailable: "Mapa RTK no disponible", task_left: "restante",
     no_entity: "Entidad no encontrada", not_worx: "Elige un cortacésped Worx Landroid Vision PLUS",
     ed_entity: "Cortacésped", ed_title: "Título (opcional)",
     ed_show_map: "Mapa RTK", ed_show_zones: "Corte único", ed_show_controls: "Controles",
@@ -87,7 +87,7 @@ const I18N = {
     start: "Avvia", confirm: "Confermare?", pause: "Pausa", dock: "Alla base", zones: "Zone", zone: "Zona",
     one_time: "Taglio singolo", order: "Ordine", order_fixed: "Speciale",
     order_auto: "Auto", edge: "Taglio bordi", go: "Avvia", pick: "Seleziona almeno una zona",
-    sent: "Inviato al robot", failed: "Errore", map_unavailable: "Mappa RTK non disponibile",
+    sent: "Inviato al robot", failed: "Errore", map_unavailable: "Mappa RTK non disponibile", task_left: "rimanente",
     no_entity: "Entità non trovata", not_worx: "Scegli un robot Worx Landroid Vision PLUS",
     ed_entity: "Robot tagliaerba", ed_title: "Titolo (facoltativo)",
     ed_show_map: "Mappa RTK", ed_show_zones: "Taglio singolo", ed_show_controls: "Comandi",
@@ -102,7 +102,7 @@ const I18N = {
     start: "Starten", confirm: "Bevestigen?", pause: "Pauze", dock: "Naar basis", zones: "Zones", zone: "Zone",
     one_time: "Eenmalig maaien", order: "Volgorde", order_fixed: "Speciaal",
     order_auto: "Auto", edge: "Randen maaien", go: "Starten", pick: "Vink minstens één zone aan",
-    sent: "Naar de maaier gestuurd", failed: "Mislukt", map_unavailable: "RTK-kaart niet beschikbaar",
+    sent: "Naar de maaier gestuurd", failed: "Mislukt", map_unavailable: "RTK-kaart niet beschikbaar", task_left: "resterend",
     no_entity: "Entiteit niet gevonden", not_worx: "Kies een Worx Landroid Vision PLUS maaier",
     ed_entity: "Maaier", ed_title: "Titel (optioneel)",
     ed_show_map: "RTK-kaart", ed_show_zones: "Eenmalig maaien", ed_show_controls: "Bediening",
@@ -117,7 +117,7 @@ const I18N = {
     start: "Start", confirm: "Potwierdzić?", pause: "Pauza", dock: "Do bazy", zones: "Strefy", zone: "Strefa",
     one_time: "Koszenie jednorazowe", order: "Kolejność", order_fixed: "Specjalna",
     order_auto: "Auto", edge: "Koszenie krawędzi", go: "Start", pick: "Zaznacz co najmniej jedną strefę",
-    sent: "Wysłano do kosiarki", failed: "Błąd", map_unavailable: "Mapa RTK niedostępna",
+    sent: "Wysłano do kosiarki", failed: "Błąd", map_unavailable: "Mapa RTK niedostępna", task_left: "pozostało",
     no_entity: "Nie znaleziono encji", not_worx: "Wybierz kosiarkę Worx Landroid Vision PLUS",
     ed_entity: "Kosiarka", ed_title: "Tytuł (opcjonalnie)",
     ed_show_map: "Mapa RTK", ed_show_zones: "Koszenie jednorazowe", ed_show_controls: "Sterowanie",
@@ -132,7 +132,7 @@ const I18N = {
     start: "Старт", confirm: "Подтвердить?", pause: "Пауза", dock: "На базу", zones: "Зоны", zone: "Зона",
     one_time: "Разовое кошение", order: "Порядок", order_fixed: "Особый",
     order_auto: "Авто", edge: "Стрижка кромки", go: "Старт", pick: "Отметьте хотя бы одну зону",
-    sent: "Отправлено косилке", failed: "Ошибка", map_unavailable: "Карта RTK недоступна",
+    sent: "Отправлено косилке", failed: "Ошибка", map_unavailable: "Карта RTK недоступна", task_left: "осталось",
     no_entity: "Объект не найден", not_worx: "Выберите косилку Worx Landroid Vision PLUS",
     ed_entity: "Косилка", ed_title: "Заголовок (необязательно)",
     ed_show_map: "Карта RTK", ed_show_zones: "Разовое кошение", ed_show_controls: "Управление",
@@ -147,7 +147,7 @@ const I18N = {
     start: "Starta", confirm: "Bekräfta?", pause: "Paus", dock: "Till basen", zones: "Zoner", zone: "Zon",
     one_time: "Engångsklippning", order: "Ordning", order_fixed: "Special",
     order_auto: "Auto", edge: "Kantklippning", go: "Starta", pick: "Markera minst en zon",
-    sent: "Skickat till klipparen", failed: "Misslyckades", map_unavailable: "RTK-karta ej tillgänglig",
+    sent: "Skickat till klipparen", failed: "Misslyckades", map_unavailable: "RTK-karta ej tillgänglig", task_left: "kvar",
     no_entity: "Entiteten hittades inte", not_worx: "Välj en Worx Landroid Vision PLUS-klippare",
     ed_entity: "Klippare", ed_title: "Titel (valfritt)",
     ed_show_map: "RTK-karta", ed_show_zones: "Engångsklippning", ed_show_controls: "Reglage",
@@ -162,7 +162,7 @@ const I18N = {
     start: "Start", confirm: "Bekrefte?", pause: "Pause", dock: "Til basen", zones: "Soner", zone: "Sone",
     one_time: "Engangsklipping", order: "Rekkefølge", order_fixed: "Spesial",
     order_auto: "Auto", edge: "Kantklipping", go: "Start", pick: "Kryss av minst én sone",
-    sent: "Sendt til klipperen", failed: "Mislyktes", map_unavailable: "RTK-kart utilgjengelig",
+    sent: "Sendt til klipperen", failed: "Mislyktes", map_unavailable: "RTK-kart utilgjengelig", task_left: "gjenstår",
     no_entity: "Fant ikke entiteten", not_worx: "Velg en Worx Landroid Vision PLUS-klipper",
     ed_entity: "Klipper", ed_title: "Tittel (valgfritt)",
     ed_show_map: "RTK-kart", ed_show_zones: "Engangsklipping", ed_show_controls: "Kontroller",
@@ -177,7 +177,7 @@ const I18N = {
     start: "Start", confirm: "Bekræft?", pause: "Pause", dock: "Til basen", zones: "Zoner", zone: "Zone",
     one_time: "Engangsklipning", order: "Rækkefølge", order_fixed: "Speciel",
     order_auto: "Auto", edge: "Kantklipning", go: "Start", pick: "Markér mindst én zone",
-    sent: "Sendt til robotten", failed: "Mislykkedes", map_unavailable: "RTK-kort utilgængeligt",
+    sent: "Sendt til robotten", failed: "Mislykkedes", map_unavailable: "RTK-kort utilgængeligt", task_left: "tilbage",
     no_entity: "Entitet ikke fundet", not_worx: "Vælg en Worx Landroid Vision PLUS-robot",
     ed_entity: "Robotplæneklipper", ed_title: "Titel (valgfri)",
     ed_show_map: "RTK-kort", ed_show_zones: "Engangsklipning", ed_show_controls: "Betjening",
@@ -310,7 +310,7 @@ function resolveEntities(hass, entityId) {
     calendar: find("calendar", "schedule"),
     party: find("switch", "party_mode"),
     rainRemaining: find("sensor", "rain_remaining"),
-    progress: find("sensor", "estimated_daily_progress"),
+    task: find("sensor", "task_remaining"),
     rainDelay: find("number", "rain_delay_minutes"),
     maintenance: find("sensor", "maintenance_status"),
     bladeCurrent: find("sensor", "blade_runtime_current"),
@@ -492,7 +492,7 @@ class WorxVisionCard extends HTMLElement {
       ? [ents.mower, ents.status, ents.battery, ents.zoneCurrent, ents.camera, ents.zoneSelect,
         ents.rssi, ents.error, ents.schedule, ents.nextSchedule,
         ents.maintenance, ents.bladeReset, ents.calendar, ents.party, ents.bladeCurrent,
-        ents.rainRemaining, ents.rainDelay, ents.progress,
+        ents.rainRemaining, ents.rainDelay, ents.task,
         ...ents.zones.flatMap((z) => [z.pattern, z.angle])]
       : [this._config.entity];
     const snap = ids.filter(Boolean).map((id) => {
@@ -501,7 +501,7 @@ class WorxVisionCard extends HTMLElement {
         s.attributes?.supported_features, s.attributes?.rain_delay, s.attributes?.zone_name, s.attributes?.by_day,
         s.attributes?.blade_runtime_since_reset, s.attributes?.blade_service_threshold_minutes,
         s.attributes?.blade_runtime_reset_at, s.attributes?.start_time, s.attributes?.end_time,
-        s.last_changed] : [id];
+        s.attributes?.zones, s.last_changed] : [id];
     });
     return stableStringify([snap, this._selected, this._order, this._edge, this._busy,
       this._notice, this._scheduleOpen, this._confirmReset, this._zonesOpen, this._armed, language(this._hass), this._config]);
@@ -541,6 +541,7 @@ class WorxVisionCard extends HTMLElement {
       ents.mower && this._show("show_info") ? this._rainBanner(ents) : "",
       ents.mower && this._show("show_info") ? this._partyBanner(ents) : "",
       ents.mower && this._show("show_controls") ? this._controls(ents) : "",
+      ents.mower ? this._taskBanner(ents) : "",
       this._show("show_map") ? this._map(ents) : "",
       this._show("show_zones") ? this._zones(ents) : "",
       ents.mower && this._show("show_schedule") ? this._schedule(ents) : "",
@@ -803,22 +804,45 @@ class WorxVisionCard extends HTMLElement {
   _map(ents) {
     const url = this._mapUrl();
     if (!ents.camera) return "";
-    if (!url) return `<div class="map-empty">${escapeHtml(t(this._hass, "map_unavailable"))}</div>` + this._progressBar(ents);
+    if (!url) return `<div class="map-empty">${escapeHtml(t(this._hass, "map_unavailable"))}</div>`;
     const fit = ["contain", "cover", "fill", "scale-down"].includes(this._config.fit) ? this._config.fit : "contain";
     const ratio = /^[\d.\s/]+$/u.test(String(this._config.aspect_ratio)) ? this._config.aspect_ratio : DEFAULTS.aspect_ratio;
-    return `<div class="map-wrap" style="aspect-ratio:${ratio}"><img class="map link" alt="RTK" style="object-fit:${fit}" src="${escapeHtml(url)}"${moreInfo(ents.camera)}></div>`
-      + this._progressBar(ents);
+    return `<div class="map-wrap" style="aspect-ratio:${ratio}"><img class="map link" alt="RTK" style="object-fit:${fit}" src="${escapeHtml(url)}"${moreInfo(ents.camera)}></div>`;
   }
 
-  /** A thin bar under the map: the day's estimated progress, nothing else. */
-  _progressBar(ents) {
+  /**
+   * What is left of the current task, as in the Worx app's Remaining view:
+   * one line per zone with the remaining share, area and time, and a bar of
+   * what is already mowed. Hidden when there is no task or nothing is left.
+   */
+  _taskBanner(ents) {
     const hass = this._hass;
-    const progressObj = hass.states[ents.progress];
-    if (!usable(progressObj)) return "";
-    const pct = Math.max(0, Math.min(100, Number(progressObj.state)));
-    if (!Number.isFinite(pct)) return "";
-    return `<div class="map-progress link" title="${escapeHtml(formatState(hass, progressObj))}"${moreInfo(ents.progress)}>`
-      + `<div class="map-progress-fill" style="width:${Math.round(pct * 10) / 10}%"></div></div>`;
+    const taskObj = hass.states[ents.task];
+    if (!usable(taskObj)) return "";
+    const zones = (Array.isArray(taskObj.attributes?.zones) ? taskObj.attributes.zones : [])
+      .filter((z) => Number.isFinite(Number(z?.remaining_pct)) && Number(z.remaining_pct) > 0);
+    if (!zones.length) return "";
+    const lang = language(hass);
+    const pct = new Intl.NumberFormat(lang, { style: "percent", maximumFractionDigits: 0 });
+    const area = new Intl.NumberFormat(lang, { maximumFractionDigits: 1 });
+    const rows = zones.map((z) => {
+      const left = Number(z.remaining_pct);
+      const parts = [pct.format(left / 100)];
+      if (Number.isFinite(Number(z.remaining_m2)) && z.remaining_m2 !== null) {
+        parts.push(`${area.format(Number(z.remaining_m2))} m²`);
+      }
+      const seconds = Number(z.remaining_time_s);
+      if (Number.isFinite(seconds) && z.remaining_time_s !== null && seconds > 0) {
+        const minutes = Math.round(seconds / 60);
+        const h = Math.floor(minutes / 60);
+        parts.push(h ? `${h}h${String(minutes % 60).padStart(2, "0")}` : `${minutes} min`);
+      }
+      const name = z.name || `#${z.id}`;
+      return `<div class="task-row"><span class="task-name">${escapeHtml(name)}</span>`
+        + `<span class="task-values">${escapeHtml(parts.join(" · "))} ${escapeHtml(t(hass, "task_left"))}</span></div>`
+        + `<div class="task-bar"><div class="task-fill" style="width:${Math.max(0, Math.min(100, 100 - left))}%"></div></div>`;
+    }).join("");
+    return `<div class="task">${rows}</div>`;
   }
 
   _zones(ents) {
@@ -1102,8 +1126,14 @@ const STYLES = `
   .zones-titles .section { margin: 0; }
   .zones-summary { font-size: 0.85em; color: var(--secondary-text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .zones-head + .zone-chips { margin-top: 8px; }
-  .map-progress { height: 4px; background: var(--secondary-background-color); }
-  .map-progress-fill { height: 100%; background: var(--success-color, #43a047); }
+  .task { padding: 8px 16px 10px; }
+  .task-row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 0.95em; }
+  .task-row + .task-bar { margin-top: 4px; }
+  .task-bar + .task-row { margin-top: 8px; }
+  .task-name { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .task-values { color: var(--secondary-text-color); white-space: nowrap; }
+  .task-bar { height: 4px; border-radius: 2px; background: var(--secondary-background-color); overflow: hidden; }
+  .task-fill { height: 100%; background: var(--primary-color); }
   .section { font-weight: 500; margin: 4px 0 6px; color: var(--primary-text-color); }
   .zone-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .zone-chip { flex: 1 1 calc(50% - 6px); min-width: 0; display: flex; align-items: center; gap: 8px;

@@ -69,11 +69,12 @@ PLACEHOLDER_NO_POINTS = {
 MOWED_SWATH_MIN_WIDTH_PX = 3.0
 MOWED_SWATH_MAX_WIDTH_PX = 32.0
 MOWED_MAX_OPACITY = 0.58
-MOWED_MIN_OPACITY = 0.12
+MOWED_MIN_OPACITY = 0.30
 # Purely a visual fade duration for freshly-mowed swaths (older swaths look
 # lighter), unrelated to how long trail data is kept (that's a full local
-# day, reset at midnight - see coordinator.py/_remember_rtk_position).
-MOWED_FADE_DURATION = timedelta(hours=6)
+# day, reset at midnight - see coordinator.py/_remember_rtk_position). Spread
+# over 12 h with a 0.30 floor, a morning's mowing still shows in the evening.
+MOWED_FADE_DURATION = timedelta(hours=12)
 CUTTING_WIDTH_BY_MODEL_M = {
     "WR202E": 0.18,
     "WR206E": 0.18,

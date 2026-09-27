@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.0.7 - 2026-09-27 (pre-release)
+
+### Added
+
+- **What is left of the current task, above the RTK map.** One line per zone of the task, with the remaining share, area and time as in the Worx app's Remaining view, and a bar of what is already mowed. The figures come from the Task remaining sensor added in 3.0.6, and matched the app on a real task. The banner stays while the mower recharges between two sessions of a task, and goes away when there is no task or nothing is left.
+
+### Changed
+
+- **No more daily progress bar under the map.** The task banner says the same thing, from the mower itself rather than an estimate. The Estimated daily progress sensor stays in the integration.
+- **The day's mowed swaths stay visible until the evening on the RTK map.** They faded to 12 % in 6 hours, so a morning's mowing was hard to see at night; they now fade over 12 hours and never below 30 %.
+
 ## 3.0.6 - 2026-09-27 (pre-release)
 
 A pre-release to check a new reading against the Worx app before the card uses it in 3.1.0.
