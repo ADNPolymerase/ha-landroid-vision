@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.12 - 2026-09-28 (pre-release)
+
+A pre-release on top of 3.0.11, to check the border cut of scheduled slots before 3.1.0.
+
+### Fixed
+
+- **The border cut of each scheduled slot really stays now.** 3.0.11 blamed the Worx cloud's copy; a real day showed the border cut still vanishing, each time a few seconds after the integration's status request, sent every 5 minutes. The mower's answer to that request, and to any command, reports every slot without the border cut, while the messages it sends on its own (an edit in the Worx app, a change of state) keep it, hours later. The border cut is now only taken from those, and no longer from an answer to a request, or from the cloud's copy after a refresh.
+
+### Changed
+
+- **A dashed frame on the card instead of a word.** A slot that starts with the border cut has its times framed with a dashed line, with a tooltip and a legend under the schedule, so each slot stays on one line.
+
 ## 3.0.11 - 2026-09-28 (pre-release)
 
 A pre-release on top of 3.0.10, to check the border cut of scheduled slots before 3.1.0.

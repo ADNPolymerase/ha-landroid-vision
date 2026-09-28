@@ -1,12 +1,14 @@
 """Tests for the border cut of weekly slots, kept from the mower's own pushes.
 
-The mower publishes each slot's border cut (`cfg.cut.b`); the copy the Worx
-cloud returns on an API refresh has it off on every slot. Seen live: an edit
-in the Worx app arrived in a push, then vanished 4 seconds later.
+The mower publishes each slot's border cut (`cfg.cut.b`) in the messages it
+sends on its own. Its answer to a status request or a command, sent every 5
+minutes, has it off on every slot, and so has the Worx cloud's copy: the
+schedule lost the border cut a few minutes after each push.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -52,13 +54,17 @@ class FakeStore:
 def _coordinator():
     coordinator = object.__new__(COORDINATOR.WorxVisionCoordinator)
     coordinator._slot_boundaries = {}
-    coordinator._cfg_seen = {}
+    coordinator._replies_expected = {}
     coordinator._slot_boundary_store = FakeStore()
     return coordinator
 
 
-def _device(cfg: dict, parsed_boundary: bool = False) -> SimpleNamespace:
-    return SimpleNamespace(raw_cfg=cfg, schedules={"slots": _parsed(parsed_boundary)})
+def _device(cfg: dict | None, parsed_boundary: bool = False, *, with_message: bool = True) -> SimpleNamespace:
+    """A device as pyworxcloud leaves it after a message: raw_data is that message."""
+    device = SimpleNamespace(raw_cfg=cfg, schedules={"slots": _parsed(parsed_boundary)})
+    if with_message:
+        device.raw_data = {"dat": {"act": 1}} if cfg is None else {"cfg": cfg, "dat": {"act": 1}}
+    return device
 
 
 class RawBoundariesTest(unittest.TestCase):
@@ -90,42 +96,78 @@ class ScheduleSlotsTest(unittest.TestCase):
 
 
 class CoordinatorTest(unittest.TestCase):
-    def test_a_push_teaches_the_boundaries_and_the_cloud_copy_does_not_erase_them(self) -> None:
+    def test_a_push_teaches_the_boundaries_and_a_refresh_keeps_them(self) -> None:
         coordinator = _coordinator()
-        cloud = _device(_cfg(0, 0, 0))
-        coordinator._cfg_seen[SERIAL] = cloud.raw_cfg  # first refresh
-        coordinator._attach_slot_boundaries(SERIAL, cloud)
-
         pushed = _device(_cfg(0, 1, 1))
         coordinator._note_pushed_schedule(SERIAL, pushed)
         self.assertEqual(coordinator._slot_boundaries[SERIAL], {"1:485": False, "1:840": True, "3:485": True})
         self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(pushed)], [False, True, True])
 
-        # API refresh 4 s later: the cloud's copy, every flag off.
-        refreshed = _device(_cfg(0, 0, 0))
-        coordinator._cfg_seen[SERIAL] = refreshed.raw_cfg
+        # API refresh: pyworxcloud builds a new device from the cloud's copy.
+        refreshed = _device(_cfg(0, 0, 0), with_message=False)
         coordinator._attach_slot_boundaries(SERIAL, refreshed)
         self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(refreshed)], [False, True, True])
 
-    def test_a_push_without_cfg_teaches_nothing(self) -> None:
+    def test_the_answer_to_a_status_request_teaches_nothing(self) -> None:
         coordinator = _coordinator()
-        device = _device(_cfg(0, 0, 0))
-        coordinator._cfg_seen[SERIAL] = device.raw_cfg
-        coordinator._note_pushed_schedule(SERIAL, device)  # same cfg object
+        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
+
+        coordinator._expect_reply(SERIAL)
+        answer = _device(_cfg(0, 0, 0))
+        coordinator._note_pushed_schedule(SERIAL, answer)
+        self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(answer)], [False, True, True])
+        self.assertEqual(coordinator._slot_boundary_store.saves, 1)
+
+        # The next message the mower sends on its own is learnt again.
+        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(1, 1, 1)))
+        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:485"], True)
+
+    def test_each_request_is_answered_once(self) -> None:
+        coordinator = _coordinator()
+        coordinator._expect_reply(SERIAL)
+        coordinator._expect_reply(SERIAL)
+        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 0, 0)))
+        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 0, 0)))
+        self.assertNotIn(SERIAL, coordinator._slot_boundaries)
+        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
+        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:840"], True)
+
+    def test_an_answer_that_never_came_is_no_longer_awaited(self) -> None:
+        coordinator = _coordinator()
+        coordinator._expect_reply(SERIAL)
+        count, sent = coordinator._replies_expected[SERIAL]
+        coordinator._replies_expected[SERIAL] = (count, sent - COORDINATOR.MOWER_REPLY_WINDOW - 1)
+        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
+        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:840"], True)
+
+    def test_a_message_without_cfg_teaches_nothing(self) -> None:
+        coordinator = _coordinator()
+        # The device still holds the cloud's cfg, the message had only dat.
+        device = _device(None)
+        device.raw_cfg = _cfg(0, 0, 0)
+        coordinator._note_pushed_schedule(SERIAL, device)
         self.assertNotIn(SERIAL, coordinator._slot_boundaries)
 
-    def test_nothing_is_learnt_before_the_first_refresh(self) -> None:
+    def test_a_message_without_cfg_does_not_use_up_an_answer(self) -> None:
         coordinator = _coordinator()
+        coordinator._expect_reply(SERIAL)
+        coordinator._note_pushed_schedule(SERIAL, _device(None))
         coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 0, 0)))
         self.assertNotIn(SERIAL, coordinator._slot_boundaries)
 
     def test_an_edit_in_the_app_replaces_the_boundaries(self) -> None:
         coordinator = _coordinator()
-        coordinator._cfg_seen[SERIAL] = None
         coordinator._note_pushed_schedule(SERIAL, _device(_cfg(1, 1, 1)))
         coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
         self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:485"], False)
         self.assertEqual(coordinator._slot_boundary_store.saves, 2)
+
+    def test_a_json_message_is_read_too(self) -> None:
+        coordinator = _coordinator()
+        device = _device(_cfg(0, 1, 1))
+        device.raw_data = json.dumps(device.raw_data)
+        coordinator._note_pushed_schedule(SERIAL, device)
+        self.assertEqual(coordinator._slot_boundaries[SERIAL]["3:485"], True)
 
 
 if __name__ == "__main__":

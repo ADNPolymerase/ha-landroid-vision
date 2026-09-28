@@ -773,15 +773,22 @@ class WorxVisionCard extends HTMLElement {
           ? slot.zone_names.join(", ") : "";
         const order = slot?.zone_order === "ordered" ? t(hass, "order_fixed")
           : (slot?.zone_order === "auto" && zones ? t(hass, "order_auto") : "");
-        const extra = [zones, order, slot?.boundary ? t(hass, "edge") : ""].filter(Boolean).join(" · ");
+        const extra = [zones, order].filter(Boolean).join(" · ");
         const isNow = Boolean(current) && day?.day === current.day && slot?.start === current.start;
-        return `<div class="slot${isNow ? " current" : ""}"><span class="slot-time">${escapeHtml(slot?.start)}-${escapeHtml(slot?.end)}</span>`
+        // A dashed frame marks a slot that starts with the border cut: a word
+        // there pushed the line onto two.
+        const edge = slot?.boundary ? ` edge" title="${escapeHtml(t(hass, "edge"))}` : "";
+        return `<div class="slot${isNow ? " current" : ""}"><span class="slot-time${edge}">${escapeHtml(slot?.start)}-${escapeHtml(slot?.end)}</span>`
           + `<span class="slot-extra">${escapeHtml(extra)}</span></div>`;
       }).join("");
       return `<div class="day"><span class="day-label">${escapeHtml(day?.day_label ?? day?.day)}</span>`
         + `<div class="day-slots">${slots}</div></div>`;
     }).join("") : `<div class="notice">${escapeHtml(t(hass, "no_slots"))}</div>`;
-    return `<div class="schedule">${head}<div class="sched-body">${rows}</div></div>`;
+    const edged = days.some((day) => (Array.isArray(day?.slots) ? day.slots : []).some((slot) => slot?.boundary));
+    const legend = edged
+      ? `<div class="sched-legend"><span class="slot-time edge">&nbsp;</span>${escapeHtml(t(hass, "edge"))}</div>`
+      : "";
+    return `<div class="schedule">${head}<div class="sched-body">${rows}${legend}</div></div>`;
   }
 
   _controls(ents) {
@@ -1178,7 +1185,11 @@ const STYLES = `
   .day { display: grid; grid-template-columns: 3.5em 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--divider-color); }
   .day-label { font-weight: 500; text-transform: capitalize; color: var(--primary-text-color); }
   .slot { display: flex; flex-wrap: wrap; gap: 4px 10px; }
-  .slot-time { color: var(--primary-text-color); font-variant-numeric: tabular-nums; }
+  .slot-time { color: var(--primary-text-color); font-variant-numeric: tabular-nums;
+    padding: 0 4px; margin-left: -5px; border: 1px dashed transparent; border-radius: 4px; }
+  .slot-time.edge { border-color: var(--secondary-text-color); }
+  .sched-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--secondary-text-color); font-size: 0.85em; }
+  .sched-legend .slot-time { margin-left: 0; min-width: 16px; }
   .slot.current .slot-time { color: var(--primary-color); font-weight: 500; }
   .sched-next .now { color: var(--primary-color); font-weight: 500; }
   .slot-extra { color: var(--secondary-text-color); font-size: 0.9em; }
