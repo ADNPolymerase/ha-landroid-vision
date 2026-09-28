@@ -308,7 +308,6 @@ class ZoneJobRetryTests(unittest.IsolatedAsyncioTestCase):
         coordinator._event_lock = asyncio.Lock()
         for name in (
             "_preserve_enriched_attributes",
-            "_note_pushed_schedule",
             "_remember_rtk_map_id",
             "_remember_rtk_position",
             "_update_daily_statistics",

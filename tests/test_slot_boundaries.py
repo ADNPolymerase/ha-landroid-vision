@@ -1,14 +1,14 @@
-"""Tests for the border cut of weekly slots, kept from the mower's own pushes.
+"""Tests for the border cut of weekly slots, read from the RTK map's schedule.
 
-The mower publishes each slot's border cut (`cfg.cut.b`) in the messages it
-sends on its own. Its answer to a status request or a command, sent every 5
-minutes, has it off on every slot, and so has the Worx cloud's copy: the
-schedule lost the border cut a few minutes after each push.
+The Worx app keeps each slot's border cut in the schedule stored with the RTK
+map. The mower's own cfg (`cut.b`) reports it off on every slot minutes after
+an edit in the app, both in its answers and in the messages it sends on its
+own, so it cannot be trusted. The map's times are the app's: a slot set to
+08:00 there reads 08:05 from the mower with Save the hedgehogs on.
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -16,158 +16,113 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from test_zone_job_retry import COORDINATOR, HELPERS  # noqa: E402
+from test_zone_job_retry import HELPERS  # noqa: E402
 
 SERIAL = "SN-TEST"
 
 
-def _raw_slot(day: int, start: int, boundary: int | None) -> dict:
-    cut = {"z": [1, 2]}
-    if boundary is not None:
-        cut["b"] = boundary
-    return {"d": day, "s": start, "t": 240, "cfg": {"cut": cut}}
-
-
-def _cfg(*boundaries: int | None) -> dict:
-    # Monday (1) 08:05 and 14:00, Wednesday (3) 08:05.
-    slots = [(1, 485), (1, 840), (3, 485)]
-    return {"sc": {"slots": [_raw_slot(d, s, b) for (d, s), b in zip(slots, boundaries)]}}
-
-
-def _parsed(boundary: bool) -> list[dict]:
+def _parsed(boundary: bool = False) -> list[dict]:
+    # Monday 08:05-12:30 and 14:00-18:00, Wednesday 08:05-12:30, as parsed
+    # from the mower's cfg, where the border cut is always off.
     return [
-        {"day": "monday", "start": "08:05", "boundary": boundary},
-        {"day": "monday", "start": "14:00", "boundary": boundary},
-        {"day": "wednesday", "start": "08:05", "boundary": boundary},
+        {"day": "monday", "start": "08:05", "end": "12:30", "duration": 265, "boundary": boundary},
+        {"day": "monday", "start": "14:00", "end": "18:00", "duration": 240, "boundary": boundary},
+        {"day": "wednesday", "start": "08:05", "end": "12:30", "duration": 265, "boundary": boundary},
     ]
 
 
-class FakeStore:
-    def __init__(self) -> None:
-        self.saves = 0
-
-    def async_delay_save(self, data_func, _delay) -> None:
-        self.saves += 1
-        data_func()
-
-
-def _coordinator():
-    coordinator = object.__new__(COORDINATOR.WorxVisionCoordinator)
-    coordinator._slot_boundaries = {}
-    coordinator._replies_expected = {}
-    coordinator._slot_boundary_store = FakeStore()
-    return coordinator
+def _entry(day: int, start: int, duration: int, border: bool, *, enabled: bool = True, owner: str | None = SERIAL) -> dict:
+    return {
+        "product_item": owner,
+        "enabled": enabled,
+        "day_of_week": day,
+        "starts_at": start,
+        "duration": duration,
+        "zones": [1, 2],
+        "zones_ordered": False,
+        "border_cut": border,
+    }
 
 
-def _device(cfg: dict | None, parsed_boundary: bool = False, *, with_message: bool = True) -> SimpleNamespace:
-    """A device as pyworxcloud leaves it after a message: raw_data is that message."""
-    device = SimpleNamespace(raw_cfg=cfg, schedules={"slots": _parsed(parsed_boundary)})
-    if with_message:
-        device.raw_data = {"dat": {"act": 1}} if cfg is None else {"cfg": cfg, "dat": {"act": 1}}
+def _map_schedule() -> list[dict]:
+    # As the app keeps it: Monday 08:00 without, 14:00 with, Wednesday 08:00
+    # with, and the disabled placeholders the app stores around them.
+    return [
+        _entry(0, 0, 1425, False, enabled=False),
+        _entry(1, 0, 420, False, enabled=False),
+        _entry(1, 480, 270, False),
+        _entry(1, 840, 240, True),
+        _entry(1, 1260, 165, False, enabled=False),
+        _entry(3, 480, 270, True),
+    ]
+
+
+def _device(schedule: list | None = None, *, parsed_boundary: bool = False) -> SimpleNamespace:
+    device = SimpleNamespace(serial_number=SERIAL, schedules={"slots": _parsed(parsed_boundary)})
+    if schedule is not None:
+        device._worx_vision_rtk_map = {"layers": {}, "schedule": schedule}
     return device
 
 
-class RawBoundariesTest(unittest.TestCase):
-    def test_keys_are_raw_day_and_start(self) -> None:
-        self.assertEqual(
-            HELPERS.raw_slot_boundaries(_cfg(0, 1, 1)),
-            {"1:485": False, "1:840": True, "3:485": True},
-        )
-
-    def test_slots_without_the_flag_are_left_out(self) -> None:
-        self.assertEqual(HELPERS.raw_slot_boundaries(_cfg(None, 1, None)), {"1:840": True})
-        self.assertEqual(HELPERS.raw_slot_boundaries({}), {})
-        self.assertEqual(HELPERS.raw_slot_boundaries(None), {})
+def _boundaries(device) -> list:
+    return [slot["boundary"] for slot in HELPERS.schedule_slots(device)]
 
 
-class ScheduleSlotsTest(unittest.TestCase):
-    def test_pushed_boundaries_win_over_the_parsed_ones(self) -> None:
-        device = _device(_cfg(0, 0, 0), parsed_boundary=False)
-        device._worx_vision_slot_boundaries = {"1:840": True, "3:485": True}
-        self.assertEqual(
-            [s["boundary"] for s in HELPERS.schedule_slots(device)], [False, True, True]
-        )
-        # The parsed slots are left untouched.
+class MapScheduleTest(unittest.TestCase):
+    def test_the_border_cut_follows_the_app(self) -> None:
+        self.assertEqual(_boundaries(_device(_map_schedule())), [False, True, True])
+
+    def test_the_mower_cfg_is_overridden_both_ways(self) -> None:
+        schedule = [_entry(1, 480, 270, True), _entry(1, 840, 240, False), _entry(3, 480, 270, False)]
+        self.assertEqual(_boundaries(_device(schedule, parsed_boundary=True)), [True, False, False])
+
+    def test_the_parsed_slots_are_left_untouched(self) -> None:
+        device = _device(_map_schedule())
+        HELPERS.schedule_slots(device)
         self.assertFalse(device.schedules["slots"][1]["boundary"])
 
-    def test_without_pushed_boundaries_the_parsed_ones_stay(self) -> None:
-        device = _device(_cfg(1, 1, 1), parsed_boundary=True)
-        self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(device)], [True] * 3)
+    def test_without_a_map_the_mower_cfg_stays(self) -> None:
+        self.assertEqual(_boundaries(_device(None, parsed_boundary=True)), [True] * 3)
+        self.assertEqual(_boundaries(_device([], parsed_boundary=True)), [True] * 3)
+
+    def test_disabled_slots_and_other_mowers_are_ignored(self) -> None:
+        schedule = [
+            _entry(1, 840, 240, False, enabled=False),
+            _entry(1, 840, 240, False, owner="OTHER"),
+            _entry(1, 840, 240, True),
+        ]
+        self.assertEqual(_boundaries(_device(schedule)), [False, True, False])
+
+    def test_entries_without_an_owner_count(self) -> None:
+        self.assertEqual(_boundaries(_device([_entry(1, 840, 240, True, owner=None)])), [False, True, False])
+
+    def test_unreadable_entries_are_skipped(self) -> None:
+        schedule = [
+            "x",
+            {**_entry(1, 840, 240, True), "starts_at": "14:00"},
+            {**_entry(1, 840, 240, True), "day_of_week": True},
+        ]
+        self.assertEqual(_boundaries(_device(schedule)), [False, False, False])
 
 
-class CoordinatorTest(unittest.TestCase):
-    def test_a_push_teaches_the_boundaries_and_a_refresh_keeps_them(self) -> None:
-        coordinator = _coordinator()
-        pushed = _device(_cfg(0, 1, 1))
-        coordinator._note_pushed_schedule(SERIAL, pushed)
-        self.assertEqual(coordinator._slot_boundaries[SERIAL], {"1:485": False, "1:840": True, "3:485": True})
-        self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(pushed)], [False, True, True])
+class MatchingTest(unittest.TestCase):
+    def test_a_later_start_matches_by_its_end(self) -> None:
+        # 08:00 for 270 min in the app, 08:05 for 265 min from the mower.
+        self.assertEqual(_boundaries(_device([_entry(1, 480, 270, True)])), [True, False, False])
 
-        # API refresh: pyworxcloud builds a new device from the cloud's copy.
-        refreshed = _device(_cfg(0, 0, 0), with_message=False)
-        coordinator._attach_slot_boundaries(SERIAL, refreshed)
-        self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(refreshed)], [False, True, True])
+    def test_the_nearest_start_within_an_hour_matches(self) -> None:
+        self.assertEqual(_boundaries(_device([_entry(1, 470, 200, True)])), [True, False, False])
+        self.assertEqual(_boundaries(_device([_entry(1, 400, 200, True)])), [False, False, False])
 
-    def test_the_answer_to_a_status_request_teaches_nothing(self) -> None:
-        coordinator = _coordinator()
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
+    def test_another_day_never_matches(self) -> None:
+        self.assertEqual(_boundaries(_device([_entry(2, 840, 240, True)])), [False, False, False])
 
-        coordinator._expect_reply(SERIAL)
-        answer = _device(_cfg(0, 0, 0))
-        coordinator._note_pushed_schedule(SERIAL, answer)
-        self.assertEqual([s["boundary"] for s in HELPERS.schedule_slots(answer)], [False, True, True])
-        self.assertEqual(coordinator._slot_boundary_store.saves, 1)
-
-        # The next message the mower sends on its own is learnt again.
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(1, 1, 1)))
-        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:485"], True)
-
-    def test_each_request_is_answered_once(self) -> None:
-        coordinator = _coordinator()
-        coordinator._expect_reply(SERIAL)
-        coordinator._expect_reply(SERIAL)
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 0, 0)))
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 0, 0)))
-        self.assertNotIn(SERIAL, coordinator._slot_boundaries)
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
-        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:840"], True)
-
-    def test_an_answer_that_never_came_is_no_longer_awaited(self) -> None:
-        coordinator = _coordinator()
-        coordinator._expect_reply(SERIAL)
-        count, sent = coordinator._replies_expected[SERIAL]
-        coordinator._replies_expected[SERIAL] = (count, sent - COORDINATOR.MOWER_REPLY_WINDOW - 1)
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
-        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:840"], True)
-
-    def test_a_message_without_cfg_teaches_nothing(self) -> None:
-        coordinator = _coordinator()
-        # The device still holds the cloud's cfg, the message had only dat.
-        device = _device(None)
-        device.raw_cfg = _cfg(0, 0, 0)
-        coordinator._note_pushed_schedule(SERIAL, device)
-        self.assertNotIn(SERIAL, coordinator._slot_boundaries)
-
-    def test_a_message_without_cfg_does_not_use_up_an_answer(self) -> None:
-        coordinator = _coordinator()
-        coordinator._expect_reply(SERIAL)
-        coordinator._note_pushed_schedule(SERIAL, _device(None))
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 0, 0)))
-        self.assertNotIn(SERIAL, coordinator._slot_boundaries)
-
-    def test_an_edit_in_the_app_replaces_the_boundaries(self) -> None:
-        coordinator = _coordinator()
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(1, 1, 1)))
-        coordinator._note_pushed_schedule(SERIAL, _device(_cfg(0, 1, 1)))
-        self.assertEqual(coordinator._slot_boundaries[SERIAL]["1:485"], False)
-        self.assertEqual(coordinator._slot_boundary_store.saves, 2)
-
-    def test_a_json_message_is_read_too(self) -> None:
-        coordinator = _coordinator()
-        device = _device(_cfg(0, 1, 1))
-        device.raw_data = json.dumps(device.raw_data)
-        coordinator._note_pushed_schedule(SERIAL, device)
-        self.assertEqual(coordinator._slot_boundaries[SERIAL]["3:485"], True)
+    def test_a_map_slot_is_used_once(self) -> None:
+        device = _device([_entry(1, 840, 240, True)])
+        device.schedules["slots"].append(
+            {"day": "monday", "start": "14:00", "end": "18:00", "duration": 240, "boundary": False}
+        )
+        self.assertEqual(_boundaries(device), [False, True, False, False])
 
 
 if __name__ == "__main__":

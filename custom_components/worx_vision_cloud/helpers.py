@@ -941,47 +941,90 @@ def rtk_location_attributes(device: Any) -> dict[str, Any]:
 def schedule_slots(device: Any) -> list[Any]:
     """Return normalized schedule slot objects from pyworxcloud.
 
-    The border cut of each slot comes from the last schedule the mower
-    published itself when the coordinator kept one: the copy the Worx cloud
-    returns on an API refresh reports no border cut on any slot.
+    On an RTK mower the border cut of each slot comes from the schedule kept
+    with the RTK map, which is what the Worx app shows: the mower's own cfg
+    reports `b: 0` on every slot minutes after an edit in the app.
     """
     schedules = getattr(device, "schedules", {}) or {}
     slots = get_dict_value(schedules, "slots", []) or []
     if not isinstance(slots, list | tuple):
         return []
     slots = [slot for slot in slots if get_dict_value(slot, "day") is not None]
-    pushed = getattr(device, "_worx_vision_slot_boundaries", None)
-    if not isinstance(pushed, dict) or not pushed:
+    map_slots = map_schedule_slots(device)
+    if not map_slots:
         return slots
+    unused = list(map_slots)
     result = []
     for slot in slots:
-        key = _raw_slot_key(slot)
-        if key in pushed and isinstance(slot, dict):
-            slot = {**slot, "boundary": pushed[key]}
+        match = _map_slot_for(slot, unused)
+        if match is not None:
+            unused.remove(match)
+            if isinstance(slot, dict):
+                slot = {**slot, "boundary": match["border_cut"]}
         result.append(slot)
     return result
 
 
-def raw_slot_boundaries(cfg: Any) -> dict[str, bool]:
-    """Return each weekly slot's border cut from a raw `cfg`, keyed "day:start".
+def map_schedule_slots(device: Any) -> list[dict[str, Any]]:
+    """Return the enabled weekly slots kept with the RTK map.
 
-    Only slots that carry the flag (`cfg.cut.b`) are listed, with the raw day
-    (Sunday 0) and the start in minutes, as the mower publishes them.
+    Each has the raw day (Sunday 0), the start and duration in minutes as set
+    in the Worx app, and the border cut. Slots of another mower sharing the
+    map are left out.
     """
-    slots = get_nested_value(cfg, "sc", "slots", default=None)
-    if not isinstance(slots, list):
-        return {}
-    boundaries: dict[str, bool] = {}
-    for slot in slots:
-        if not isinstance(slot, dict):
+    map_data = getattr(device, "_worx_vision_rtk_map", None)
+    entries = map_data.get("schedule") if isinstance(map_data, dict) else None
+    if not isinstance(entries, list):
+        return []
+    serial = getattr(device, "serial_number", None)
+    slots = []
+    for entry in entries:
+        if not isinstance(entry, dict) or not entry.get("enabled"):
             continue
-        cut = get_nested_value(slot, "cfg", "cut", default=None)
-        if not isinstance(cut, dict) or "b" not in cut:
+        owner = entry.get("product_item")
+        if serial is not None and owner is not None and str(owner) != str(serial):
             continue
-        day, start = slot.get("d"), slot.get("s")
-        if isinstance(day, int) and isinstance(start, int):
-            boundaries[f"{day}:{start}"] = bool(cut["b"])
-    return boundaries
+        day, start, duration = (
+            entry.get("day_of_week"),
+            entry.get("starts_at"),
+            entry.get("duration"),
+        )
+        if not all(isinstance(value, int) and not isinstance(value, bool) for value in (day, start, duration)):
+            continue
+        slots.append(
+            {
+                "day": day,
+                "start": start,
+                "duration": duration,
+                "border_cut": bool(entry.get("border_cut")),
+            }
+        )
+    return slots
+
+
+# Save the hedgehogs moves an early start after sunrise (08:00 in the app,
+# 08:05 from the mower) but keeps the end: a slot is matched by its start,
+# then by its end, then by the nearest start within this many minutes.
+MAP_SLOT_MATCH_MINUTES = 60
+
+
+def _map_slot_for(slot: Any, candidates: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the map slot matching a parsed slot, or None."""
+    day = RAW_SCHEDULE_DAY.get(str(get_dict_value(slot, "day") or "").lower())
+    start = _schedule_minutes(get_dict_value(slot, "start"))
+    if day is None or start is None:
+        return None
+    duration = get_dict_value(slot, "duration")
+    same_day = [c for c in candidates if c["day"] == day]
+    for candidate in same_day:
+        if candidate["start"] == start:
+            return candidate
+    if isinstance(duration, int):
+        for candidate in same_day:
+            if candidate["start"] + candidate["duration"] == start + duration:
+                return candidate
+    near = [c for c in same_day if abs(c["start"] - start) <= MAP_SLOT_MATCH_MINUTES]
+    return min(near, key=lambda c: abs(c["start"] - start)) if near else None
 
 
 def schedule_day_index(day: Any) -> int | None:
@@ -1279,15 +1322,6 @@ def _schedule_minutes(value: Any) -> int | None:
     if parsed is None:
         return None
     return parsed.hour * 60 + parsed.minute
-
-
-def _raw_slot_key(slot: Any) -> str | None:
-    """Return the "day:start" key of a parsed slot, in the mower's own terms."""
-    day = RAW_SCHEDULE_DAY.get(str(get_dict_value(slot, "day") or "").lower())
-    start = _schedule_minutes(get_dict_value(slot, "start"))
-    if day is None or start is None:
-        return None
-    return f"{day}:{start}"
 
 
 def raw_schedule_slot_cut(device: Any, slot: Any) -> dict[str, Any] | None:

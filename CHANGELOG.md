@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.13 - 2026-09-28 (pre-release)
+
+A pre-release on top of 3.0.12, to check the border cut of scheduled slots before 3.1.0.
+
+### Fixed
+
+- **The border cut of each scheduled slot now comes from where the Worx app keeps it.** 3.0.11 and 3.0.12 read it from the mower, but the mower reports it off on every slot a few minutes after an edit in the app, in the messages it sends on its own as well as in its answers. The app keeps it in the schedule stored with the RTK map, which the integration already reads: the schedule sensor, the calendar and the card now take it from there, matching each slot to the app's even when Save the hedgehogs moves its start. An edit in the app shows within 30 minutes, or at the next restart. Without an RTK map, the mower's own value is used as before.
+
+### Removed
+
+- **The border cut learnt from the mower's messages** in 3.0.11 and 3.0.12, and the file that kept it across restarts, which is deleted at startup.
+
 ## 3.0.12 - 2026-09-28 (pre-release)
 
 A pre-release on top of 3.0.11, to check the border cut of scheduled slots before 3.1.0.

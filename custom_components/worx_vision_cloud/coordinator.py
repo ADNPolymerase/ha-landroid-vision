@@ -6,7 +6,6 @@ from collections import deque
 from datetime import UTC, datetime, time, timedelta
 import json
 import logging
-from time import monotonic
 from urllib.parse import quote
 from typing import Any, Callable
 
@@ -59,7 +58,6 @@ from .helpers import (
     zone_job_task_started,
     rtk_map_id,
     rtk_position,
-    raw_slot_boundaries,
     is_firmware_updating,
     is_stopped_away_from_base,
 )
@@ -89,10 +87,6 @@ STATISTICS_SAVE_DELAY = 60
 LOCAL_OPTIONS_STORAGE_VERSION = 1
 ONE_TIME_MOWING_STORAGE_VERSION = 1
 ONE_TIME_MOWING_SAVE_DELAY = 5
-# How long a message may take to answer a request sent to the mower. The
-# mower answers a status request or a command with its cfg, and that answer
-# reports every scheduled slot without the border cut.
-MOWER_REPLY_WINDOW = 120
 SLOT_BOUNDARY_STORAGE_VERSION = 1
 RTK_TRAIL_STORAGE_VERSION = 1
 RTK_TRAIL_SAVE_DELAY = 60
@@ -220,14 +214,8 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             ONE_TIME_MOWING_STORAGE_VERSION,
             f"{DOMAIN}.{config_entry.entry_id}.one_time_mowing",
         )
-        # Border cut of each weekly slot, as the mower last published it on
-        # its own. Its answers to our requests, and the Worx cloud's copy,
-        # report none, so they must not overwrite it (see
-        # _note_pushed_schedule).
-        self._slot_boundaries: dict[str, dict[str, bool]] = {}
-        # Answers still expected from each mower: (count, time of the last
-        # request), see _expect_reply.
-        self._replies_expected: dict[str, tuple[int, float]] = {}
+        # Left by 3.0.11 and 3.0.12, which learnt each slot's border cut from
+        # the mower's messages. It now comes from the RTK map's schedule.
         self._slot_boundary_store = Store[dict[str, Any]](
             hass,
             SLOT_BOUNDARY_STORAGE_VERSION,
@@ -289,13 +277,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._restore_one_time_options(
             await self._one_time_mowing_store.async_load()
         )
-        stored_boundaries = await self._slot_boundary_store.async_load()
-        if isinstance(stored_boundaries, dict):
-            self._slot_boundaries = {
-                str(serial): {str(key): bool(value) for key, value in slots.items()}
-                for serial, slots in stored_boundaries.items()
-                if isinstance(slots, dict)
-            }
+        await self._slot_boundary_store.async_remove()
 
         await self._load_rtk_trail()
 
@@ -369,9 +351,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             )
             await self._one_time_mowing_store.async_save(
                 self._one_time_options_data()
-            )
-            await self._slot_boundary_store.async_save(
-                {serial: dict(slots) for serial, slots in self._slot_boundaries.items()}
             )
         finally:
             await super().async_shutdown()
@@ -730,7 +709,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         async with self._event_lock:
             self._preserve_enriched_attributes(str(serial), device)
-            self._note_pushed_schedule(str(serial), device)
             self._remember_rtk_map_id(str(serial), device)
             self._remember_rtk_position(str(serial), device)
             self._update_daily_statistics(str(serial), device)
@@ -773,7 +751,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
     async def async_request_device_update(self, serial_number: str) -> None:
         """Ask one mower for a fresh MQTT state update, then refresh coordinator data."""
         try:
-            self._expect_reply(serial_number)
             await self.cloud.update(serial_number)
         finally:
             await self.async_request_refresh()
@@ -938,7 +915,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             raise HomeAssistantError("Worx MQTT connection is not available")
 
         try:
-            self._expect_reply(serial_number)
             await mqtt.apublish(serial_number, topic, message, protocol)
         except NoConnectionError:
             _LOGGER.warning(
@@ -948,7 +924,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             mqtt = getattr(self.cloud, "mqtt", None)
             if mqtt is None:
                 raise HomeAssistantError("Worx MQTT connection is not available")
-            self._expect_reply(serial_number)
             await mqtt.apublish(serial_number, topic, message, protocol)
 
     async def _async_request_device_update_best_effort(
@@ -1642,7 +1617,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
                 "p": [],
             }
         }
-        self._expect_reply(serial_number)
         await self.cloud.send(serial_number, json.dumps(payload))
 
     def _update_cached_cut_over_border(
@@ -2002,7 +1976,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def _enrich_device(self, serial_number: str, device: DeviceHandler) -> None:
         """Attach private API details to the cached device object."""
-        self._attach_slot_boundaries(serial_number, device)
         product_item = await self.async_get_product_item(serial_number)
         if product_item is not None:
             setattr(device, "_worx_vision_product_item", product_item)
@@ -2202,58 +2175,6 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             if trail:
                 self._rtk_position_trails[str(serial)] = trail
                 self._rtk_trail_day[str(serial)] = today
-
-    def _expect_reply(self, serial_number: str) -> None:
-        """Note that a request just sent to the mower will be answered."""
-        count, _sent = self._replies_expected.get(serial_number, (0, 0.0))
-        self._replies_expected[serial_number] = (count + 1, monotonic())
-
-    def _is_reply(self, serial_number: str) -> bool:
-        """Tell whether a pushed cfg answers one of our own requests.
-
-        Each request is answered once, within MOWER_REPLY_WINDOW seconds; an
-        answer that never comes stops being awaited after that delay.
-        """
-        count, sent = self._replies_expected.pop(serial_number, (0, 0.0))
-        if count <= 0 or monotonic() - sent > MOWER_REPLY_WINDOW:
-            return False
-        if count > 1:
-            self._replies_expected[serial_number] = (count - 1, sent)
-        return True
-
-    def _note_pushed_schedule(self, serial_number: str, device: DeviceHandler) -> None:
-        """Learn each weekly slot's border cut from a cfg the mower pushed.
-
-        Only a cfg carried by the pushed message itself counts: a message
-        with no cfg leaves the device the previous one, possibly the cloud's
-        copy. And the mower's answer to a status request or a command reports
-        every slot without the border cut (seen live: `b: 0` on every slot
-        while the mower's own messages kept it), so answers teach nothing.
-        """
-        message = getattr(device, "raw_data", None)
-        if isinstance(message, str):
-            try:
-                message = json.loads(message)
-            except ValueError:
-                message = None
-        cfg = message.get("cfg") if isinstance(message, dict) else None
-        if isinstance(cfg, dict) and not self._is_reply(serial_number):
-            boundaries = raw_slot_boundaries(cfg)
-            if boundaries and boundaries != self._slot_boundaries.get(serial_number):
-                self._slot_boundaries[serial_number] = boundaries
-                self._slot_boundary_store.async_delay_save(
-                    lambda: {s: dict(b) for s, b in self._slot_boundaries.items()},
-                    ONE_TIME_MOWING_SAVE_DELAY,
-                )
-        self._attach_slot_boundaries(serial_number, device)
-
-    def _attach_slot_boundaries(self, serial_number: str, device: DeviceHandler) -> None:
-        """Give the device the border cut the mower last published per slot."""
-        setattr(
-            device,
-            "_worx_vision_slot_boundaries",
-            dict(self._slot_boundaries.get(serial_number, {})),
-        )
 
     def _preserve_enriched_attributes(
         self, serial_number: str, device: DeviceHandler
