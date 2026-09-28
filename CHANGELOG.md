@@ -1,53 +1,17 @@
 # Changelog
 
-## 3.0.13 - 2026-09-28 (pre-release)
+## 3.1.0 - 2026-09-28
 
-A pre-release on top of 3.0.12, to check the border cut of scheduled slots before 3.1.0.
-
-### Fixed
-
-- **The border cut of each scheduled slot now comes from where the Worx app keeps it.** 3.0.11 and 3.0.12 read it from the mower, but the mower reports it off on every slot a few minutes after an edit in the app, in the messages it sends on its own as well as in its answers. The app keeps it in the schedule stored with the RTK map, which the integration already reads: the schedule sensor, the calendar and the card now take it from there, matching each slot to the app's even when Save the hedgehogs moves its start. An edit in the app shows within 30 minutes, or at the next restart. Without an RTK map, the mower's own value is used as before.
-
-### Removed
-
-- **The border cut learnt from the mower's messages** in 3.0.11 and 3.0.12, and the file that kept it across restarts, which is deleted at startup.
-
-## 3.0.12 - 2026-09-28 (pre-release)
-
-A pre-release on top of 3.0.11, to check the border cut of scheduled slots before 3.1.0.
-
-### Fixed
-
-- **The border cut of each scheduled slot really stays now.** 3.0.11 blamed the Worx cloud's copy; a real day showed the border cut still vanishing, each time a few seconds after the integration's status request, sent every 5 minutes. The mower's answer to that request, and to any command, reports every slot without the border cut, while the messages it sends on its own (an edit in the Worx app, a change of state) keep it, hours later. The border cut is now only taken from those, and no longer from an answer to a request, or from the cloud's copy after a refresh.
-
-### Changed
-
-- **A dashed frame on the card instead of a word.** A slot that starts with the border cut has its times framed with a dashed line, with a tooltip and a legend under the schedule, so each slot stays on one line.
-
-## 3.0.11 - 2026-09-28 (pre-release)
-
-A pre-release on top of 3.0.10, to check the border cut of scheduled slots before 3.1.0.
-
-### Fixed
-
-- **The border cut of each scheduled slot no longer disappears.** The mower publishes it slot by slot, but a few seconds later the copy the Worx cloud returns on a refresh set it off everywhere, so the schedule showed no border cut most of the time. It is now taken from the mower's own messages, kept across restarts, and follows an edit made in the Worx app as soon as the mower publishes it.
-
-### Changed
-
-- **A shorter, unambiguous border cut marker in the schedule sensor.** `+B` (`+E` in English, the first letter of the word) now follows every slot that starts with the border cut, so an afternoon-only border cut no longer reads like a whole day: `mon 08:00-12:30, 14:00-18:00 +E`.
-
-### Documentation
-
-- **Why the schedule can start later than in the Worx app.** The schedule sensor and calendar show the times the mower reports. With Save the hedgehogs on, the mower moves the start of an early slot to after sunrise, every few nights: a slot set to 08:00 in the app read 08:05 at the end of September. Nothing is wrong with the integration when the two differ.
-
-## 3.0.10 - 2026-09-27 (pre-release)
-
-A pre-release to try what is left of a task on the card before 3.1.0. It replaces the 3.0.6 to 3.0.8 pre-releases.
+What is left of the current task on the card, and the border cut of each scheduled slot as the Worx app sets it. This release gathers the 3.0.10 to 3.0.13 pre-releases.
 
 ### Added
 
 - **What is left of the current task, above the RTK map, as in the Worx app's Remaining view.** One line per zone of the task: the remaining share, the remaining area and the mowing time left, with a bar of what is already mowed. The figures come from the mower's own task list and matched the app on real tasks. The banner stays while the mower recharges in the middle of a task, and goes away once the task is finished or stopped, or when there is none.
 - **A Task remaining sensor** with the same figures: the remaining share of the task, weighted by zone area, and a `zones` attribute with each zone's name, remaining share, area and mowing time. It reads unknown when no task runs, and its `active` attribute tells a running task (recharges included) from a finished or stopped one, which the mower keeps in its list.
+
+### Fixed
+
+- **The border cut of each scheduled slot is the one set in the Worx app.** The mower reports it off on every slot a few minutes after an edit in the app, so the schedule showed no border cut most of the time. It now comes from the schedule the app keeps with the RTK map, which the integration already reads: the schedule sensor, the calendar and the card match each slot to the app's, even when Save the hedgehogs moves its start. An edit in the app shows within 30 minutes, or at the next restart. Without an RTK map, the mower's own value is used as before.
 
 ### Changed
 
@@ -56,6 +20,12 @@ A pre-release to try what is left of a task on the card before 3.1.0. It replace
 - **Error 110 reads "Insufficient light (E14)"**, as the Worx app names it, instead of "Camera error". The card adds that it has to be cleared on the mower itself: nothing clears it remotely.
 - **No more daily progress bar under the map.** The task banner says the same from the mower itself rather than an estimate. The Estimated daily progress sensor stays in the integration.
 - **The day's mowed swaths stay visible until the evening on the RTK map.** They faded to 12 % in 6 hours; they now fade over 12 hours and never below 30 %.
+- **A short, unambiguous border cut marker in the schedule sensor.** `+B` (`+E` in English, the first letter of the word) follows every slot that starts with the border cut, so an afternoon-only border cut no longer reads like a whole day: `mon 08:00-12:30, 14:00-18:00 +E`.
+- **A dashed frame on the card for a slot with the border cut.** Its times are framed with a dashed line, with a tooltip and a legend under the schedule, so each slot stays on one line.
+
+### Documentation
+
+- **Why the schedule can start later than in the Worx app.** The schedule sensor and calendar show the times the mower reports. With Save the hedgehogs on, the mower moves the start of an early slot to after sunrise, every few nights: a slot set to 08:00 in the app read 08:05 at the end of September. Nothing is wrong with the integration when the two differ.
 
 ## 3.0.5 - 2026-09-27
 
