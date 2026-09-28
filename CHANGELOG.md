@@ -1,6 +1,16 @@
 # Changelog
 
-## 3.1.0 - unreleased
+## 3.0.11 - 2026-09-28 (pre-release)
+
+A pre-release on top of 3.0.10, to check the border cut of scheduled slots before 3.1.0.
+
+### Fixed
+
+- **The border cut of each scheduled slot no longer disappears.** The mower publishes it slot by slot, but a few seconds later the copy the Worx cloud returns on a refresh set it off everywhere, so the schedule showed no border cut most of the time. It is now taken from the mower's own messages, kept across restarts, and follows an edit made in the Worx app as soon as the mower publishes it.
+
+### Changed
+
+- **A shorter, unambiguous border cut marker in the schedule sensor.** `+B` (`+E` in English, the first letter of the word) now follows every slot that starts with the border cut, so an afternoon-only border cut no longer reads like a whole day: `mon 08:00-12:30, 14:00-18:00 +E`.
 
 ### Documentation
 

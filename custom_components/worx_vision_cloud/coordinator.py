@@ -58,6 +58,7 @@ from .helpers import (
     zone_job_task_started,
     rtk_map_id,
     rtk_position,
+    raw_slot_boundaries,
     is_firmware_updating,
     is_stopped_away_from_base,
 )
@@ -87,6 +88,7 @@ STATISTICS_SAVE_DELAY = 60
 LOCAL_OPTIONS_STORAGE_VERSION = 1
 ONE_TIME_MOWING_STORAGE_VERSION = 1
 ONE_TIME_MOWING_SAVE_DELAY = 5
+SLOT_BOUNDARY_STORAGE_VERSION = 1
 RTK_TRAIL_STORAGE_VERSION = 1
 RTK_TRAIL_SAVE_DELAY = 60
 # A generous per-day safety cap, not a rolling window: the trail is reset at
@@ -213,6 +215,16 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             ONE_TIME_MOWING_STORAGE_VERSION,
             f"{DOMAIN}.{config_entry.entry_id}.one_time_mowing",
         )
+        # Border cut of each weekly slot, as the mower last published it. The
+        # copy the Worx cloud returns on an API refresh reports none, so it
+        # must not overwrite what the mower said (see _note_pushed_schedule).
+        self._slot_boundaries: dict[str, dict[str, bool]] = {}
+        self._cfg_seen: dict[str, Any] = {}
+        self._slot_boundary_store = Store[dict[str, Any]](
+            hass,
+            SLOT_BOUNDARY_STORAGE_VERSION,
+            f"{DOMAIN}.{config_entry.entry_id}.slot_boundaries",
+        )
         self._unsub_periodic_refresh: Callable[[], None] | None = None
         # First observed moment of an ongoing disconnection, per
         # (serial_number, kind) with kind in ("online", "mqtt"). Used to hide
@@ -269,6 +281,13 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._restore_one_time_options(
             await self._one_time_mowing_store.async_load()
         )
+        stored_boundaries = await self._slot_boundary_store.async_load()
+        if isinstance(stored_boundaries, dict):
+            self._slot_boundaries = {
+                str(serial): {str(key): bool(value) for key, value in slots.items()}
+                for serial, slots in stored_boundaries.items()
+                if isinstance(slots, dict)
+            }
 
         await self._load_rtk_trail()
 
@@ -342,6 +361,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             )
             await self._one_time_mowing_store.async_save(
                 self._one_time_options_data()
+            )
+            await self._slot_boundary_store.async_save(
+                {serial: dict(slots) for serial, slots in self._slot_boundaries.items()}
             )
         finally:
             await super().async_shutdown()
@@ -700,6 +722,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
         async with self._event_lock:
             self._preserve_enriched_attributes(str(serial), device)
+            self._note_pushed_schedule(str(serial), device)
             self._remember_rtk_map_id(str(serial), device)
             self._remember_rtk_position(str(serial), device)
             self._update_daily_statistics(str(serial), device)
@@ -1967,6 +1990,10 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
 
     async def _enrich_device(self, serial_number: str, device: DeviceHandler) -> None:
         """Attach private API details to the cached device object."""
+        # Whatever cfg the device holds now is not a fresh push: it may be the
+        # cloud's copy, which must not teach us the slots' border cut.
+        self._cfg_seen[serial_number] = getattr(device, "raw_cfg", None)
+        self._attach_slot_boundaries(serial_number, device)
         product_item = await self.async_get_product_item(serial_number)
         if product_item is not None:
             setattr(device, "_worx_vision_product_item", product_item)
@@ -2166,6 +2193,34 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             if trail:
                 self._rtk_position_trails[str(serial)] = trail
                 self._rtk_trail_day[str(serial)] = today
+
+    def _note_pushed_schedule(self, serial_number: str, device: DeviceHandler) -> None:
+        """Learn each weekly slot's border cut from a cfg the mower pushed.
+
+        pyworxcloud replaces `raw_cfg` only when a message carries a cfg, so a
+        cfg object not seen at the last refresh is a fresh push. A push with
+        no cfg leaves the previous object, possibly the cloud's copy, and
+        teaches nothing. Nothing is learnt before the first refresh.
+        """
+        cfg = getattr(device, "raw_cfg", None)
+        if serial_number in self._cfg_seen and isinstance(cfg, dict) and cfg is not self._cfg_seen[serial_number]:
+            self._cfg_seen[serial_number] = cfg
+            boundaries = raw_slot_boundaries(cfg)
+            if boundaries and boundaries != self._slot_boundaries.get(serial_number):
+                self._slot_boundaries[serial_number] = boundaries
+                self._slot_boundary_store.async_delay_save(
+                    lambda: {s: dict(b) for s, b in self._slot_boundaries.items()},
+                    ONE_TIME_MOWING_SAVE_DELAY,
+                )
+        self._attach_slot_boundaries(serial_number, device)
+
+    def _attach_slot_boundaries(self, serial_number: str, device: DeviceHandler) -> None:
+        """Give the device the border cut the mower last published per slot."""
+        setattr(
+            device,
+            "_worx_vision_slot_boundaries",
+            dict(self._slot_boundaries.get(serial_number, {})),
+        )
 
     def _preserve_enriched_attributes(
         self, serial_number: str, device: DeviceHandler

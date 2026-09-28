@@ -79,24 +79,46 @@ class DaySummaryTests(unittest.TestCase):
              _slot("monday", "14:00", "18:00", boundary=True)],
             "en",
         )
-        self.assertEqual(summary, "Mon 08:00-12:30, 14:00-18:00 + edge")
+        self.assertEqual(summary, "Mon 08:00-12:30, 14:00-18:00 +E")
 
-    def test_the_marker_is_written_once_when_the_whole_day_cuts_the_edge(self) -> None:
+    def test_every_edged_slot_carries_the_marker(self) -> None:
         summary = HELPERS.schedule_day_summary(
             "monday",
             [_slot("monday", "08:00", "12:30", boundary=True),
              _slot("monday", "14:00", "18:00", boundary=True)],
             "en",
         )
-        self.assertEqual(summary, "Mon 08:00-12:30, 14:00-18:00 + edge")
-        self.assertEqual(summary.count("edge"), 1)
+        self.assertEqual(summary, "Mon 08:00-12:30 +E, 14:00-18:00 +E")
+
+    def test_a_morning_edge_only_is_not_read_as_the_whole_day(self) -> None:
+        summary = HELPERS.schedule_day_summary(
+            "monday",
+            [_slot("monday", "08:00", "12:30", boundary=True),
+             _slot("monday", "14:00", "18:00")],
+            "en",
+        )
+        self.assertEqual(summary, "Mon 08:00-12:30 +E, 14:00-18:00")
+
+    def test_afternoon_only_and_whole_day_read_differently(self) -> None:
+        afternoon = HELPERS.schedule_day_summary(
+            "monday",
+            [_slot("monday", "08:00", "12:30"), _slot("monday", "14:00", "18:00", boundary=True)],
+            "fr",
+        )
+        whole = HELPERS.schedule_day_summary(
+            "monday",
+            [_slot("monday", "08:00", "12:30", boundary=True), _slot("monday", "14:00", "18:00", boundary=True)],
+            "fr",
+        )
+        self.assertEqual(afternoon, "lun 08:00-12:30, 14:00-18:00 +B")
+        self.assertEqual(whole, "lun 08:00-12:30 +B, 14:00-18:00 +B")
 
     def test_a_lone_edged_slot_keeps_its_marker(self) -> None:
         self.assertEqual(
             HELPERS.schedule_day_summary(
                 "monday", [_slot("monday", "08:00", "12:30", boundary=True)], "en"
             ),
-            "Mon 08:00-12:30 + edge",
+            "Mon 08:00-12:30 +E",
         )
 
     def test_a_day_without_usable_times_falls_back_to_its_label(self) -> None:

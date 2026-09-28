@@ -158,17 +158,18 @@ SCHEDULE_DAY_LABELS = {
 }
 
 SCHEDULE_TEXT_LABELS = {
-    "en": {"none": "no active slots", "count": "{count} active slots", "edge": "+ edge"},
-    "de": {"none": "keine aktiven Zeitfenster", "count": "{count} aktive Zeitfenster", "edge": "+ Kante"},
-    "fr": {"none": "aucun créneau actif", "count": "{count} créneaux actifs", "edge": "+ bordure"},
-    "pl": {"none": "brak aktywnych slotów", "count": "{count} aktywnych slotów", "edge": "+ krawędź"},
-    "nl": {"none": "geen actieve tijdvakken", "count": "{count} actieve tijdvakken", "edge": "+ rand"},
-    "es": {"none": "ninguna franja activa", "count": "{count} franjas activas", "edge": "+ borde"},
-    "it": {"none": "nessuna fascia attiva", "count": "{count} fasce attive", "edge": "+ bordo"},
-    "sv": {"none": "inga aktiva tidsfönster", "count": "{count} aktiva tidsfönster", "edge": "+ kant"},
-    "no": {"none": "ingen aktive tidsrom", "count": "{count} aktive tidsrom", "edge": "+ kant"},
-    "da": {"none": "ingen aktive tidsrum", "count": "{count} aktive tidsrum", "edge": "+ kant"},
-    "ru": {"none": "нет активных интервалов", "count": "активных интервалов: {count}", "edge": "+ кромка"},
+    # Border cut marker: the first letter of the word, to keep the state short.
+    "en": {"none": "no active slots", "count": "{count} active slots", "edge": "+E"},
+    "de": {"none": "keine aktiven Zeitfenster", "count": "{count} aktive Zeitfenster", "edge": "+K"},
+    "fr": {"none": "aucun créneau actif", "count": "{count} créneaux actifs", "edge": "+B"},
+    "pl": {"none": "brak aktywnych slotów", "count": "{count} aktywnych slotów", "edge": "+K"},
+    "nl": {"none": "geen actieve tijdvakken", "count": "{count} actieve tijdvakken", "edge": "+R"},
+    "es": {"none": "ninguna franja activa", "count": "{count} franjas activas", "edge": "+B"},
+    "it": {"none": "nessuna fascia attiva", "count": "{count} fasce attive", "edge": "+B"},
+    "sv": {"none": "inga aktiva tidsfönster", "count": "{count} aktiva tidsfönster", "edge": "+K"},
+    "no": {"none": "ingen aktive tidsrom", "count": "{count} aktive tidsrom", "edge": "+K"},
+    "da": {"none": "ingen aktive tidsrum", "count": "{count} aktive tidsrum", "edge": "+K"},
+    "ru": {"none": "нет активных интервалов", "count": "активных интервалов: {count}", "edge": "+К"},
 }
 
 
@@ -938,12 +939,49 @@ def rtk_location_attributes(device: Any) -> dict[str, Any]:
 
 
 def schedule_slots(device: Any) -> list[Any]:
-    """Return normalized schedule slot objects from pyworxcloud."""
+    """Return normalized schedule slot objects from pyworxcloud.
+
+    The border cut of each slot comes from the last schedule the mower
+    published itself when the coordinator kept one: the copy the Worx cloud
+    returns on an API refresh reports no border cut on any slot.
+    """
     schedules = getattr(device, "schedules", {}) or {}
     slots = get_dict_value(schedules, "slots", []) or []
     if not isinstance(slots, list | tuple):
         return []
-    return [slot for slot in slots if get_dict_value(slot, "day") is not None]
+    slots = [slot for slot in slots if get_dict_value(slot, "day") is not None]
+    pushed = getattr(device, "_worx_vision_slot_boundaries", None)
+    if not isinstance(pushed, dict) or not pushed:
+        return slots
+    result = []
+    for slot in slots:
+        key = _raw_slot_key(slot)
+        if key in pushed and isinstance(slot, dict):
+            slot = {**slot, "boundary": pushed[key]}
+        result.append(slot)
+    return result
+
+
+def raw_slot_boundaries(cfg: Any) -> dict[str, bool]:
+    """Return each weekly slot's border cut from a raw `cfg`, keyed "day:start".
+
+    Only slots that carry the flag (`cfg.cut.b`) are listed, with the raw day
+    (Sunday 0) and the start in minutes, as the mower publishes them.
+    """
+    slots = get_nested_value(cfg, "sc", "slots", default=None)
+    if not isinstance(slots, list):
+        return {}
+    boundaries: dict[str, bool] = {}
+    for slot in slots:
+        if not isinstance(slot, dict):
+            continue
+        cut = get_nested_value(slot, "cfg", "cut", default=None)
+        if not isinstance(cut, dict) or "b" not in cut:
+            continue
+        day, start = slot.get("d"), slot.get("s")
+        if isinstance(day, int) and isinstance(start, int):
+            boundaries[f"{day}:{start}"] = bool(cut["b"])
+    return boundaries
 
 
 def schedule_day_index(day: Any) -> int | None:
@@ -1243,6 +1281,15 @@ def _schedule_minutes(value: Any) -> int | None:
     return parsed.hour * 60 + parsed.minute
 
 
+def _raw_slot_key(slot: Any) -> str | None:
+    """Return the "day:start" key of a parsed slot, in the mower's own terms."""
+    day = RAW_SCHEDULE_DAY.get(str(get_dict_value(slot, "day") or "").lower())
+    start = _schedule_minutes(get_dict_value(slot, "start"))
+    if day is None or start is None:
+        return None
+    return f"{day}:{start}"
+
+
 def raw_schedule_slot_cut(device: Any, slot: Any) -> dict[str, Any] | None:
     """Return the raw cut block of the weekly slot matching a parsed slot.
 
@@ -1356,13 +1403,10 @@ def schedule_day_summary(
 ) -> str:
     """Return one day of the schedule: its label, then its time ranges.
 
-    When every slot of the day cuts the edge, the marker is written once
-    at the end instead of after each range. The Worx app sets the edge
-    per slot but sends the same value to all of them, so in practice this
-    is what the mower reports and it keeps the line inside the 255
-    characters a Home Assistant state allows. A mixed day keeps the
-    marker on each range that carries it, which reads like a factored day
-    when only the last range is edged; the mower never reports that.
+    The border cut is set per slot in the Worx app, and a day can mix both
+    (edge in the afternoon only, for instance), so the short marker follows
+    every range that carries it. A week with the edge everywhere still fits
+    the 255 characters a Home Assistant state allows.
     """
     lang = schedule_language(language)
     label = schedule_day_label(day, lang)
@@ -1374,13 +1418,7 @@ def schedule_day_summary(
     if not times:
         return label or "slot"
 
-    edge = SCHEDULE_TEXT_LABELS[lang]["edge"]
-    suffix = f" {edge}"
-    if len(times) > 1 and all(text.endswith(suffix) for text in times):
-        times = [text[: -len(suffix)] for text in times]
-        ranges = f"{SCHEDULE_SLOT_SEPARATOR.join(times)}{suffix}"
-    else:
-        ranges = SCHEDULE_SLOT_SEPARATOR.join(times)
+    ranges = SCHEDULE_SLOT_SEPARATOR.join(times)
     return f"{label} {ranges}".strip()
 
 
