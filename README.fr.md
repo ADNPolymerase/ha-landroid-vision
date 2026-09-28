@@ -26,7 +26,7 @@ Intégration Home Assistant pour les tondeuses Worx Landroid Vision, Vision Clou
 - Le motif et l'angle de tonte de chaque zone RTK, en lecture seule.
 - Réglages de la tondeuse : verrouillage, programme, coupe de bordure intelligente, protection des hérissons, mode festif, délai pluie, et hauteur de coupe, couple, zones interdites ou ACS quand la tondeuse les a.
 - Surface tondue et progression du jour conservées par l'intégration, plus une estimation locale qui avance quand les statistiques Worx sont en retard.
-- Capteur et calendrier du programme avec les zones de chaque créneau, caméra de la carte RTK avec la trace du jour, position du robot.
+- Capteur et calendrier du programme avec les zones de chaque créneau, caméra de la carte RTK avec la trace du jour, position du robot. Le programme affiche les heures que donne la tondeuse : avec la protection des hérissons, un créneau matinal peut commencer plus tard que dans l'app, après le lever du soleil.
 - Capteurs d'état, d'erreur, d'aptitude, de batterie et d'entretien, avec des alertes dans Réparations pour l'entretien des lames et de la batterie et pour une tondeuse arrêtée loin de sa base.
 - Diagnostics avec coordonnées et identifiants masqués. 11 langues.
 

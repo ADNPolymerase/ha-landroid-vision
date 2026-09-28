@@ -26,7 +26,7 @@ Home Assistant integration for Worx Landroid Vision, Vision Cloud and RTK mowers
 - Each RTK zone's mowing pattern and angle, read only.
 - Mower settings: lock, schedule, smart edge cut, save the hedgehogs, party mode, rain delay, and cutting height, torque, off limits or ACS when the mower has them.
 - Daily mowed area and progress kept by the integration, plus a local estimate that keeps moving when the Worx statistics lag.
-- Schedule sensor and calendar with each slot's zones, RTK map camera with the day's trail, robot position.
+- Schedule sensor and calendar with each slot's zones, RTK map camera with the day's trail, robot position. The schedule shows the times the mower reports: with Save the hedgehogs on, an early slot can start later than set in the app, after sunrise.
 - Status, error, readiness, battery and maintenance sensors, with Repairs alerts for blade and battery service and for a mower stopped away from its base.
 - Diagnostics with coordinates and identifiers redacted. 11 languages.
 

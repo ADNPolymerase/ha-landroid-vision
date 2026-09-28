@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.0 - unreleased
+
+### Documentation
+
+- **Why the schedule can start later than in the Worx app.** The schedule sensor and calendar show the times the mower reports. With Save the hedgehogs on, the mower moves the start of an early slot to after sunrise, every few nights: a slot set to 08:00 in the app read 08:05 at the end of September. Nothing is wrong with the integration when the two differ.
+
 ## 3.0.10 - 2026-09-27 (pre-release)
 
 A pre-release to try what is left of a task on the card before 3.1.0. It replaces the 3.0.6 to 3.0.8 pre-releases.
