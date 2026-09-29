@@ -160,5 +160,36 @@ class TransitZoneTests(unittest.TestCase):
         self.assertEqual(HELPERS.rtk_current_zone_name(device), "Back lawn")
 
 
+class DockedPositionTests(unittest.TestCase):
+    """A docked mower sits on its station whatever its drifting fix says."""
+
+    def test_docked_reads_the_station(self) -> None:
+        mower = _mower(status_id=1, metres_from_station=4.0)
+        self.assertEqual(HELPERS.rtk_position(mower), STATION)
+        self.assertEqual(HELPERS.rtk_distance_to_station_m(mower), 0.0)
+        self.assertTrue(HELPERS.rtk_at_station(mower))
+
+    def test_the_reported_fix_stays_readable(self) -> None:
+        mower = _mower(status_id=1, metres_from_station=4.0)
+        latitude, _ = HELPERS.reported_rtk_position(mower)
+        self.assertAlmostEqual(latitude, STATION[0] + 4.0 * METRE_IN_DEGREES)
+
+    def test_other_statuses_keep_the_fix(self) -> None:
+        for status_id in (0, 4, 7, 9, 34, None):
+            with self.subTest(status_id=status_id):
+                mower = _mower(status_id=status_id, metres_from_station=4.0)
+                self.assertAlmostEqual(
+                    HELPERS.rtk_distance_to_station_m(mower), 4.0, places=2
+                )
+                self.assertFalse(HELPERS.rtk_at_station(mower))
+
+    def test_docked_without_a_station_keeps_the_fix(self) -> None:
+        mower = _mower(status_id=1, metres_from_station=4.0)
+        mower._worx_vision_rtk_map = {"layers": {"markers": []}}
+        self.assertEqual(
+            HELPERS.rtk_position(mower), HELPERS.reported_rtk_position(mower)
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

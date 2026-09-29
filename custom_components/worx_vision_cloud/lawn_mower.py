@@ -30,6 +30,7 @@ from .helpers import (
     hold_small_attribute_changes,
     rtk_at_station,
     rtk_distance_to_station_m,
+    rtk_station_position,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -158,7 +159,13 @@ class WorxVisionLawnMower(WorxVisionEntity, LawnMowerEntity):
             attrs["rtk_at_station"] = rtk_at_station(device)
 
         gps = getattr(device, "gps", None)
-        if gps is not None:
+        station = (
+            rtk_station_position(device) if attrs["status_id"] in DOCKED_STATUS_IDS else None
+        )
+        if station is not None:
+            # A docked mower's fixes drift off the station at night.
+            attrs["latitude"], attrs["longitude"] = station
+        elif gps is not None:
             latitude = get_dict_value(gps, "latitude")
             longitude = get_dict_value(gps, "longitude")
             if latitude is not None and longitude is not None:

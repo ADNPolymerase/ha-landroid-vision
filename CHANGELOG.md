@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.1 - 2026-09-29
+
+### Fixed
+
+- **A docked mower stays on its station on the RTK map.** On its base at night, the mower keeps sending RTK fixes that drift away without it moving: one crept 4 m into the garden in under an hour. While it is docked, the RTK position tracker, the map, the day's trail, the lawn mower's coordinates and the distance to the station now use the station marker of the RTK map. While mowing, returning, paused or in error, the fix is used as before. Without a station marker on the map, nothing changes.
+
 ## 3.1.0 - 2026-09-28
 
 What is left of the current task on the card, and the border cut of each scheduled slot as the Worx app sets it. This release gathers the 3.0.10 to 3.0.13 pre-releases.

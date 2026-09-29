@@ -577,7 +577,24 @@ def rtk_zone_ids(device: Any) -> list[int]:
 
 
 def rtk_position(device: Any) -> tuple[float, float] | None:
-    """Return current RTK latitude/longitude position."""
+    """Return the mower's position, on its station while it is docked.
+
+    A docked mower keeps sending RTK fixes, and at night they drift away
+    from the station without the mower moving: watched on a Vision Cloud
+    whose reported position crept 4 m into the garden in under an hour
+    while it sat on its base. The station marker of the RTK map is where a
+    docked mower actually is, so it stands in for the fix.
+    """
+    status_id = get_dict_value(getattr(device, "status", {}) or {}, "id")
+    if status_id in DOCKED_STATUS_IDS:
+        station = rtk_station_position(device)
+        if station is not None:
+            return station
+    return reported_rtk_position(device)
+
+
+def reported_rtk_position(device: Any) -> tuple[float, float] | None:
+    """Return the RTK latitude/longitude position the mower reported."""
     position = get_nested_value(_raw_dat(device), "rtk", "pos", default=[])
     if not isinstance(position, list | tuple) or len(position) < 2:
         return None
