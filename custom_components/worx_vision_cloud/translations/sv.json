@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Knivservice krävs",
-          "battery_service_due": "Batteriservice krävs"
+          "battery_service_due": "Batteriservice krävs",
+          "blade_and_battery_service_due": "Kniv- och batteriservice krävs"
         }
       },
       "pitch": {

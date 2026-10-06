@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Messerwartung fällig",
-          "battery_service_due": "Akkuwartung fällig"
+          "battery_service_due": "Akkuwartung fällig",
+          "blade_and_battery_service_due": "Messer- und Akkuwartung fällig"
         }
       },
       "pitch": {

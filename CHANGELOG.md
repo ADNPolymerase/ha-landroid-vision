@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.2 - 2026-10-06
+
+### Fixed
+
+- **A due blade service no longer hides a due battery service.** The Maintenance status sensor checked the blades first, so it read "Blade service due" even when the battery was due as well. It now reads "Blade and battery service due" when both are, and two new attributes, `blade_service_due` and `battery_service_due`, give each one separately. The Repairs alerts already handled both and are unchanged.
+
 ## 3.1.1 - 2026-09-29
 
 ### Fixed

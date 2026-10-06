@@ -212,7 +212,12 @@ READINESS_STATE_OPTIONS = [
 
 CLOUD_CONNECTION_OPTIONS = ["ok", "check", "offline"]
 
-MAINTENANCE_STATE_OPTIONS = ["ok", "blade_service_due", "battery_service_due"]
+MAINTENANCE_STATE_OPTIONS = [
+    "ok",
+    "blade_service_due",
+    "battery_service_due",
+    "blade_and_battery_service_due",
+]
 
 RAIN_DELAY_ERROR_DESCRIPTIONS = {"rain delay", "rain_delay"}
 
@@ -592,19 +597,36 @@ def _battery_threshold_cycles(device) -> int:
         return DEFAULT_BATTERY_SERVICE_CYCLES
 
 
-def _maintenance_state(device) -> str | None:
+def _service_due(device) -> tuple[bool | None, bool | None]:
+    """Return (blade_due, battery_due), None where the counter is unknown."""
     blade_minutes = _since_reset(device, "blade_work_time", "blade_work_time_reset")
     battery_cycles = _since_reset(
         device, "battery_charge_cycles", "battery_charge_cycles_reset"
     )
-    if blade_minutes is None and battery_cycles is None:
+    blade_due = (
+        None
+        if blade_minutes is None
+        else blade_minutes >= _blade_threshold_minutes(device)
+    )
+    battery_due = (
+        None
+        if battery_cycles is None
+        else battery_cycles >= _battery_threshold_cycles(device)
+    )
+    return blade_due, battery_due
+
+
+def _maintenance_state(device) -> str | None:
+    # Both checks are reported together, so a due blade service no longer
+    # hides a due battery service.
+    blade_due, battery_due = _service_due(device)
+    if blade_due is None and battery_due is None:
         return None
-    if blade_minutes is not None and blade_minutes >= _blade_threshold_minutes(device):
+    if blade_due and battery_due:
+        return "blade_and_battery_service_due"
+    if blade_due:
         return "blade_service_due"
-    if (
-        battery_cycles is not None
-        and battery_cycles >= _battery_threshold_cycles(device)
-    ):
+    if battery_due:
         return "battery_service_due"
     return "ok"
 
@@ -618,7 +640,10 @@ def _maintenance_attributes(device) -> dict[str, Any]:
     battery_reset_at = _as_datetime(
         _product_item(device, "battery_charge_cycles_reset_at")
     )
+    blade_due, battery_due = _service_due(device)
     return {
+        "blade_service_due": blade_due,
+        "battery_service_due": battery_due,
         "blade_runtime_since_reset": blade_minutes,
         "blade_service_threshold_minutes": _blade_threshold_minutes(device),
         "battery_cycles_since_reset": battery_cycles,

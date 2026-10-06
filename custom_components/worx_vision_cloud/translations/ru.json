@@ -234,7 +234,8 @@
         "state": {
           "ok": "Норма",
           "blade_service_due": "Требуется замена ножей",
-          "battery_service_due": "Требуется обслуживание батареи"
+          "battery_service_due": "Требуется обслуживание батареи",
+          "blade_and_battery_service_due": "Требуется замена ножей и обслуживание батареи"
         }
       },
       "pitch": {

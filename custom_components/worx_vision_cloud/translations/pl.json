@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Wymiana ostrzy wymagana",
-          "battery_service_due": "Serwis baterii wymagany"
+          "battery_service_due": "Serwis baterii wymagany",
+          "blade_and_battery_service_due": "Wymiana ostrzy i serwis baterii wymagane"
         }
       },
       "pitch": {

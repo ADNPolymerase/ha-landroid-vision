@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Revisión de cuchillas pendiente",
-          "battery_service_due": "Revisión de batería pendiente"
+          "battery_service_due": "Revisión de batería pendiente",
+          "blade_and_battery_service_due": "Revisión de cuchillas y batería pendiente"
         }
       },
       "pitch": {

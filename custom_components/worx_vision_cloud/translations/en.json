@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Blade service due",
-          "battery_service_due": "Battery service due"
+          "battery_service_due": "Battery service due",
+          "blade_and_battery_service_due": "Blade and battery service due"
         }
       },
       "pitch": {

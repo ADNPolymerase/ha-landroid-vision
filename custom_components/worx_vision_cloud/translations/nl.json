@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Mesonderhoud nodig",
-          "battery_service_due": "Batterijonderhoud nodig"
+          "battery_service_due": "Batterijonderhoud nodig",
+          "blade_and_battery_service_due": "Mes- en batterijonderhoud nodig"
         }
       },
       "pitch": {

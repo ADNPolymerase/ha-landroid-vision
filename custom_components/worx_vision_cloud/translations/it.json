@@ -234,7 +234,8 @@
         "state": {
           "ok": "OK",
           "blade_service_due": "Manutenzione lame necessaria",
-          "battery_service_due": "Manutenzione batteria necessaria"
+          "battery_service_due": "Manutenzione batteria necessaria",
+          "blade_and_battery_service_due": "Manutenzione lame e batteria necessaria"
         }
       },
       "pitch": {
