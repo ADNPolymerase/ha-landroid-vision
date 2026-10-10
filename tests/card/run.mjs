@@ -998,6 +998,62 @@ function rainy(extra = {}) {
   check("the wait runs out: back to the label", markup(later).includes("Confirm?"), false);
 }
 
+// ── history lines: yesterday and last mowing ───────────────────────────────
+
+{
+  const history = (yesterday, last) => {
+    const h = makeHass();
+    h.locale = { language: "en", time_format: "24" };
+    h.entities["sensor.robot_hier"] = reg("sensor.robot_hier", "dev1", "mowing_time_yesterday");
+    h.entities["sensor.robot_derniere"] = reg("sensor.robot_derniere", "dev1", "last_mowing");
+    if (yesterday) h.states["sensor.robot_hier"] = yesterday;
+    if (last) h.states["sensor.robot_derniere"] = last;
+    return h;
+  };
+  const both = { entity: "lawn_mower.robot", show_yesterday: true, show_last_mowing: true };
+  const yday = st("130", { unit_of_measurement: "min", estimated_area: 210.4, estimated_progress: 62.4 });
+  const last = st("2026-10-09T17:45:00+00:00", { start: "2026-10-09T14:00:00+00:00", duration: 225, zones: ["A"] });
+
+  check("off by default", markup(make({ entity: "lawn_mower.robot" }, history(yday, last))).includes('class="history"'), false);
+
+  const html = markup(make(both, history(yday, last)));
+  contains("yesterday: time, area, share", html, "Yesterday</span><b>2 h 10 · 210 m² · 62%</b>");
+  contains("last mowing: clock range and duration", html, "14:00 → 17:45 (3 h 45)</b>");
+  contains("last mowing dated by its start", html, "Oct 9");
+  contains("yesterday opens its sensor", html, 'data-entity="sensor.robot_hier"');
+  check("history right after the schedule", html.indexOf('class="schedule') < html.indexOf('class="history"'), true);
+
+  const onlyLast = markup(make({ entity: "lawn_mower.robot", show_last_mowing: true }, history(yday, last)));
+  check("one option, one line", (onlyLast.match(/class="history-row/gu) || []).length, 1);
+
+  contains("a day without mowing says so",
+    markup(make(both, history(st("0", { unit_of_measurement: "min", estimated_area: 0 }), null))), "Yesterday</span><b>no mowing</b>");
+  contains("duration sensor shown in hours still reads right",
+    markup(make(both, history(st("2.5", { unit_of_measurement: "h" }), null))), "<b>2 h 30</b>");
+  check("unknown sensors hide both lines",
+    markup(make(both, history(st("unknown", {}), st("unknown", {})))).includes('class="history"'), false);
+  check("no sensors at all hides both lines", markup(make(both)).includes('class="history"'), false);
+
+  const noStart = markup(make(both, history(null, st("2026-10-09T17:45:00+00:00", {}))));
+  contains("end only when the start is missing", noStart, "17:45</b>");
+  const lastRow = (noStart.match(/Last mowing<\/span><b>([^<]*)<\/b>/u) || [])[1] || "";
+  check("no duration in brackets without one", lastRow.includes("("), false);
+
+  const twelve = history(null, last);
+  twelve.locale = { language: "en", time_format: "12" };
+  contains("12-hour profile", markup(make(both, twelve)), "02:00 PM → 05:45 PM");
+
+  const fr = history(yday, last);
+  fr.language = "fr";
+  fr.locale = { language: "fr", time_format: "24" };
+  const frHtml = markup(make(both, fr));
+  contains("French yesterday", frHtml, "Hier</span><b>2 h 10 · 210 m² · 62 %</b>");
+  contains("French last mowing", frHtml, "Dernière tonte");
+
+  const legacy = markup(make({ entity: "camera.robot_carte", show_last_mowing: false }, history(yday, last)));
+  check("legacy map-only card shows no history", legacy.includes('class="history"'), false);
+}
+
 // ── translations ────────────────────────────────────────────────────────────
 
 {
@@ -1040,8 +1096,9 @@ function rainy(extra = {}) {
 
   const schema = editor._form?.schema || [];
   const grid = schema.find((item) => item.type === "grid");
-  check("switches grouped in a grid to shorten the editor", grid?.schema?.length, 7);
+  check("switches grouped in a grid to shorten the editor", grid?.schema?.length, 9);
   check("values switch in the editor", grid?.schema?.some((item) => item.name === "show_values"), true);
+  check("history switches in the editor", ["show_yesterday", "show_last_mowing"].every((n) => grid?.schema?.some((item) => item.name === n)), true);
   check("grid adds no key of its own to the config", grid?.name === "" && grid?.flatten === true, true);
   check("every switch is in the grid", schema.filter((item) => item.selector?.boolean).length, 0);
   const frEditor = new Editor();

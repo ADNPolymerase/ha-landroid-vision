@@ -280,6 +280,12 @@
       },
       "task_remaining": {
         "name": "Rimanente dell'attività"
+      },
+      "mowing_time_yesterday": {
+        "name": "Tempo di taglio ieri"
+      },
+      "last_mowing": {
+        "name": "Ultimo taglio"
       }
     },
     "binary_sensor": {

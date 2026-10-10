@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.2.0 - 2026-10-10
+
+Yesterday's mowing and the last mowing, as sensors and as two optional lines on the card.
+
+### Added
+
+- **A Mowing time yesterday sensor.** The mowing time today had at midnight, kept across restarts, with the estimated area and share of the lawn in its `estimated_area` and `estimated_progress` attributes. It reads 0 after a day without mowing.
+- **A Last mowing sensor.** When the last finished mowing session ended, with its `start`, `duration` (mowing minutes), `zones` and `estimated_area` as attributes. Mowing that resumes within ten minutes continues the same session; a trip back to the station to charge starts a new one. It keeps the previous session while the mower mows, and survives restarts.
+- **Two optional lines on the card**, off by default: `show_yesterday` ("Yesterday 2 h 10 · 210 m² · 62%") and `show_last_mowing` ("Fri, Oct 9, 14:00 → 17:45 (3 h 45)"), with times in the user profile's format. Each line stays hidden while its sensor is missing or unknown. Both switches are in the card editor.
+
 ## 3.1.2 - 2026-10-06
 
 ### Fixed

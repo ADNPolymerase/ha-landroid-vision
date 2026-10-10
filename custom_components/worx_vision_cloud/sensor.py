@@ -1243,6 +1243,8 @@ async def async_setup_entry(
         entities.append(WorxRemainingProgressSensor(coordinator, entry, serial_number))
         entities.append(WorxEstimatedAreaTodaySensor(coordinator, entry, serial_number))
         entities.append(WorxEstimatedDailyProgressSensor(coordinator, entry, serial_number))
+        entities.append(WorxMowingTimeYesterdaySensor(coordinator, entry, serial_number))
+        entities.append(WorxLastMowingSensor(coordinator, entry, serial_number))
         entities.append(WorxTaskRemainingSensor(coordinator, entry, serial_number))
 
     def add_raw_entities() -> None:
@@ -1764,6 +1766,94 @@ class WorxEstimatedDailyProgressSensor(WorxEstimatedAreaTodaySensor):
         return {
             **super().extra_state_attributes,
             "lawn_area": _lawn_area(self.device),
+        }
+
+
+def _estimate_from_minutes(device, minutes: float | None) -> dict[str, Any]:
+    """Return the area and lawn share mowed in the given minutes."""
+    efficiency = _mowing_efficiency(device)
+    if minutes is None or efficiency is None:
+        return {"area": None, "progress": None}
+    area = round(minutes / 60 * efficiency, 2)
+    lawn_area = _lawn_area(device)
+    progress = None
+    if lawn_area not in (None, 0):
+        progress = round(max(0, min(100, area / lawn_area * 100)), 1)
+    return {"area": area, "progress": progress}
+
+
+class WorxMowingTimeYesterdaySensor(WorxVisionEntity, SensorEntity):
+    """Locally observed mowing time of the previous local day.
+
+    The figure today's mowing time had at midnight, kept by the coordinator's
+    persisted statistics, with the area and lawn share estimated the same way
+    as the estimated sensors for today.
+    """
+
+    _attr_translation_key = "mowing_time_yesterday"
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:history"
+
+    def __init__(self, coordinator, entry, serial_number: str) -> None:
+        """Initialize mowing time yesterday."""
+        super().__init__(coordinator, entry, serial_number, "mowing_time_yesterday")
+
+    @property
+    def native_value(self) -> float | None:
+        """Return yesterday's mowing minutes."""
+        return self.coordinator.mowing_minutes_yesterday(self._serial_number)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the estimated area and lawn share of yesterday."""
+        estimate = _estimate_from_minutes(
+            self.device,
+            self.coordinator.mowing_minutes_yesterday(self._serial_number),
+        )
+        return {
+            "source": "local_mowing_status_wall_clock",
+            "estimated_area": estimate["area"],
+            "estimated_progress": estimate["progress"],
+        }
+
+
+class WorxLastMowingSensor(WorxVisionEntity, SensorEntity):
+    """When the last finished mowing session ended.
+
+    A session is the time spent in the mowing and starting statuses. A
+    streak that resumes within ten minutes continues the same session; a
+    trip back to the station to charge starts a new one. Duration counts
+    mowing time only.
+    """
+
+    _attr_translation_key = "last_mowing"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:robot-mower-outline"
+
+    def __init__(self, coordinator, entry, serial_number: str) -> None:
+        """Initialize last mowing."""
+        super().__init__(coordinator, entry, serial_number, "last_mowing")
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Return when the last finished session ended."""
+        session = self.coordinator.last_mowing_session(self._serial_number)
+        return None if session is None else session["end"]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the start, duration, zones and estimated area."""
+        session = self.coordinator.last_mowing_session(self._serial_number)
+        if session is None:
+            return {}
+        estimate = _estimate_from_minutes(self.device, session["duration_min"])
+        return {
+            "start": session["start"].isoformat(),
+            "duration": session["duration_min"],
+            "zones": session["zones"],
+            "estimated_area": estimate["area"],
         }
 
 

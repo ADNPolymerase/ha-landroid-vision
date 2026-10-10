@@ -280,6 +280,12 @@
       },
       "task_remaining": {
         "name": "Осталось по заданию"
+      },
+      "mowing_time_yesterday": {
+        "name": "Время стрижки вчера"
+      },
+      "last_mowing": {
+        "name": "Последняя стрижка"
       }
     },
     "binary_sensor": {

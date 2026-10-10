@@ -280,6 +280,12 @@
       },
       "task_remaining": {
         "name": "Verbleibende Aufgabe"
+      },
+      "mowing_time_yesterday": {
+        "name": "Mähzeit gestern"
+      },
+      "last_mowing": {
+        "name": "Letztes Mähen"
       }
     },
     "binary_sensor": {

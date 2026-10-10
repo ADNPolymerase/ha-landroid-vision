@@ -280,6 +280,12 @@
       },
       "task_remaining": {
         "name": "Reste de la tâche"
+      },
+      "mowing_time_yesterday": {
+        "name": "Temps de tonte hier"
+      },
+      "last_mowing": {
+        "name": "Dernière tonte"
       }
     },
     "binary_sensor": {

@@ -280,6 +280,12 @@
       },
       "task_remaining": {
         "name": "Resterend van de taak"
+      },
+      "mowing_time_yesterday": {
+        "name": "Maaitijd gisteren"
+      },
+      "last_mowing": {
+        "name": "Laatste maaibeurt"
       }
     },
     "binary_sensor": {

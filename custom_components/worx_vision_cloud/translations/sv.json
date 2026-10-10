@@ -280,6 +280,12 @@
       },
       "task_remaining": {
         "name": "Återstående av uppgiften"
+      },
+      "mowing_time_yesterday": {
+        "name": "Klipptid igår"
+      },
+      "last_mowing": {
+        "name": "Senaste klippning"
       }
     },
     "binary_sensor": {

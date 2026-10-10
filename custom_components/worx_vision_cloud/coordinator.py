@@ -2252,6 +2252,9 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             now_utc=now_utc,
             local_day=local_now.date(),
             local_midnight_utc=local_midnight_utc,
+            # The zone settled on at the previous update: the raw RTK lookup
+            # flickers at zone borders and would list zones never mowed.
+            zone=getattr(device, "_worx_vision_zone_smoothed", None),
         )
         if changed:
             if self._statistics_save_pending:
@@ -2387,6 +2390,18 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             datetime.now(UTC),
             dt_util.now().date(),
         )
+
+    def mowing_minutes_yesterday(self, serial_number: str) -> float | None:
+        """Return locally observed mowing minutes for the previous local day."""
+        return self._statistics.mowing_minutes_yesterday(
+            serial_number,
+            datetime.now(UTC),
+            dt_util.now().date(),
+        )
+
+    def last_mowing_session(self, serial_number: str) -> dict[str, Any] | None:
+        """Return the last finished locally observed mowing session."""
+        return self._statistics.last_session(serial_number)
 
     def _update_cached_product_item(self, serial_number: str, **fields: Any) -> None:
         """Patch cached product item fields after a successful write."""

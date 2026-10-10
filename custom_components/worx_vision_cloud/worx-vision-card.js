@@ -32,6 +32,7 @@ const I18N = {
     ed_entity: "Mower", ed_title: "Title (optional)",
     ed_show_map: "RTK map", ed_show_zones: "One-time mowing", ed_show_controls: "Controls",
     ed_refresh_interval: "Map refresh (s)",
+    yesterday: "Yesterday", last_mowing: "Last mowing", no_mowing: "no mowing", ed_show_yesterday: "Yesterday's mowing", ed_show_last_mowing: "Last mowing",
   },
   fr: {
     party: "Mode festif", party_banner: "Mode festif : la tondeuse ne sortira pas, même pendant le programme.",
@@ -47,6 +48,7 @@ const I18N = {
     ed_entity: "Tondeuse", ed_title: "Titre (facultatif)",
     ed_show_map: "Carte RTK", ed_show_zones: "Tonte unique", ed_show_controls: "Commandes",
     ed_refresh_interval: "Rafraîchissement de la carte (s)",
+    yesterday: "Hier", last_mowing: "Dernière tonte", no_mowing: "aucune tonte", ed_show_yesterday: "Tonte d'hier", ed_show_last_mowing: "Dernière tonte",
   },
   de: {
     party: "Partymodus", party_banner: "Partymodus: Der Mäher fährt nicht los, auch nicht während des Zeitplans.",
@@ -62,6 +64,7 @@ const I18N = {
     ed_entity: "Mäher", ed_title: "Titel (optional)",
     ed_show_map: "RTK-Karte", ed_show_zones: "Einmaliges Mähen", ed_show_controls: "Steuerung",
     ed_refresh_interval: "Kartenaktualisierung (s)",
+    yesterday: "Gestern", last_mowing: "Letztes Mähen", no_mowing: "nicht gemäht", ed_show_yesterday: "Mähen von gestern", ed_show_last_mowing: "Letztes Mähen",
   },
   es: {
     party: "Modo fiesta", party_banner: "Modo fiesta: el cortacésped no saldrá, ni siquiera durante el programa.",
@@ -77,6 +80,7 @@ const I18N = {
     ed_entity: "Cortacésped", ed_title: "Título (opcional)",
     ed_show_map: "Mapa RTK", ed_show_zones: "Corte único", ed_show_controls: "Controles",
     ed_refresh_interval: "Actualización del mapa (s)",
+    yesterday: "Ayer", last_mowing: "Último corte", no_mowing: "sin corte", ed_show_yesterday: "Corte de ayer", ed_show_last_mowing: "Último corte",
   },
   it: {
     party: "Modalità festa", party_banner: "Modalità festa: il robot non uscirà, nemmeno durante il programma.",
@@ -92,6 +96,7 @@ const I18N = {
     ed_entity: "Robot tagliaerba", ed_title: "Titolo (facoltativo)",
     ed_show_map: "Mappa RTK", ed_show_zones: "Taglio singolo", ed_show_controls: "Comandi",
     ed_refresh_interval: "Aggiornamento mappa (s)",
+    yesterday: "Ieri", last_mowing: "Ultimo taglio", no_mowing: "nessun taglio", ed_show_yesterday: "Taglio di ieri", ed_show_last_mowing: "Ultimo taglio",
   },
   nl: {
     party: "Feestmodus", party_banner: "Feestmodus: de maaier gaat niet naar buiten, ook niet tijdens het schema.",
@@ -107,6 +112,7 @@ const I18N = {
     ed_entity: "Maaier", ed_title: "Titel (optioneel)",
     ed_show_map: "RTK-kaart", ed_show_zones: "Eenmalig maaien", ed_show_controls: "Bediening",
     ed_refresh_interval: "Kaartverversing (s)",
+    yesterday: "Gisteren", last_mowing: "Laatste maaibeurt", no_mowing: "niet gemaaid", ed_show_yesterday: "Maaien van gisteren", ed_show_last_mowing: "Laatste maaibeurt",
   },
   pl: {
     party: "Tryb imprezy", party_banner: "Tryb imprezy: kosiarka nie wyjedzie, nawet w czasie harmonogramu.",
@@ -122,6 +128,7 @@ const I18N = {
     ed_entity: "Kosiarka", ed_title: "Tytuł (opcjonalnie)",
     ed_show_map: "Mapa RTK", ed_show_zones: "Koszenie jednorazowe", ed_show_controls: "Sterowanie",
     ed_refresh_interval: "Odświeżanie mapy (s)",
+    yesterday: "Wczoraj", last_mowing: "Ostatnie koszenie", no_mowing: "bez koszenia", ed_show_yesterday: "Koszenie wczoraj", ed_show_last_mowing: "Ostatnie koszenie",
   },
   ru: {
     party: "Режим вечеринки", party_banner: "Режим вечеринки: косилка не выедет, даже по расписанию.",
@@ -137,6 +144,7 @@ const I18N = {
     ed_entity: "Косилка", ed_title: "Заголовок (необязательно)",
     ed_show_map: "Карта RTK", ed_show_zones: "Разовое кошение", ed_show_controls: "Управление",
     ed_refresh_interval: "Обновление карты (с)",
+    yesterday: "Вчера", last_mowing: "Последняя стрижка", no_mowing: "без стрижки", ed_show_yesterday: "Стрижка вчера", ed_show_last_mowing: "Последняя стрижка",
   },
   sv: {
     party: "Festläge", party_banner: "Festläge: klipparen kör inte ut, inte ens under schemat.",
@@ -152,6 +160,7 @@ const I18N = {
     ed_entity: "Klippare", ed_title: "Titel (valfritt)",
     ed_show_map: "RTK-karta", ed_show_zones: "Engångsklippning", ed_show_controls: "Reglage",
     ed_refresh_interval: "Kartuppdatering (s)",
+    yesterday: "Igår", last_mowing: "Senaste klippning", no_mowing: "ingen klippning", ed_show_yesterday: "Gårdagens klippning", ed_show_last_mowing: "Senaste klippning",
   },
   no: {
     party: "Festmodus", party_banner: "Festmodus: klipperen kjører ikke ut, heller ikke i tidsplanen.",
@@ -167,6 +176,7 @@ const I18N = {
     ed_entity: "Klipper", ed_title: "Tittel (valgfritt)",
     ed_show_map: "RTK-kart", ed_show_zones: "Engangsklipping", ed_show_controls: "Kontroller",
     ed_refresh_interval: "Kartoppdatering (s)",
+    yesterday: "I går", last_mowing: "Siste klipping", no_mowing: "ingen klipping", ed_show_yesterday: "Gårsdagens klipping", ed_show_last_mowing: "Siste klipping",
   },
   da: {
     party: "Festtilstand", party_banner: "Festtilstand: robotten kører ikke ud, heller ikke i tidsplanen.",
@@ -182,6 +192,7 @@ const I18N = {
     ed_entity: "Robotplæneklipper", ed_title: "Titel (valgfri)",
     ed_show_map: "RTK-kort", ed_show_zones: "Engangsklipning", ed_show_controls: "Betjening",
     ed_refresh_interval: "Kortopdatering (s)",
+    yesterday: "I går", last_mowing: "Seneste klipning", no_mowing: "ingen klipning", ed_show_yesterday: "Gårsdagens klipning", ed_show_last_mowing: "Seneste klipning",
   },
 };
 
@@ -311,6 +322,8 @@ function resolveEntities(hass, entityId) {
     party: find("switch", "party_mode"),
     rainRemaining: find("sensor", "rain_remaining"),
     task: find("sensor", "task_remaining"),
+    yesterday: find("sensor", "mowing_time_yesterday"),
+    lastMowing: find("sensor", "last_mowing"),
     rainDelay: find("number", "rain_delay_minutes"),
     maintenance: find("sensor", "maintenance_status"),
     bladeCurrent: find("sensor", "blade_runtime_current"),
@@ -366,6 +379,8 @@ const DEFAULTS = {
   show_schedule: true,
   show_blades: true,
   show_values: true,
+  show_yesterday: false,
+  show_last_mowing: false,
   refresh_interval: 30,
   fit: "contain",
   aspect_ratio: "900 / 620",
@@ -492,7 +507,7 @@ class WorxVisionCard extends HTMLElement {
       ? [ents.mower, ents.status, ents.battery, ents.zoneCurrent, ents.camera, ents.zoneSelect,
         ents.rssi, ents.error, ents.schedule, ents.nextSchedule,
         ents.maintenance, ents.bladeReset, ents.calendar, ents.party, ents.bladeCurrent,
-        ents.rainRemaining, ents.rainDelay, ents.task,
+        ents.rainRemaining, ents.rainDelay, ents.task, ents.yesterday, ents.lastMowing,
         ...ents.zones.flatMap((z) => [z.pattern, z.angle])]
       : [this._config.entity];
     const snap = ids.filter(Boolean).map((id) => {
@@ -501,7 +516,8 @@ class WorxVisionCard extends HTMLElement {
         s.attributes?.supported_features, s.attributes?.rain_delay, s.attributes?.zone_name, s.attributes?.by_day,
         s.attributes?.blade_runtime_since_reset, s.attributes?.blade_service_threshold_minutes,
         s.attributes?.blade_runtime_reset_at, s.attributes?.start_time, s.attributes?.end_time,
-        s.attributes?.zones, s.attributes?.active, s.last_changed] : [id];
+        s.attributes?.zones, s.attributes?.active, s.attributes?.start, s.attributes?.duration,
+        s.attributes?.estimated_area, s.attributes?.estimated_progress, s.last_changed] : [id];
     });
     return stableStringify([snap, this._selected, this._order, this._edge, this._busy,
       this._notice, this._scheduleOpen, this._confirmReset, this._zonesOpen, this._armed, language(this._hass), this._config]);
@@ -545,6 +561,7 @@ class WorxVisionCard extends HTMLElement {
       this._show("show_map") ? this._map(ents) : "",
       this._show("show_zones") ? this._zones(ents) : "",
       ents.mower && this._show("show_schedule") ? this._schedule(ents) : "",
+      ents.mower ? this._history(ents) : "",
       ents.mower && this._show("show_blades") ? this._blades(ents) : "",
     ].join("");
   }
@@ -703,6 +720,58 @@ class WorxVisionCard extends HTMLElement {
       + (pct === null ? "" : `<div class="bar"><div class="bar-fill${level}" style="width:${pct}%"></div></div>`)
       + (details ? `<div class="blades-details">${escapeHtml(details)}</div>` : "")
       + `${action}${this._notice && canReset ? `<div class="notice ${this._notice.ok ? "ok" : "error"}">${escapeHtml(this._notice.text)}</div>` : ""}</div>`;
+  }
+
+  /** Optional lines: yesterday's mowing and the last finished session. */
+  _history(ents) {
+    const hass = this._hass;
+    const lang = localeOf(hass);
+    const rows = [];
+    const row = (icon, label, value, entityId) => `<div class="history-row link"${moreInfo(entityId)}>`
+      + `<ha-icon icon="${icon}"></ha-icon><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></div>`;
+
+    if (this._show("show_yesterday") && ents.yesterday) {
+      const stateObj = hass.states[ents.yesterday];
+      const minutes = durationMinutes(stateObj);
+      if (Number.isFinite(minutes)) {
+        const parts = [];
+        if (Math.round(minutes) > 0) {
+          parts.push(formatMinutes(minutes));
+          const area = Number(stateObj.attributes?.estimated_area);
+          if (stateObj.attributes?.estimated_area != null && Number.isFinite(area)) {
+            parts.push(`${new Intl.NumberFormat(lang, { maximumFractionDigits: 0 }).format(area)} m²`);
+          }
+          const progress = Number(stateObj.attributes?.estimated_progress);
+          if (stateObj.attributes?.estimated_progress != null && Number.isFinite(progress)) {
+            parts.push(new Intl.NumberFormat(lang, { style: "percent", maximumFractionDigits: 0 }).format(progress / 100));
+          }
+        } else {
+          parts.push(t(hass, "no_mowing"));
+        }
+        rows.push(row("mdi:history", t(hass, "yesterday"), parts.join(" · "), ents.yesterday));
+      }
+    }
+
+    if (this._show("show_last_mowing") && ents.lastMowing) {
+      const stateObj = hass.states[ents.lastMowing];
+      const end = usable(stateObj) ? Date.parse(stateObj.state) : NaN;
+      if (Number.isFinite(end)) {
+        const format = hass?.locale?.time_format;
+        const hour12 = format === "12" ? true : format === "24" ? false : undefined;
+        const clock = (ms) => new Date(ms).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", hour12 });
+        const start = Date.parse(stateObj.attributes?.start);
+        const date = new Date(Number.isFinite(start) ? start : end)
+          .toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" });
+        let text = Number.isFinite(start) ? `${date}, ${clock(start)} → ${clock(end)}` : `${date}, ${clock(end)}`;
+        const duration = Number(stateObj.attributes?.duration);
+        if (stateObj.attributes?.duration != null && Number.isFinite(duration)) {
+          text += ` (${formatMinutes(duration)})`;
+        }
+        rows.push(row("mdi:robot-mower-outline", t(hass, "last_mowing"), text, ents.lastMowing));
+      }
+    }
+
+    return rows.length ? `<div class="history">${rows.join("")}</div>` : "";
   }
 
   async _toggleParty() {
@@ -1094,6 +1163,10 @@ const STYLES = `
   .error-title { font-weight: 500; }
   .error-when { font-size: 0.85em; opacity: 0.9; }
   .blades { padding: 10px 16px 14px; border-top: 1px solid var(--divider-color); }
+  .history { padding: 8px 16px; border-top: 1px solid var(--divider-color); display: grid; gap: 4px; }
+  .history-row { display: flex; align-items: center; gap: 8px; color: var(--secondary-text-color); font-size: 0.9em; }
+  .history-row ha-icon { --mdc-icon-size: 18px; }
+  .history-row b { margin-left: auto; font-weight: 500; color: var(--primary-text-color); text-align: right; }
   .blades-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--primary-text-color); }
   .blades-row b { font-weight: 500; }
   .bar { height: 6px; border-radius: 3px; background: var(--secondary-background-color); margin-top: 8px; overflow: hidden; }
@@ -1210,6 +1283,8 @@ const EDITOR_SCHEMA = [
       { name: "show_schedule", selector: { boolean: {} } },
       { name: "show_blades", selector: { boolean: {} } },
       { name: "show_values", selector: { boolean: {} } },
+      { name: "show_yesterday", selector: { boolean: {} } },
+      { name: "show_last_mowing", selector: { boolean: {} } },
     ],
   },
   { name: "refresh_interval", selector: { number: { min: 0, max: 3600, mode: "box", unit_of_measurement: "s" } } },
