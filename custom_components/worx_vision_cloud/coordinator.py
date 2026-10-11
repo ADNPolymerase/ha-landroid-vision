@@ -174,6 +174,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         self._zone_unknown_since: dict[str, datetime] = {}
         self._event_lock = asyncio.Lock()
         self._rtk_address_lock = asyncio.Lock()
+        self._mqtt_reconnect_lock = asyncio.Lock()
         self._last_rtk_address_lookup: datetime | None = None
         self._rtk_map_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._rtk_address_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
@@ -763,9 +764,66 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
         _LOGGER.warning(
             "Worx MQTT connection is not ready; reconnecting before command"
         )
-        await self.cloud.connect()
+        await self._async_reconnect_mqtt()
         if not getattr(self.cloud, "mqtt_connected", False):
             raise HomeAssistantError("Worx MQTT connection is not ready")
+
+    async def _async_reconnect_mqtt(self, stale_client: Any = None) -> None:
+        """Reconnect MQTT, stopping the previous client first.
+
+        Reconnects are serialized: when two commands find the connection down
+        at the same time, the second one reuses the client the first one
+        opened. ``stale_client`` is the client a publish just failed on; it is
+        replaced even if pyworxcloud still reports it as connected.
+        """
+        async with self._mqtt_reconnect_lock:
+            current = getattr(self.cloud, "mqtt", None)
+            if getattr(self.cloud, "mqtt_connected", False) and (
+                stale_client is None or current is not stale_client
+            ):
+                return
+            await self._async_release_stale_mqtt()
+            await self.cloud.connect()
+
+    async def _async_release_stale_mqtt(self) -> None:
+        """Stop the previous MQTT client before connect() creates a new one.
+
+        pyworxcloud 6.4.2's connect() always creates a new MQTT client with a
+        new client id and does not stop the old one. The old paho client keeps
+        reconnecting in its own thread and delivering the same updates, so
+        every reconnect would leave one more client behind. The library's own
+        background retry task is stopped as well: connect() replaces the event
+        it watches, and the task would otherwise replace the new client later.
+        Brought over from SmartServicePL 1.6.0.
+        """
+        cloud = self.cloud
+        retry_task = getattr(cloud, "_mqtt_retry_task", None)
+        if retry_task is not None and not retry_task.done():
+            retry_task.cancel()
+            # asyncio.wait neither raises the task's outcome nor swallows a
+            # cancellation of this coroutine, unlike awaiting the task itself.
+            await asyncio.wait({retry_task})
+            if not retry_task.cancelled() and retry_task.exception() is not None:
+                _LOGGER.debug(
+                    "Worx MQTT retry task ended with an error",
+                    exc_info=retry_task.exception(),
+                )
+        if retry_task is not None:
+            cloud._mqtt_retry_task = None
+
+        if getattr(cloud, "mqtt", None) is None:
+            return
+        disconnect_mqtt = getattr(cloud, "_disconnect_mqtt", None)
+        if disconnect_mqtt is None:
+            _LOGGER.debug(
+                "pyworxcloud has no _disconnect_mqtt; the old MQTT client is left running"
+            )
+            return
+        try:
+            await disconnect_mqtt(_LOGGER)
+        except Exception:  # noqa: BLE001 - a broken old client must not block reconnecting
+            _LOGGER.debug("Could not stop the previous Worx MQTT client", exc_info=True)
+            cloud.mqtt = None
 
     def is_firmware_update_in_progress(self, serial_number: str) -> bool:
         """Return whether that mower is currently applying a firmware update."""
@@ -920,7 +978,7 @@ class WorxVisionCoordinator(DataUpdateCoordinator[dict[str, DeviceHandler]]):
             _LOGGER.warning(
                 "Worx MQTT command failed because connection was stale; retrying once"
             )
-            await self.cloud.connect()
+            await self._async_reconnect_mqtt(stale_client=mqtt)
             mqtt = getattr(self.cloud, "mqtt", None)
             if mqtt is None:
                 raise HomeAssistantError("Worx MQTT connection is not available")

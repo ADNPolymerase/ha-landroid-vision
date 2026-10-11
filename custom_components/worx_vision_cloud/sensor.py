@@ -105,6 +105,8 @@ STATUS_STATE_KEYS = {
     "zoning": "zoning",
     "border crossing": "border_crossing",
     "exploring lawn": "exploring_lawn",
+    # Status 12, the mower driven by hand from the Worx app.
+    "remote control": "remote_control",
     "mowing": "mowing",
     "cutting edge": "edge_cutting",
     "edge cutting": "edge_cutting",
@@ -133,6 +135,7 @@ STATUS_STATE_OPTIONS = [
     "zoning",
     "border_crossing",
     "exploring_lawn",
+    "remote_control",
     "mowing",
     "edge_cutting",
     "charging",

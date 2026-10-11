@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.2.1 - 2026-10-11
+
+Fixes brought over from the upstream integration, [SmartServicePL/worx_vision_cloud_plus_github](https://github.com/SmartServicePL/worx_vision_cloud_plus_github) 1.6.0.
+
+### Fixed
+
+- **A reconnect no longer leaves the previous MQTT client running.** pyworxcloud 6.4.2 creates a new MQTT client on every `connect()` without stopping the old one, which kept reconnecting in the background and delivered the same updates again. Before reconnecting for a command, the integration now stops the previous client and the library's background retry. Two commands that find the connection down at the same time open a single new connection, and a command that failed on a stale connection always replaces the client it failed on.
+- **The Status sensor knows status 12.** A mower driven by hand from the Worx app now reads "Remote control" instead of unknown.
+
 ## 3.2.0 - 2026-10-10
 
 Yesterday's mowing and the last mowing, as sensors and as two optional lines on the card.
