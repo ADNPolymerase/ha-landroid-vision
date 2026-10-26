@@ -279,6 +279,9 @@
       "zone_mowing_angle": {
         "name": "Схема кошения {zone} угол"
       },
+      "zone_cutting_height": {
+        "name": "Высота стрижки {zone}"
+      },
       "task_remaining": {
         "name": "Осталось по заданию"
       },

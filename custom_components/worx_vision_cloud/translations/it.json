@@ -279,6 +279,9 @@
       "zone_mowing_angle": {
         "name": "Schema di taglio {zone} angolo"
       },
+      "zone_cutting_height": {
+        "name": "Altezza di taglio {zone}"
+      },
       "task_remaining": {
         "name": "Rimanente dell'attività"
       },

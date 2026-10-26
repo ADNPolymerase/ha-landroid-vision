@@ -279,6 +279,9 @@
       "zone_mowing_angle": {
         "name": "Patrón de corte {zone} ángulo"
       },
+      "zone_cutting_height": {
+        "name": "Altura de corte {zone}"
+      },
       "task_remaining": {
         "name": "Restante de la tarea"
       },

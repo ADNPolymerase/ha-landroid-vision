@@ -20,6 +20,7 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfArea,
     UnitOfElectricPotential,
+    UnitOfLength,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -1233,6 +1234,10 @@ async def async_setup_entry(
             entities.append(
                 WorxZoneAngleSensor(coordinator, entry, serial_number, zone_id)
             )
+            if rtk_zone_cuts(device).get(zone_id, {}).get("height") is not None:
+                entities.append(
+                    WorxZoneHeightSensor(coordinator, entry, serial_number, zone_id)
+                )
         entities.append(
             WorxStateDurationSensor(coordinator, entry, serial_number, "dock")
         )
@@ -1471,6 +1476,26 @@ class WorxZoneAngleSensor(_WorxZoneCutSensor):
     def native_value(self) -> int | None:
         """Return the angle in degrees."""
         return self._cut().get("direction")
+
+
+class WorxZoneHeightSensor(_WorxZoneCutSensor):
+    """Cutting height of one RTK zone, in millimetres, as the mower reports it.
+
+    Only created on mowers whose zone config carries a height (electric
+    height adjustment). The mower-wide height stays on the cutting height
+    number entity.
+    """
+
+    _kind = "cutting_height"
+    _attr_translation_key = "zone_cutting_height"
+    _attr_icon = "mdi:grass"
+    _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_native_unit_of_measurement = UnitOfLength.MILLIMETERS
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the height in millimetres."""
+        return self._cut().get("height")
 
 
 LAST_UPDATE_REPORT_INTERVAL = timedelta(hours=24)

@@ -279,6 +279,9 @@
       "zone_mowing_angle": {
         "name": "Motif {zone} angle"
       },
+      "zone_cutting_height": {
+        "name": "Hauteur de coupe {zone}"
+      },
       "task_remaining": {
         "name": "Reste de la tâche"
       },

@@ -1,4 +1,4 @@
-"""Tests for each RTK zone's mowing pattern and angle, read only."""
+"""Tests for each RTK zone's mowing pattern, angle and height, read only."""
 
 from __future__ import annotations
 
@@ -92,6 +92,30 @@ class ZoneCutsTests(unittest.TestCase):
         self.assertIsNone(cuts[1]["pattern"])
         self.assertIsNone(cuts[1]["direction"])
         self.assertIsNone(cuts[2]["pattern"])
+
+    def test_height_is_read_from_the_zone_module(self) -> None:
+        device = _device(
+            [
+                {"id": 1, "cfg": {"cut": {"t": 5, "d": 47}, "modules": {"EA": {"h": 30}}}},
+                {"id": 2, "cfg": {"cut": {"t": 1, "d": 0}, "modules": {"EA": {"h": "45"}}}},
+            ],
+            [],
+        )
+        cuts = HELPERS.rtk_zone_cuts(device)
+        self.assertEqual(cuts[1]["height"], 30)
+        self.assertEqual(cuts[2]["height"], 45)
+
+    def test_height_is_none_without_electric_adjustment(self) -> None:
+        device = _device(
+            [
+                {"id": 1, "cfg": {"cut": {"t": 1, "d": 10}}},
+                {"id": 2, "cfg": {"cut": {"t": 1}, "modules": {"EA": {"h": "x"}}}},
+            ],
+            [],
+        )
+        cuts = HELPERS.rtk_zone_cuts(device)
+        self.assertIsNone(cuts[1]["height"])
+        self.assertIsNone(cuts[2]["height"])
 
 
 if __name__ == "__main__":

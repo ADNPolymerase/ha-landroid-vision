@@ -453,12 +453,13 @@ ZONE_CUT_PATTERN_OPTIONS = [*ZONE_CUT_PATTERNS.values(), "other"]
 
 
 def rtk_zone_cuts(device: Any) -> dict[int, dict[str, Any]]:
-    """Return each RTK zone's mowing pattern and angle, keyed by zone id.
+    """Return each RTK zone's mowing pattern, angle and height, keyed by zone id.
 
-    Read from the mower's own per-zone config (`cfg.rtk.zs[].cfg.cut`), which
+    Read from the mower's own per-zone config (`cfg.rtk.zs[].cfg`), which
     the mower updates once a change made in the Worx app is activated, so it
-    shows what the mower will actually mow. `t` is the pattern, `d` the angle
-    in degrees.
+    shows what the mower will actually mow. In `cut`, `t` is the pattern and
+    `d` the angle in degrees. The cutting height in millimetres is
+    `modules.EA.h`, only on mowers with electric height adjustment.
     """
     names = rtk_zone_names(device)
     cuts: dict[int, dict[str, Any]] = {}
@@ -481,11 +482,16 @@ def rtk_zone_cuts(device: Any) -> dict[int, dict[str, Any]]:
             direction = int(cutting["d"]) % 360 if cutting.get("d") is not None else None
         except (TypeError, ValueError):
             direction = None
+        try:
+            height = int(zone["height"]) if zone.get("height") is not None else None
+        except (TypeError, ValueError):
+            height = None
         cuts[zone_id] = {
             "name": names.get(zone_id),
             "pattern": None if code is None else ZONE_CUT_PATTERNS.get(code, "other"),
             "pattern_code": code,
             "direction": direction,
+            "height": height,
         }
     return cuts
 
@@ -553,6 +559,7 @@ def rtk_map_attributes(device: Any) -> dict[str, Any]:
             {
                 "id": get_dict_value(zone, "id"),
                 "cutting": get_nested_value(zone, "cfg", "cut", default={}),
+                "height": get_nested_value(zone, "cfg", "modules", "EA", "h"),
                 "schedule": get_nested_value(zone, "cfg", "sc", default={}),
             }
             for zone in zones

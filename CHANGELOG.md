@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.0-beta1 - 2026-10-26
+
+Beta. Built from a user's diagnostics: the maintainer's mower has no electric height adjustment, so this has not been tested on a real mower yet.
+
+### Added
+
+- **A Cutting height sensor for each RTK zone.** Read only, in millimetres, from the mower's own zone config (`cfg.rtk.zs[].cfg.modules.EA.h`), next to the existing pattern and angle sensors. It is created only on mowers whose zones carry a height, so mowers without electric height adjustment get no new entity. The Cutting height number keeps reading and writing the mower-wide height, between 20 and 60 mm.
+
 ## 3.2.1 - 2026-10-11
 
 Fixes brought over from the upstream integration, [SmartServicePL/worx_vision_cloud_plus_github](https://github.com/SmartServicePL/worx_vision_cloud_plus_github) 1.6.0.

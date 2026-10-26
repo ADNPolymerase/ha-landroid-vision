@@ -279,6 +279,9 @@
       "zone_mowing_angle": {
         "name": "Mähmuster {zone} Winkel"
       },
+      "zone_cutting_height": {
+        "name": "Schnitthöhe {zone}"
+      },
       "task_remaining": {
         "name": "Verbleibende Aufgabe"
       },

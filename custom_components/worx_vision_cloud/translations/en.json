@@ -279,6 +279,9 @@
       "zone_mowing_angle": {
         "name": "Mowing pattern {zone} angle"
       },
+      "zone_cutting_height": {
+        "name": "Cutting height {zone}"
+      },
       "task_remaining": {
         "name": "Task remaining"
       },
