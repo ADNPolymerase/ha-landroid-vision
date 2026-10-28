@@ -1141,17 +1141,37 @@ def next_schedule_start(device: Any, now: datetime) -> datetime | None:
     return min(candidates) if candidates else None
 
 
+def _zone_code(value: Any) -> int | None:
+    """Return a pattern code as an int, or None when it is missing."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _zone_direction(value: Any) -> int | None:
+    """Return a cutting direction in degrees within a turn, or None."""
+    try:
+        return int(float(value)) % 360
+    except (TypeError, ValueError):
+        return None
+
+
 def rtk_zone_names(device: Any) -> dict[int, str]:
     """Map RTK zone ids to the names configured in the Worx app.
 
     The schedule config (cfg.rtk.zs) carries the zone ids the mower accepts
-    for one-time mowing but no names, while the map holds the names without
-    those ids. Both sides expose the cutting direction, so zones are paired
-    on it when every direction is distinct, and by order otherwise. Transit
-    zones are skipped: they have no cutting metadata and no schedule entry.
+    for one-time mowing but no names. The map carries the names, and each
+    work zone's `summary` holds its id (`type` 2), numbered like cfg.rtk.zs.
+    Transit zones (`type` 1, no cutting metadata) are numbered separately and
+    skipped. When the map ids cover every configured zone they are used as
+    is. Otherwise zones are paired on what both sides expose: pattern and
+    direction together, then direction alone, each only when the value is
+    unique on both sides. Zones that stay ambiguous are left unnamed rather
+    than guessed from the map order.
     """
     cfg_zones = rtk_map_attributes(device).get("zones", []) or []
-    pairs: list[tuple[int, Any]] = []
+    pairs: list[tuple[int, int | None, int | None]] = []
     for zone in cfg_zones:
         try:
             zone_id = int(get_dict_value(zone, "id"))
@@ -1159,11 +1179,17 @@ def rtk_zone_names(device: Any) -> dict[int, str]:
             continue
         if zone_id > 0:
             pairs.append(
-                (zone_id, get_nested_value(zone, "cutting", "d", default=None))
+                (
+                    zone_id,
+                    _zone_code(get_nested_value(zone, "cutting", "t", default=None)),
+                    _zone_direction(
+                        get_nested_value(zone, "cutting", "d", default=None)
+                    ),
+                )
             )
 
     map_data = getattr(device, "_worx_vision_rtk_map", None)
-    map_zones: list[tuple[str, Any]] = []
+    map_zones: list[tuple[str, int | None, int | None, int | None]] = []
     if isinstance(map_data, dict):
         boundaries = (
             get_nested_value(map_data, "layers", "boundaries", default=[]) or []
@@ -1177,36 +1203,61 @@ def rtk_zone_names(device: Any) -> dict[int, str]:
                     key in metadata for key in ("cut_type", "cut_direction")
                 ):
                     continue
+                summary = get_dict_value(zone, "summary", {}) or {}
+                if not isinstance(summary, dict):
+                    summary = {}
+                if _zone_code(get_dict_value(summary, "type")) == 1:
+                    continue
                 name = get_dict_value(zone, "name")
                 if name in (None, ""):
                     continue
                 map_zones.append(
-                    (str(name), get_dict_value(metadata, "cut_direction"))
+                    (
+                        str(name),
+                        _zone_code(get_dict_value(summary, "id")),
+                        _zone_code(get_dict_value(metadata, "cut_type")),
+                        _zone_direction(get_dict_value(metadata, "cut_direction")),
+                    )
                 )
 
     if not pairs or not map_zones:
         return {}
 
     names: dict[int, str] = {}
-    cfg_dirs = [d for _, d in pairs if d is not None]
-    map_dirs = [d for _, d in map_zones if d is not None]
+    cfg_ids = {zone_id for zone_id, _, _ in pairs}
+    map_ids = [map_id for _, map_id, _, _ in map_zones]
     if (
-        len(cfg_dirs) == len(pairs)
-        and len(map_dirs) == len(map_zones)
-        and len(set(cfg_dirs)) == len(cfg_dirs)
-        and len(set(map_dirs)) == len(map_dirs)
+        None not in map_ids
+        and len(set(map_ids)) == len(map_ids)
+        and cfg_ids <= set(map_ids)
     ):
-        by_direction = {direction: name for name, direction in map_zones}
-        for zone_id, direction in pairs:
-            name = by_direction.get(direction)
-            if name is not None:
-                names[zone_id] = name
-
-    if len(names) != len(pairs):
-        # Directions were ambiguous or missing: fall back to map order.
-        names = {}
-        for (zone_id, _), (name, _) in zip(sorted(pairs), map_zones):
-            names[zone_id] = name
+        by_id = {map_id: name for name, map_id, _, _ in map_zones}
+        names = {zone_id: by_id[zone_id] for zone_id in cfg_ids}
+    else:
+        cfg_left = {zone_id: (t, d) for zone_id, t, d in pairs}
+        map_left = {index: (t, d) for index, (_, _, t, d) in enumerate(map_zones)}
+        keys = (
+            lambda t, d: (t, d) if t is not None else None,
+            lambda t, d: d,
+        )
+        for key in keys:
+            cfg_keys: dict[Any, list[int]] = {}
+            for zone_id, (t, d) in cfg_left.items():
+                if (value := key(t, d)) is not None:
+                    cfg_keys.setdefault(value, []).append(zone_id)
+            map_keys: dict[Any, list[int]] = {}
+            for index, (t, d) in map_left.items():
+                if (value := key(t, d)) is not None:
+                    map_keys.setdefault(value, []).append(index)
+            for value, zone_ids in cfg_keys.items():
+                indexes = map_keys.get(value, [])
+                if len(zone_ids) == 1 and len(indexes) == 1:
+                    names[zone_ids[0]] = map_zones[indexes[0]][0]
+                    del cfg_left[zone_ids[0]]
+                    del map_left[indexes[0]]
+        if len(cfg_left) == 1 and len(map_left) == 1:
+            # The last zone on each side can only be this one.
+            names[next(iter(cfg_left))] = map_zones[next(iter(map_left))][0]
 
     # Keep labels unambiguous if the app reuses a name across zones.
     seen: dict[str, int] = {}

@@ -118,5 +118,93 @@ class ZoneCutsTests(unittest.TestCase):
         self.assertIsNone(cuts[2]["height"])
 
 
+
+def _zone(zone_id: int, pattern: int, direction: int | None) -> dict:
+    cut = {"t": pattern} if direction is None else {"t": pattern, "d": direction}
+    return {"id": zone_id, "cfg": {"cut": cut}}
+
+
+def _named(
+    name: str, pattern: int, direction: int | None, zone_id: int | None = None
+) -> dict:
+    metadata = {"cut_type": pattern}
+    if direction is not None:
+        metadata["cut_direction"] = direction
+    zone = {"name": name, "metadata": metadata}
+    if zone_id is not None:
+        zone["summary"] = {"id": zone_id, "type": 2}
+    return zone
+
+
+# Eight fictional zones: two share a direction but not a pattern, two share
+# both, and one has no direction. The map lists them in another order.
+ZONES = [
+    _zone(1, 1, 10),
+    _zone(2, 1, 30),
+    _zone(3, 5, 30),
+    _zone(4, 1, 60),
+    _zone(5, 1, 90),
+    _zone(6, 1, 90),
+    _zone(7, 4, 120),
+    _zone(8, 0, None),
+]
+MAP = [
+    ("Orchard", 7, 4, 120),
+    ("Pond", 6, 1, 90),
+    ("Terrace", 3, 5, 30),
+    ("Meadow", 8, 0, None),
+    ("Hedge", 5, 1, 90),
+    ("Front lawn", 1, 1, 10),
+    ("Path", 2, 1, 30),
+    ("Back lawn", 4, 1, 60),
+]
+
+
+class ZoneNamesTests(unittest.TestCase):
+    def test_map_zone_ids_name_every_zone(self) -> None:
+        transit = {"name": "1", "metadata": {}, "summary": {"id": 1, "type": 1}}
+        device = _device(
+            ZONES,
+            [transit] + [_named(n, t, d, i) for n, i, t, d in MAP],
+        )
+        self.assertEqual(
+            HELPERS.rtk_zone_names(device),
+            {i: n for n, i, _, _ in MAP},
+        )
+
+    def test_transit_zone_with_cutting_metadata_is_skipped(self) -> None:
+        transit = _named("Corridor", 1, 10)
+        transit["summary"] = {"id": 1, "type": 1}
+        device = _device(
+            [_zone(1, 1, 10)], [transit, _named("Front lawn", 1, 10, 1)]
+        )
+        self.assertEqual(HELPERS.rtk_zone_names(device), {1: "Front lawn"})
+
+    def test_without_ids_unique_pattern_and_direction_pair_zones(self) -> None:
+        device = _device(ZONES, [_named(n, t, d) for n, _, t, d in MAP])
+        names = HELPERS.rtk_zone_names(device)
+        self.assertEqual(names[1], "Front lawn")
+        self.assertEqual(names[2], "Path")
+        self.assertEqual(names[3], "Terrace")
+        self.assertEqual(names[4], "Back lawn")
+        self.assertEqual(names[7], "Orchard")
+        self.assertEqual(names[8], "Meadow")
+
+    def test_without_ids_ambiguous_zones_stay_unnamed(self) -> None:
+        device = _device(ZONES, [_named(n, t, d) for n, _, t, d in MAP])
+        names = HELPERS.rtk_zone_names(device)
+        self.assertNotIn(5, names)
+        self.assertNotIn(6, names)
+
+    def test_ids_not_covering_every_zone_fall_back_to_cutting(self) -> None:
+        device = _device(
+            [_zone(1, 1, 10), _zone(2, 1, 30)],
+            [_named("Front lawn", 1, 10, 1), _named("Path", 1, 30)],
+        )
+        self.assertEqual(
+            HELPERS.rtk_zone_names(device), {1: "Front lawn", 2: "Path"}
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
