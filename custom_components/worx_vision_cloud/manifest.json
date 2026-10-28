@@ -21,5 +21,5 @@
   "requirements": [
     "pyworxcloud==6.4.2"
   ],
-  "version": "3.3.0-beta2"
+  "version": "3.3.0"
 }

@@ -1,20 +1,14 @@
 # Changelog
 
-## 3.3.0-beta2 - 2026-10-28
+## 3.3.0 - 2026-10-28
 
-Beta.
+### Added
+
+- **A Cutting height sensor for each RTK zone.** Read only, in millimetres, from the mower's own zone config (`cfg.rtk.zs[].cfg.modules.EA.h`), next to the existing pattern and angle sensors. It is created only on mowers whose zones carry a height, so mowers without electric height adjustment get no new entity. The Cutting height number keeps reading and writing the mower-wide height, between 20 and 60 mm. Built from a user's diagnostics and not yet confirmed on a mower with electric height adjustment: if the values differ from the Worx app, please report it in [#3](https://github.com/ADNPolymerase/ha-landroid-vision/issues/3).
 
 ### Fixed
 
 - **RTK zone names follow the right zone numbers again** ([#4](https://github.com/ADNPolymerase/ha-landroid-vision/issues/4)). Names come from the map and numbers from the mower's config. They were paired on the cutting direction only when every direction was unique; one duplicate, or a zone without a direction, paired the whole list by map order and mixed the names up. The map gives each work zone its number in `summary.id`, so that number is now used directly. Transit zones are numbered separately and are skipped. On a map without these numbers, zones are paired on pattern and direction together, then on direction alone, each only when unique on both sides, and a zone that stays ambiguous keeps its number instead of a guessed name.
-
-## 3.3.0-beta1 - 2026-10-26
-
-Beta. Built from a user's diagnostics: the maintainer's mower has no electric height adjustment, so this has not been tested on a real mower yet.
-
-### Added
-
-- **A Cutting height sensor for each RTK zone.** Read only, in millimetres, from the mower's own zone config (`cfg.rtk.zs[].cfg.modules.EA.h`), next to the existing pattern and angle sensors. It is created only on mowers whose zones carry a height, so mowers without electric height adjustment get no new entity. The Cutting height number keeps reading and writing the mower-wide height, between 20 and 60 mm.
 
 ## 3.2.1 - 2026-10-11
 
